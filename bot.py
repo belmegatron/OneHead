@@ -2,16 +2,11 @@ import time
 from tabulate import tabulate
 from tinydb import TinyDB, Query, operations
 from discord.ext import commands
+from itertools import combinations
+from random import choice
 
 class OneHeadException(BaseException):
     pass
-
-
-class TeamBalance(object):
-
-    @staticmethod
-    def balance(self, signups, method):
-        pass
 
 
 class Database(object):
@@ -26,7 +21,7 @@ class Database(object):
             raise OneHeadException('Player Name not a valid string.')
 
         if not cls.db.search(cls.user.name == player_name):
-            cls.db.insert({'name': player_name, 'win': 0, 'loss': 0})
+            cls.db.insert({'name': player_name, 'win': 0, 'loss': 0, 'mmr': 0})
 
     @classmethod
     def remove_player(cls, player_name):
@@ -37,6 +32,7 @@ class Database(object):
         if cls.db.search(cls.user.name == player_name):
             cls.db.update(operations.delete('win'), cls.user.name == player_name)
             cls.db.update(operations.delete('loss'), cls.user.name == player_name)
+            cls.db.update(operations.delete('mmr'), cls.user.name == player_name)
             cls.db.update(operations.delete('name'), cls.user.name == player_name)
 
     @classmethod
@@ -64,9 +60,12 @@ class Database(object):
 
 
 class ScoreBoard(object):
-    database = Database()
-    db = database.db
-    user = Database.user
+
+    def __init__(self, database):
+
+        self.database = database
+        self.db = self.database.db
+        self.user = self.database.user
 
     @staticmethod
     def _calculate_win_loss_ratio(scoreboard):
@@ -111,20 +110,60 @@ class ScoreBoard(object):
 
         return scoreboard_positions
 
-    @classmethod
-    def get_scoreboard(cls):
+    def get_scoreboard(self):
 
-        scoreboard = cls.db.search(cls.user.name.exists())
+        scoreboard = self.db.search(self.user.name.exists())
 
         if not scoreboard:
             return scoreboard
 
-        cls._calculate_win_loss_ratio(scoreboard)
-        sorted_scoreboard = cls._calculate_positions(scoreboard, "ratio")
-        sorted_scoreboard = cls._sort_scoreboard_key_order(sorted_scoreboard)
+        self._calculate_win_loss_ratio(scoreboard)
+        sorted_scoreboard = self._calculate_positions(scoreboard, "ratio")
+        sorted_scoreboard = self._sort_scoreboard_key_order(sorted_scoreboard)
         sorted_scoreboard = tabulate(sorted_scoreboard, headers="keys", tablefmt="simple")
 
         return sorted_scoreboard
+
+
+class TeamBalance(object):
+
+    def __init__(self, onehead):
+
+        self.onehead = onehead
+        self.database = self.onehead.database
+
+    def balance(self):
+
+        profiles = []
+        for player in self.onehead.signups:
+            profile = self.database.db.lookup_player(player)
+            profiles.append(profile)
+
+        all_five_man_lineups = list(combinations(profiles, 5))
+        all_matchups = list(combinations(all_five_man_lineups, 2))
+        valid_combinations = []
+
+        for matchup in all_matchups:
+            share_players = False
+            for player in list(matchup[0]):
+                if player in list(matchup[1]):
+                    share_players = True
+            if share_players is False:
+                valid_combinations.append(matchup)
+
+        rating_differences = []
+        for vc in valid_combinations:
+            t1_rating = sum([player["mmr"] for player in vc[0]])
+            t2_rating = sum([player["mmr"] for player in vc[1]])
+            rating_difference = abs(t1_rating - t2_rating)
+            rating_differences.append(rating_difference)
+
+        rating_differences = dict(enumerate(rating_differences, start=0))
+        rating_differences = {k: v for k, v in sorted(rating_differences.items(), key=lambda item: item[1])}
+        indices = list(rating_differences.keys())[:10]
+        balanced_teams = valid_combinations[choice(indices)]
+
+        return balanced_teams
 
 
 class OneHead(commands.Cog):
@@ -132,6 +171,7 @@ class OneHead(commands.Cog):
 
         self.bot = bot
         self.database = Database()
+        self.scoreboard = ScoreBoard(self.database)
         self.game_in_progress = False
         self.is_balanced = False
         self.signups = []
@@ -225,14 +265,14 @@ class OneHead(commands.Cog):
             for player in self.t2:
                 self.database.update_player(player, True)
 
-        await commands.Command.invoke(self.scoreboard, ctx)
+        await commands.Command.invoke(self.scoreboard.get_scoreboard(), ctx)
         await self.move_back_to_lobby(ctx)
         self.reset_state()
 
     @commands.command(aliases=['sb'])
     async def scoreboard(self, ctx):
 
-        scoreboard = ScoreBoard.get_scoreboard()
+        scoreboard = self.scoreboard.get_scoreboard()
         await ctx.send("**IGC Leaderboard** ```\n{}```".format(scoreboard))
 
     @commands.command(aliases=['reg'])
@@ -253,6 +293,10 @@ class OneHead(commands.Cog):
             await ctx.send("Successfully Deregistered.")
         else:
             await ctx.send("Discord Name could not be found.")
+
+    @commands.command()
+    async def who(self, ctx):
+        await ctx.send("Current Signups: {}".format(self.signups))
 
     @commands.command(aliases=['su'])
     async def signup(self, ctx):
