@@ -1,9 +1,10 @@
-import time
 from tabulate import tabulate
 from tinydb import TinyDB, Query, operations
 from discord.ext import commands
 from itertools import combinations
 from random import choice
+from asyncio import sleep
+
 
 class OneHeadException(BaseException):
     pass
@@ -15,13 +16,13 @@ class Database(object):
     user = Query()
 
     @classmethod
-    def add_player(cls, player_name):
+    def add_player(cls, player_name, mmr):
 
         if not isinstance(player_name, str):
             raise OneHeadException('Player Name not a valid string.')
 
         if not cls.db.search(cls.user.name == player_name):
-            cls.db.insert({'name': player_name, 'win': 0, 'loss': 0, 'mmr': 0})
+            cls.db.insert({'name': player_name, 'win': 0, 'loss': 0, 'mmr': mmr})
 
     @classmethod
     def remove_player(cls, player_name):
@@ -172,10 +173,11 @@ class OneHead(commands.Cog):
         self.bot = bot
         self.database = Database()
         self.scoreboard = ScoreBoard(self.database)
+        self.team_balance = TeamBalance(self)
         self.game_in_progress = False
         self.is_balanced = False
         self.signups = []
-        self.ready_check = []
+        self.players_ready = []
 
         self.channel_names = ['IGC IHL #1', 'IGC IHL #2']
         self.channels = []
@@ -199,6 +201,26 @@ class OneHead(commands.Cog):
             await ctx.send("Game already in progress...")
             return
 
+        signups_full = await self.signup_check(ctx)
+        if signups_full is False:
+            return
+
+        await self.balance(ctx)
+
+        if self.is_balanced:
+            await self.create_discord_channels(ctx)
+            await self.move_discord_channels(ctx)
+
+            await ctx.send("Game starting in ...")
+            for second in range(3, 0, -1):
+                await ctx.send("{}".format(second))
+                await sleep(1)
+            await ctx.send("Go!")
+            self.game_in_progress = True
+
+    async def signup_check(self, ctx):
+
+        signups_full = False
         signup_count = len(self.signups)
         if signup_count != 10:
             if signup_count == 0:
@@ -207,59 +229,57 @@ class OneHead(commands.Cog):
                 await ctx.send("Only {} Signup, require {} more.".format(signup_count, 10 - signup_count))
             else:
                 await ctx.send("Only {} Signups, require {} more.".format(signup_count, 10 - signup_count))
-            return
+        else:
+            signups_full = True
 
-        if self.is_balanced is False:
-            await self.balance(ctx)
-
-        await self.create_discord_channels(ctx)
-        await self.move_discord_channels(ctx)
-
-        await ctx.send("Game starting in ...")
-        for second in range(3, 0, -1):
-            await ctx.send("{}".format(second))
-            time.sleep(1)
-        await ctx.send("Go!")
-        self.game_in_progress = True
+        return signups_full
 
     @commands.has_permissions(administrator=True)
     @commands.command()
     async def stop(self, ctx):
         if self.game_in_progress:
             await ctx.send("Game stopped.")
+            await self.move_back_to_lobby(ctx)
+            await self.teardown_discord_channels()
             self.reset_state()
         else:
             await ctx.send("No currently active game.")
 
-        await self.teardown_discord_channels()
-
     async def balance(self, ctx):
+        signup_count = len(self.signups)
         await ctx.send("Balancing teams...")
-        # TODO: Calculate how to balance teams based on DB entries.
+        if len(self.signups) != 10:
+            await ctx.send("Only {} Signups, require {} more.".format(signup_count, 10 - signup_count))
+            return
+
+        balanced_teams = self.team_balance.balance()
+        self.t1 = balanced_teams[0]
+        self.t1 = balanced_teams[1]
         self.is_balanced = True
 
     @commands.has_permissions(administrator=True)
     @commands.command()
-    async def result(self, ctx, side):
+    async def result(self, ctx, result):
         if self.game_in_progress is False:
             await ctx.send("No currently active game.")
             return
 
-        sides = ["t1", "t2"]
+        accepted_results = ["t1", "t2", "void"]
 
-        if side not in sides:
-            await ctx.send("Invalid Value - Must be either 't1' or 't2'.")
+        if result not in accepted_results:
+            await ctx.send("Invalid Value - Must be either 't1' or 't2' or 'void' if appropriate.")
             return
 
-        await ctx.send("{} Victory!".format(side))
         await ctx.send("Updating Scores...")
 
-        if side == "t1":
+        if result == "t1":
+            await ctx.send("Team 1 Victory!")
             for player in self.t1:
                 self.database.update_player(player, True)
             for player in self.t2:
                 self.database.update_player(player, False)
-        else:
+        elif result == "t2":
+            await ctx.send("Team 2 Victory!")
             for player in self.t1:
                 self.database.update_player(player, False)
             for player in self.t2:
@@ -276,13 +296,15 @@ class OneHead(commands.Cog):
         await ctx.send("**IGC Leaderboard** ```\n{}```".format(scoreboard))
 
     @commands.command(aliases=['reg'])
-    async def register(self, ctx):
+    async def register(self, ctx, mmr):
 
-        if not self.database.db.search(self.database.user.name == ctx.author.display_name):
-            self.database.add_player(ctx.author.display_name)
-            await ctx.send("Successfully Registered.")
+        name = ctx.author.display_name
+
+        if not self.database.db.search(self.database.user.name == name):
+            self.database.add_player(ctx.author.display_name, mmr)
+            await ctx.send("{} successfully registered.".format(name))
         else:
-            await ctx.send("Already registered.")
+            await ctx.send("{} is already registered.".format(name))
 
     @commands.has_permissions(administrator=True)
     @commands.command(aliases=['dereg'])
@@ -297,6 +319,17 @@ class OneHead(commands.Cog):
     @commands.command()
     async def who(self, ctx):
         await ctx.send("Current Signups: {}".format(self.signups))
+
+    @commands.has_permissions(administrator=True)
+    @commands.command()
+    async def summon(self, ctx):
+
+        all_registered_players = self.database.db.search(self.database.user.name.exists())
+        names = [x['name'] for x in all_registered_players]
+        members = [x for x in ctx.guild.members if x.display_name in names]
+        mentions = " ".join([x.mention for x in members])
+        message = "IT'S DOTA TIME BOYS! Summoning all 1Heads - {}".format(mentions)
+        await ctx.send(message)
 
     @commands.command(aliases=['su'])
     async def signup(self, ctx):
@@ -325,12 +358,44 @@ class OneHead(commands.Cog):
         await ctx.send("Current Signups: {}".format(self.signups))
 
     @commands.command(aliases=['rc'])
-    async def readycheck(self, ctx):
-        pass
+    async def ready_check(self, ctx):
+
+        if await self.signup_check(ctx):
+            await ctx.send("Ready Check Started, 30s remaining - type '!ready' to ready up.")
+            await sleep(30)
+            players_ready_count = len(self.players_ready)
+            players_not_ready = " ,".join([x for x in self.signups if x not in self.players_ready])
+            if players_ready_count == 10:
+                await ctx.send("Ready Check Complete - All players ready.")
+            else:
+                await ctx.send("Still waiting on {} players: {}".format(10 - players_ready_count, players_not_ready))
+
+        self.players_ready = []
 
     @commands.command(aliases=['r'])
     async def ready(self, ctx):
-        pass
+        name = ctx.author.display_name
+
+        if name not in self.signups:
+            await ctx.send("{} needs to sign in first.".format(name))
+            return
+
+        self.players_ready.append(name)
+        await ctx.send("{} is ready.".format(name))
+
+    @commands.command()
+    async def rugor(self, ctx):
+        await ctx.send("Everyone SHUT the FUCK up. Lewis has something to say, please speak my good sir.", tts=True)
+
+    @commands.command(aliases=['stat'])
+    async def status(self, ctx):
+
+        if self.game_in_progress:
+            players = {"Team 1": self.t1, "Team 2": self.t2}
+            ig_players = tabulate(players, headers="keys", tablefmt="simple")
+            await ctx.send("**Current Game** ```\n{}```".format(ig_players))
+        else:
+            await ctx.send("No currently active game.")
 
     async def create_discord_channels(self, ctx):
 
