@@ -1,7 +1,8 @@
 from dotenv import load_dotenv
 import os
 from discord.ext import commands
-from bot import OneHead
+from onehead_core import OneHeadCore
+
 
 if __name__ == "__main__":
 
@@ -9,5 +10,6 @@ if __name__ == "__main__":
     TOKEN = os.getenv('DISCORD_TOKEN')
     bot = commands.Bot(command_prefix='!')
 
-    bot.add_cog(OneHead(bot))
+    bot.add_cog(OneHeadCore(bot))
+
     bot.run(TOKEN)

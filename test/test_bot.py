@@ -1,6 +1,6 @@
 from unittest import TestCase
 from mock import MagicMock, patch
-from bot import Database, TeamBalance
+from onehead_core import Database, OneHeadBalance
 
 
 class DataBaseTest(TestCase):
@@ -37,7 +37,7 @@ class TeamBalanceTest(TestCase):
     @patch("bot.Database.lookup_player")
     def test_balance(self, _):
         onehead = MagicMock()
-        tb = TeamBalance(onehead)
+        tb = OneHeadBalance(onehead)
         onehead.signups = self.signups
         onehead.database.db.lookup_player.side_effect = self.pass_arg_back
-        tb.balance()
+        tb.calculate_balance()
