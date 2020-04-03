@@ -82,7 +82,7 @@ class OneHeadCore(commands.Cog):
         if result == "t1":
             await ctx.send("Team 1 Victory!")
             for player in self.t1:
-                self.database.update_plagiyer(player, True)
+                self.database.update_player(player, True)
             for player in self.t2:
                 self.database.update_player(player, False)
         elif result == "t2":

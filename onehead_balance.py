@@ -1,5 +1,6 @@
 from itertools import combinations
 from random import choice
+from onehead_common import OneHeadException
 
 
 class OneHeadBalance(object):
@@ -18,8 +19,12 @@ class OneHeadBalance(object):
 
         profiles = []
         for player in self.signups:
-            profile = self.database.db.lookup_player(player)
-            profiles.append(profile)
+            profile = self.database.lookup_player(player)
+            if profile:
+                profiles.append(profile)
+
+        if len(profiles) != 10:
+            raise OneHeadException("Error: Only {} profiles could be found in database.".format(len(profiles)))
 
         all_five_man_lineups = list(combinations(profiles, 5))
         all_matchups = list(combinations(all_five_man_lineups, 2))
@@ -30,8 +35,12 @@ class OneHeadBalance(object):
             for player in list(matchup[0]):
                 if player in list(matchup[1]):
                     share_players = True
+                    break
             if share_players is False:
                 valid_combinations.append(matchup)
+
+        if not valid_combinations:
+            raise OneHeadException("Error: No valid matchups could be calculated. Possible Duplicate Player Name.")
 
         rating_differences = []
         for vc in valid_combinations:
@@ -40,9 +49,11 @@ class OneHeadBalance(object):
             rating_difference = abs(t1_rating - t2_rating)
             rating_differences.append(rating_difference)
 
-        rating_differences = dict(enumerate(rating_differences, start=0))
-        rating_differences = {k: v for k, v in sorted(rating_differences.items(), key=lambda item: item[1])}
-        indices = list(rating_differences.keys())[:10]
+        rating_differences_mapping = dict(enumerate(rating_differences, start=0))
+        rating_differences_mapping = {k: v for k, v in
+                                      sorted(rating_differences_mapping.items(), key=lambda item: item[1])}
+
+        indices = list(rating_differences_mapping.keys())[:10]
         balanced_teams = valid_combinations[choice(indices)]
 
         return balanced_teams

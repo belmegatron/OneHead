@@ -1,5 +1,6 @@
 from tabulate import tabulate
 from discord.ext import commands
+from onehead_common import OneHeadException
 
 
 class OneHeadScoreBoard(commands.Cog):
@@ -64,7 +65,7 @@ class OneHeadScoreBoard(commands.Cog):
         scoreboard = self.db.search(self.user.name.exists())
 
         if not scoreboard:
-            return scoreboard
+            raise OneHeadException("No users found in database.")
 
         self._calculate_win_loss_ratio(scoreboard)
         sorted_scoreboard = self._calculate_positions(scoreboard, "ratio")
