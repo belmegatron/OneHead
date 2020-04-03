@@ -3,12 +3,7 @@
 OneHead is an IHL Discord Bot for hosting Dota 2 IHL Games.
 
 ## Requirements
-https://discordapp.com/\
-
-
-## Installation
-
-`python setup.py install`
+https://discordapp.com/
 
 ## How to Use
 
