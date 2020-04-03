@@ -21,6 +21,9 @@ class OneHeadRegistration(commands.Cog):
 
     @commands.command(aliases=['reg'])
     async def register(self, ctx, mmr):
+        """
+        Register yourself to the IHL by typing !register <your mmr>.
+        """
 
         name = ctx.author.display_name
 
@@ -33,7 +36,9 @@ class OneHeadRegistration(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.command(aliases=['dereg'])
     async def deregister(self, ctx):
-
+        """
+        Removes a player from the internal IHL database.
+        """
         if self.database.db.search(self.database.user.name == ctx.author.display_name):
             self.database.remove_player(ctx.author.display_name)
             await ctx.send("Successfully Deregistered.")
@@ -52,6 +57,9 @@ class OneHeadPreGame(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.command()
     async def summon(self, ctx):
+        """
+        Messages all registered players of the IHL to come and sign up.
+        """
 
         all_registered_players = self.database.db.search(self.database.user.name.exists())
         names = [x['name'] for x in all_registered_players]
@@ -78,12 +86,18 @@ class OneHeadPreGame(commands.Cog):
 
     @commands.command()
     async def who(self, ctx):
+        """
+        Shows all players currently signed up to play in the IHL.
+        """
         await ctx.send("Current Signups: {}".format(self.signups))
 
     @commands.command(aliases=['su'])
     async def signup(self, ctx):
-        name = ctx.author.display_name
+        """
+        Signup to join a game in the IHL.
+        """
 
+        name = ctx.author.display_name
         if not self.database.db.search(self.database.user.name == name):
             await ctx.send("Please register first using the !reg command.")
             return
@@ -99,6 +113,9 @@ class OneHeadPreGame(commands.Cog):
 
     @commands.command(aliases=['so'])
     async def signout(self, ctx):
+        """
+        Remove yourself from the current pool of players wanting to play.
+        """
         if ctx.author.display_name not in self.signups:
             await ctx.send("{} is not currently signed up.".format(ctx.author.display_name))
         else:
@@ -108,6 +125,9 @@ class OneHeadPreGame(commands.Cog):
 
     @commands.command(aliases=['r'])
     async def ready(self, ctx):
+        """
+        Use this command in response to a ready check.
+        """
         name = ctx.author.display_name
 
         if name not in self.signups:
@@ -119,7 +139,9 @@ class OneHeadPreGame(commands.Cog):
 
     @commands.command(aliases=['rc'])
     async def ready_check(self, ctx):
-
+        """
+        Initiates a ready check, after approx. 30s the result of the check will be displayed.
+        """
         if await self.signup_check(ctx):
             await ctx.send("Ready Check Started, 30s remaining - type '!ready' to ready up.")
             await sleep(30)

@@ -29,7 +29,9 @@ class OneHeadCore(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.command()
     async def start(self, ctx):
-
+        """
+        Starts an IHL game.
+        """
         if self.game_in_progress:
             await ctx.send("Game already in progress...")
             return
@@ -56,6 +58,10 @@ class OneHeadCore(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.command()
     async def stop(self, ctx):
+        """
+        Cancels an IHL game. Can alternatively void a result using the !result command.
+        """
+
         if self.game_in_progress:
             await ctx.send("Game stopped.")
             await self.channels.move_back_to_lobby(ctx)
@@ -67,6 +73,9 @@ class OneHeadCore(commands.Cog):
     @commands.has_permissions(administrator=True)
     @commands.command()
     async def result(self, ctx, result):
+        """
+        Provide the result of game that has finished. Can pass 'void' if the match did not correctly terminate.
+        """
         if self.game_in_progress is False:
             await ctx.send("No currently active game.")
             return
@@ -100,7 +109,9 @@ class OneHeadCore(commands.Cog):
 
     @commands.command(aliases=['stat'])
     async def status(self, ctx):
-
+        """
+        If a game is active, displays the teams and their respective players.
+        """
         if self.game_in_progress:
             players = {"Team 1": self.t1, "Team 2": self.t2}
             ig_players = tabulate(players, headers="keys", tablefmt="simple")

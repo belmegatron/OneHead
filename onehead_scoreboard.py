@@ -13,6 +13,9 @@ class OneHeadScoreBoard(commands.Cog):
 
     @commands.command(aliases=['sb'])
     async def scoreboard(self, ctx):
+        """
+        Shows the current rankings for the IGC IHL Leaderboard.
+        """
 
         scoreboard = self.get_scoreboard()
         await ctx.send("**IGC Leaderboard** ```\n{}```".format(scoreboard))
