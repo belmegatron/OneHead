@@ -31,12 +31,13 @@ class OneHeadBalance(object):
         valid_combinations = []
 
         for matchup in all_matchups:
-            share_players = False
-            for player in list(matchup[0]):
-                if player in list(matchup[1]):
-                    share_players = True
+            matchup_1, matchup_2 = matchup
+            shared_players = False
+            for player in list(matchup_1):
+                if player in list(matchup_2):
+                    shared_players = True
                     break
-            if share_players is False:
+            if shared_players is False:
                 valid_combinations.append(matchup)
 
         if not valid_combinations:
@@ -44,8 +45,9 @@ class OneHeadBalance(object):
 
         rating_differences = []
         for vc in valid_combinations:
-            t1_rating = sum([player["mmr"] for player in vc[0]])
-            t2_rating = sum([player["mmr"] for player in vc[1]])
+            t1, t2 = vc
+            t1_rating = sum([player["mmr"] for player in t1])
+            t2_rating = sum([player["mmr"] for player in t2])
             rating_difference = abs(t1_rating - t2_rating)
             rating_differences.append(rating_difference)
 
@@ -66,6 +68,5 @@ class OneHeadBalance(object):
             await ctx.send("Only {} Signups, require {} more.".format(signup_count, 10 - signup_count))
 
         balanced_teams = self.calculate_balance()
-        self.t1 = balanced_teams[0]
-        self.t2 = balanced_teams[1]
+        self.t1, self.t2 = balanced_teams
         self.is_balanced = True
