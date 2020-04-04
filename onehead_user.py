@@ -53,6 +53,7 @@ class OneHeadPreGame(commands.Cog):
         self.database = database
         self.signups = []
         self.players_ready = []
+        self.ready_check_in_progress = False
 
     @commands.has_permissions(administrator=True)
     @commands.command()
@@ -134,6 +135,10 @@ class OneHeadPreGame(commands.Cog):
             await ctx.send("{} needs to sign in first.".format(name))
             return
 
+        if self.ready_check_in_progress is False:
+            await ctx.send("No ready check initiated.")
+            return
+
         self.players_ready.append(name)
         await ctx.send("{} is ready.".format(name))
 
@@ -144,6 +149,7 @@ class OneHeadPreGame(commands.Cog):
         """
         if await self.signup_check(ctx):
             await ctx.send("Ready Check Started, 30s remaining - type '!ready' to ready up.")
+            self.ready_check_in_progress = True
             await sleep(30)
             players_ready_count = len(self.players_ready)
             players_not_ready = " ,".join([x for x in self.signups if x not in self.players_ready])
@@ -152,5 +158,6 @@ class OneHeadPreGame(commands.Cog):
             else:
                 await ctx.send("Still waiting on {} players: {}".format(10 - players_ready_count, players_not_ready))
 
+        self.ready_check_in_progress = False
         self.players_ready = []
 

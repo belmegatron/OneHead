@@ -18,7 +18,7 @@ class OneHeadCore(commands.Cog):
         self.database = OneHeadDB()
         self.scoreboard = OneHeadScoreBoard(self.database)
         self.pre_game = OneHeadPreGame(self.database)
-        self.team_balance = OneHeadBalance(self.database, self.pre_game, self.t1, self.t2)
+        self.team_balance = OneHeadBalance(self.database, self.pre_game)
         self.channels = OneHeadChannels(self.t1, self.t2)
         self.registration = OneHeadRegistration(self.database)
 
@@ -40,8 +40,8 @@ class OneHeadCore(commands.Cog):
         if signups_full is False:
             return
 
-        await self.team_balance.balance(ctx)
-
+        balanced_teams = await self.team_balance.balance(ctx)
+        self.t1, self.t2 = balanced_teams
         self.team_balance.is_balanced = True
 
         if self.team_balance.is_balanced:
@@ -113,7 +113,9 @@ class OneHeadCore(commands.Cog):
         If a game is active, displays the teams and their respective players.
         """
         if self.game_in_progress:
-            players = {"Team 1": self.t1, "Team 2": self.t2}
+            t1_names = [x['name'] for x in self.t1]
+            t2_names = [x['name'] for x in self.t2]
+            players = {"Team 1": t1_names, "Team 2": t2_names}
             ig_players = tabulate(players, headers="keys", tablefmt="simple")
             await ctx.send("**Current Game** ```\n{}```".format(ig_players))
         else:

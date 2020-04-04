@@ -5,13 +5,11 @@ from onehead_common import OneHeadException
 
 class OneHeadBalance(object):
 
-    def __init__(self, database, pregame, t1, t2):
+    def __init__(self, database, pregame):
 
         self.database = database
         self.pre_game = pregame
         self.signups = self.pre_game.signups
-        self.t1 = t1
-        self.t2 = t2
 
         self.is_balanced = False
 
@@ -68,5 +66,6 @@ class OneHeadBalance(object):
             await ctx.send("Only {} Signups, require {} more.".format(signup_count, 10 - signup_count))
 
         balanced_teams = self.calculate_balance()
-        self.t1, self.t2 = balanced_teams
+
         self.is_balanced = True
+        return balanced_teams
