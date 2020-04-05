@@ -12,22 +12,22 @@ class OneHeadScoreBoardTest(TestCase):
 
     def test_calculate_win_loss_ratio_loss_0(self):
         scoreboard = [{"name": "RBEEZAY", "win": 10, "loss": 0}]
-        self.scoreboard._calculate_win_loss_ratio(scoreboard)
+        self.scoreboard._calculate_win_percentage(scoreboard)
         self.assertEqual(scoreboard[0]["ratio"], 10)
 
     def test_calculate_win_loss_ratio_win_0(self):
         scoreboard = [{"name": "RBEEZAY", "win": 0, "loss": 10}]
-        self.scoreboard._calculate_win_loss_ratio(scoreboard)
+        self.scoreboard._calculate_win_percentage(scoreboard)
         self.assertEqual(scoreboard[0]["ratio"], 0)
 
     def test_calculate_win_loss_ratio_int_result(self):
         scoreboard = [{"name": "RBEEZAY", "win": 10, "loss": 5}]
-        self.scoreboard._calculate_win_loss_ratio(scoreboard)
+        self.scoreboard._calculate_win_percentage(scoreboard)
         self.assertEqual(scoreboard[0]["ratio"], 2)
 
     def test_calculate_win_loss_ratio_float_result(self):
         scoreboard = [{"name": "RBEEZAY", "win": 10, "loss": 4}]
-        self.scoreboard._calculate_win_loss_ratio(scoreboard)
+        self.scoreboard._calculate_win_percentage(scoreboard)
         self.assertEqual(scoreboard[0]["ratio"], 2.5)
 
     def test_sort_scoreboard_key_order(self):

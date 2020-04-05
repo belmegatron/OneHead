@@ -21,18 +21,27 @@ class OneHeadScoreBoard(commands.Cog):
         await ctx.send("**IGC Leaderboard** ```\n{}```".format(scoreboard))
 
     @staticmethod
-    def _calculate_win_loss_ratio(scoreboard):
+    def _calculate_win_percentage(scoreboard):
 
         for record in scoreboard:
-            if record["loss"] == 0 or record["win"] == 0:
-                record["ratio"] = record["win"]
+            if record['win'] == 0:
+                record["%"] = 0
             else:
-                record["ratio"] = float(record["win"] / record["loss"])
+                record["%"] = round(record['win'] / (record['win'] + record['loss']) * 100, 1)
+
+    @staticmethod
+    def _calculate_rating(scoreboard):
+
+        baseline_rating = 1500
+        for record in scoreboard:
+            win_modifier = record['win'] * 25
+            loss_modifier = record['loss'] * 25
+            record['rating'] = baseline_rating + win_modifier - loss_modifier
 
     @staticmethod
     def _sort_scoreboard_key_order(scoreboard):
 
-        key_order = ["#", "name", "win", "loss", "ratio"]
+        key_order = ["#", "name", "win", "loss", "%", "rating"]
         sorted_scoreboard = []
 
         for record in scoreboard:
@@ -70,8 +79,9 @@ class OneHeadScoreBoard(commands.Cog):
         if not scoreboard:
             raise OneHeadException("No users found in database.")
 
-        self._calculate_win_loss_ratio(scoreboard)
-        sorted_scoreboard = self._calculate_positions(scoreboard, "ratio")
+        self._calculate_win_percentage(scoreboard)
+        self._calculate_rating(scoreboard)
+        sorted_scoreboard = self._calculate_positions(scoreboard, "rating")
         sorted_scoreboard = self._sort_scoreboard_key_order(sorted_scoreboard)
         sorted_scoreboard = tabulate(sorted_scoreboard, headers="keys", tablefmt="simple")
 

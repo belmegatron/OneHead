@@ -1,3 +1,8 @@
+import discord
+
+
+
+
 class OneHeadException(BaseException):
     pass
 
@@ -27,22 +32,40 @@ class OneHeadChannels(object):
 
     async def move_back_to_lobby(self, ctx):
 
-        team_1 = [x for x in ctx.guild.members if x.display_name in self.t1]
-        team_2 = [x for x in ctx.guild.members if x.display_name in self.t2]
+        t1_names = [x['name'] for x in self.t1]
+        t2_names = [x['name'] for x in self.t2]
+        team_1 = [x for x in ctx.guild.members if x.display_name in t1_names]
+        team_2 = [x for x in ctx.guild.members if x.display_name in t2_names]
 
-        lobby = [x for x in ctx.guild.voice_channels if x.name == "LOBBY"]
+        lobby = [x for x in ctx.guild.voice_channels if x.name == "LOBBY"][0]
 
         for member in team_1:
-            member.move_to(lobby)
+            try:
+                await member.move_to(lobby)
+            except discord.errors.HTTPException:
+                pass
+
         for member in team_2:
-            member.move_to(lobby)
+            try:
+                await member.move_to(lobby)
+            except discord.errors.HTTPException:
+                pass
 
     async def move_discord_channels(self, ctx):
 
-        team_1 = [x for x in ctx.guild.members if x.display_name in self.t1]
-        team_2 = [x for x in ctx.guild.members if x.display_name in self.t2]
+        t1_names = [x['name'] for x in self.t1]
+        t2_names = [x['name'] for x in self.t2]
+        team_1 = [x for x in ctx.guild.members if x.display_name in t1_names]
+        team_2 = [x for x in ctx.guild.members if x.display_name in t2_names]
 
         for member in team_1:
-            member.move_to(self.channel_names[0])
+            try:
+                await member.move_to(self.channels[0])
+            except discord.errors.HTTPException:
+                pass
+
         for member in team_2:
-            member.move_to(self.channel_names[1])
+            try:
+                await member.move_to(self.channels[1])
+            except discord.errors.HTTPException:
+                pass

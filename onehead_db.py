@@ -15,7 +15,7 @@ class OneHeadDB(object):
             raise OneHeadException('Player Name not a valid string.')
 
         if not self.db.search(self.user.name == player_name):
-            self.db.insert({'name': player_name, 'win': 0, 'loss': 0, 'mmr': mmr})
+            self.db.insert({'name': player_name, 'win': 0, 'loss': 0, 'mmr': int(mmr)})
 
     def remove_player(self, player_name):
 

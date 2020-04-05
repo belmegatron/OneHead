@@ -51,6 +51,8 @@ class OneHeadCore(commands.Cog):
             await ctx.send("Setting up IHL Discord Channels...")
             await self.channels.create_discord_channels(ctx)
             await ctx.send("Moving Players to IHL Discord Channels...")
+            self.channels.t1 = self.t1
+            self.channels.t2 = self.t2
             await self.channels.move_discord_channels(ctx)
 
             await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")

@@ -1,6 +1,6 @@
 from discord.ext import commands
 from asyncio import sleep
-
+from onehead_common import OneHeadException
 
 class OneHeadMemes(commands.Cog):
 
@@ -26,6 +26,11 @@ class OneHeadRegistration(commands.Cog):
         """
 
         name = ctx.author.display_name
+
+        try:
+            tmp = int(mmr)
+        except ValueError:
+            raise OneHeadException("{} is not a valid integer.".format(mmr))
 
         if not self.database.db.search(self.database.user.name == name):
             self.database.add_player(ctx.author.display_name, mmr)
@@ -90,7 +95,19 @@ class OneHeadPreGame(commands.Cog):
         """
         Shows all players currently signed up to play in the IHL.
         """
+
+        await ctx.send("There are currently {} players signed up.".format(len(self.signups)))
         await ctx.send("Current Signups: {}".format(self.signups))
+
+    @commands.has_permissions(administrator=True)
+    @commands.command()
+    async def reset(self, ctx):
+        """
+        Reset current sign ups.
+        """
+
+        self.signups = []
+        await ctx.send("Signups have been reset.")
 
     @commands.command(aliases=['su'])
     async def signup(self, ctx):
@@ -106,7 +123,7 @@ class OneHeadPreGame(commands.Cog):
         if name in self.signups:
             await ctx.send("{} is already signed up.".format(name))
         elif len(self.signups) >= 10:
-            ctx.send("Signups full.")
+            await ctx.send("Signups full.")
         else:
             self.signups.append(name)
 
