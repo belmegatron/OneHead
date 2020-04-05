@@ -2,3 +2,6 @@
 /.idea
 db.json
 __pycache__/
+build/
+dist/
+OneHead.egg-info/
