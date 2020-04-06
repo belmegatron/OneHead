@@ -106,6 +106,8 @@ class OneHeadCore(commands.Cog):
             for player in t2_names:
                 self.database.update_player(player, True)
 
+        self.database.upload_file("db.json", "onehead")
+
         scoreboard = self.bot.get_command("scoreboard")
         await commands.Command.invoke(scoreboard, ctx)
         await self.channels.move_back_to_lobby(ctx)
