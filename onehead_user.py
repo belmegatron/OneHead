@@ -2,6 +2,7 @@ from discord.ext import commands
 from asyncio import sleep
 from onehead_common import OneHeadException
 
+
 class OneHeadMemes(commands.Cog):
 
     def __init__(self):

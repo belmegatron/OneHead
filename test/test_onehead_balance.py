@@ -28,7 +28,7 @@ class OneHeadBalanceTest(TestCase):
         self.database = MagicMock(spec=OneHeadDB)
         self.t1 = None
         self.t2 = None
-        self.team_balance = OneHeadBalance(self.database, self.pre_game, self.t1, self.t2)
+        self.team_balance = OneHeadBalance(self.database, self.pre_game)
 
     def mock_lookup_player(self, *args):
         return [x for x in self.mock_db if x['name'] == args[0]]
@@ -37,7 +37,7 @@ class OneHeadBalanceTest(TestCase):
         self.database.lookup_player.side_effect = self.mock_lookup_player
         mock_combination = [self.mock_db[:5], self.mock_db[5:]]
         mock_combinations.side_effect = [MagicMock(), [mock_combination]]
-        result = self.team_balance.calculate_balance()
+        result = self.team_balance._calculate_balance()
         self.assertEqual(result[0], [{'name': 'RBEEZAY', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 5000},
                                      {'name': 'GPP', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 2000},
                                      {'name': 'LOZZA', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 5000},
@@ -49,11 +49,11 @@ class OneHeadBalanceTest(TestCase):
         mock_combination = [self.mock_db[:5], self.mock_db[5:]]
         mock_combination[0][0] = mock_combination[1][0]
         mock_combinations.side_effect = [MagicMock(), [mock_combination]]
-        self.assertRaises(OneHeadException, self.team_balance.calculate_balance)
+        self.assertRaises(OneHeadException, self.team_balance._calculate_balance)
 
     def test_calculate_balance_incorrect_profile_count(self, mock_combinations):
         self.database.lookup_player.return_value = []
         mock_combination = [self.mock_db[:5], self.mock_db[5:]]
         mock_combination[0][0] = mock_combination[1][0]
         mock_combinations.side_effect = [MagicMock(), [mock_combination]]
-        self.assertRaises(OneHeadException, self.team_balance.calculate_balance)
+        self.assertRaises(OneHeadException, self.team_balance._calculate_balance)

@@ -42,9 +42,8 @@ class OneHeadCore(commands.Cog):
 
         balanced_teams = await self.team_balance.balance(ctx)
         self.t1, self.t2 = balanced_teams
-        self.team_balance.is_balanced = True
 
-        if self.team_balance.is_balanced:
+        if balanced_teams:
             self.game_in_progress = True
             status = self.bot.get_command("status")
             await commands.Command.invoke(status, ctx)
@@ -54,7 +53,6 @@ class OneHeadCore(commands.Cog):
             self.channels.t1 = self.t1
             self.channels.t2 = self.t2
             await self.channels.move_discord_channels(ctx)
-
             await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
 
     @commands.has_role("IHL Admin")
@@ -106,8 +104,6 @@ class OneHeadCore(commands.Cog):
             for player in t2_names:
                 self.database.update_player(player, True)
 
-        self.database.upload_file("db.json", "onehead")
-
         scoreboard = self.bot.get_command("scoreboard")
         await commands.Command.invoke(scoreboard, ctx)
         await self.channels.move_back_to_lobby(ctx)
@@ -131,7 +127,6 @@ class OneHeadCore(commands.Cog):
     def reset_state(self):
 
         self.game_in_progress = False
-        self.team_balance.is_balanced = False
         self.t1 = []
         self.t2 = []
 

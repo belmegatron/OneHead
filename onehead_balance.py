@@ -9,11 +9,9 @@ class OneHeadBalance(object):
 
         self.database = database
         self.pre_game = pregame
-        self.signups = self.pre_game.signups
+        self.signups = []
 
-        self.is_balanced = False
-
-    def calculate_balance(self):
+    def _calculate_balance(self):
 
         profiles = []
         for player in self.signups:
@@ -60,12 +58,13 @@ class OneHeadBalance(object):
 
     async def balance(self, ctx):
 
+        self.signups = self.pre_game.signups
         signup_count = len(self.signups)
         await ctx.send("Balancing teams...")
         if len(self.signups) != 10:
             await ctx.send("Only {} Signups, require {} more.".format(signup_count, 10 - signup_count))
 
-        balanced_teams = self.calculate_balance()
+        balanced_teams = self._calculate_balance()
+        self.signups = []
 
-        self.is_balanced = True
         return balanced_teams
