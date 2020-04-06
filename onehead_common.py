@@ -1,8 +1,6 @@
 import discord
 
 
-
-
 class OneHeadException(BaseException):
     pass
 

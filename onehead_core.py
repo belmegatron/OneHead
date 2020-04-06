@@ -26,7 +26,7 @@ class OneHeadCore(commands.Cog):
         bot.add_cog(self.scoreboard)
         bot.add_cog(self.registration)
 
-    @commands.has_permissions(administrator=True)
+    @commands.has_role("IHL Admin")
     @commands.command()
     async def start(self, ctx):
         """
@@ -57,7 +57,7 @@ class OneHeadCore(commands.Cog):
 
             await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
 
-    @commands.has_permissions(administrator=True)
+    @commands.has_role("IHL Admin")
     @commands.command()
     async def stop(self, ctx):
         """
@@ -72,7 +72,7 @@ class OneHeadCore(commands.Cog):
         else:
             await ctx.send("No currently active game.")
 
-    @commands.has_permissions(administrator=True)
+    @commands.has_role("IHL Admin")
     @commands.command()
     async def result(self, ctx, result):
         """
@@ -90,17 +90,20 @@ class OneHeadCore(commands.Cog):
 
         await ctx.send("Updating Scores...")
 
+        t1_names = [x['name'] for x in self.t1]
+        t2_names = [x['name'] for x in self.t2]
+
         if result == "t1":
             await ctx.send("Team 1 Victory!")
-            for player in self.t1:
+            for player in t1_names:
                 self.database.update_player(player, True)
-            for player in self.t2:
+            for player in t2_names:
                 self.database.update_player(player, False)
         elif result == "t2":
             await ctx.send("Team 2 Victory!")
-            for player in self.t1:
+            for player in t1_names:
                 self.database.update_player(player, False)
-            for player in self.t2:
+            for player in t2_names:
                 self.database.update_player(player, True)
 
         scoreboard = self.bot.get_command("scoreboard")

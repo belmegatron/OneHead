@@ -60,7 +60,7 @@ class OneHeadPreGame(commands.Cog):
         self.players_ready = []
         self.ready_check_in_progress = False
 
-    @commands.has_permissions(administrator=True)
+    @commands.has_role("IHL Admin")
     @commands.command()
     async def summon(self, ctx):
         """
@@ -99,7 +99,7 @@ class OneHeadPreGame(commands.Cog):
         await ctx.send("There are currently {} players signed up.".format(len(self.signups)))
         await ctx.send("Current Signups: {}".format(self.signups))
 
-    @commands.has_permissions(administrator=True)
+    @commands.has_role("IHL Admin")
     @commands.command()
     async def reset(self, ctx):
         """
