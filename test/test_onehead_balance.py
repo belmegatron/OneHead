@@ -1,26 +1,29 @@
 from unittest import TestCase
-from mock import MagicMock, patch
 import asyncio
+from mock import MagicMock, patch
 from onehead_balance import OneHeadBalance
 from onehead_db import OneHeadDB
 from onehead_user import OneHeadPreGame
 from onehead_common import OneHeadException
 
 
-def _run(coro):
-    """Run the given coroutine."""
-    return asyncio.get_event_loop().run_until_complete(coro)
+class OneHeadAsyncTest(object):
 
+    @staticmethod
+    def _run(coro):
+        """Run the given coroutine."""
+        return asyncio.get_event_loop().run_until_complete(coro)
 
-def async_mock(*args, **kwargs):
-    """Create an async function mock."""
-    m = MagicMock(*args, **kwargs)
+    @staticmethod
+    def async_mock(*args, **kwargs):
+        """Create an async function mock."""
+        m = MagicMock(*args, **kwargs)
 
-    async def mock_coro(*args, **kwargs):
-        return m(*args, **kwargs)
+        async def mock_coro(*args, **kwargs):
+            return m(*args, **kwargs)
 
-    mock_coro.mock = m
-    return mock_coro
+        mock_coro.mock = m
+        return mock_coro
 
 
 class OneHeadBalanceTest(TestCase):
@@ -82,8 +85,8 @@ class OneHeadBalanceTest(TestCase):
         mock_signups = ["BOB SAGET"]    # Only 1 signup, therefore should fail.
         self.pre_game.signups = mock_signups
         ctx = MagicMock()
-        ctx.send = async_mock(return_value=None)
-        self.assertRaises(OneHeadException, _run, self.team_balance.balance(ctx))
+        ctx.send = OneHeadAsyncTest.async_mock(return_value=None)
+        self.assertRaises(OneHeadException, OneHeadAsyncTest._run, self.team_balance.balance(ctx))
         self.assertEqual(self.team_balance.signups, mock_signups)
 
     @patch("onehead_balance.OneHeadBalance._calculate_balance")
@@ -91,7 +94,7 @@ class OneHeadBalanceTest(TestCase):
 
         self.pre_game.signups = self.signups    # Expected list of 10 signups.
         ctx = MagicMock()
-        ctx.send = async_mock(return_value=None)
-        _run(self.team_balance.balance(ctx))
+        ctx.send = OneHeadAsyncTest.async_mock(return_value=None)
+        OneHeadAsyncTest._run(self.team_balance.balance(ctx))
         mock_calculate_balance.assert_called_once()
 

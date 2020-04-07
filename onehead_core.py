@@ -43,17 +43,16 @@ class OneHeadCore(commands.Cog):
         balanced_teams = await self.team_balance.balance(ctx)
         self.t1, self.t2 = balanced_teams
 
-        if balanced_teams:
-            self.game_in_progress = True
-            status = self.bot.get_command("status")
-            await commands.Command.invoke(status, ctx)
-            await ctx.send("Setting up IHL Discord Channels...")
-            await self.channels.create_discord_channels(ctx)
-            await ctx.send("Moving Players to IHL Discord Channels...")
-            self.channels.t1 = self.t1
-            self.channels.t2 = self.t2
-            await self.channels.move_discord_channels(ctx)
-            await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
+        self.game_in_progress = True
+        status = self.bot.get_command("status")
+        await commands.Command.invoke(status, ctx)
+        await ctx.send("Setting up IHL Discord Channels...")
+        await self.channels.create_discord_channels(ctx)
+        await ctx.send("Moving Players to IHL Discord Channels...")
+        self.channels.t1 = self.t1
+        self.channels.t2 = self.t2
+        await self.channels.move_discord_channels(ctx)
+        await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
 
     @commands.has_role("IHL Admin")
     @commands.command()

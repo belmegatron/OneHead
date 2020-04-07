@@ -1,5 +1,5 @@
 from unittest import TestCase
-from mock import MagicMock, patch
+from mock import MagicMock
 from onehead_scoreboard import OneHeadScoreBoard
 from onehead_common import OneHeadException
 
