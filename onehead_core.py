@@ -70,6 +70,13 @@ class OneHeadCore(commands.Cog):
         else:
             await ctx.send("No currently active game.")
 
+    def get_player_names(self):
+
+        t1_names = [x['name'] for x in self.t1]
+        t2_names = [x['name'] for x in self.t2]
+
+        return t1_names, t2_names
+
     @commands.has_role("IHL Admin")
     @commands.command()
     async def result(self, ctx, result):
@@ -87,9 +94,7 @@ class OneHeadCore(commands.Cog):
             return
 
         await ctx.send("Updating Scores...")
-
-        t1_names = [x['name'] for x in self.t1]
-        t2_names = [x['name'] for x in self.t2]
+        t1_names, t2_names = self.get_player_names()
 
         if result == "t1":
             await ctx.send("Team 1 Victory!")
@@ -115,9 +120,9 @@ class OneHeadCore(commands.Cog):
         """
         If a game is active, displays the teams and their respective players.
         """
+
         if self.game_in_progress:
-            t1_names = [x['name'] for x in self.t1]
-            t2_names = [x['name'] for x in self.t2]
+            t1_names, t2_names = self.get_player_names()
             players = {"Team 1": t1_names, "Team 2": t2_names}
             ig_players = tabulate(players, headers="keys", tablefmt="simple")
             await ctx.send("**Current Game** ```\n{}```".format(ig_players))

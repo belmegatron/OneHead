@@ -3,17 +3,6 @@ from asyncio import sleep
 from onehead_common import OneHeadException
 
 
-class OneHeadMemes(commands.Cog):
-
-    def __init__(self):
-        pass
-
-    @commands.has_permissions(administrator=True)
-    @commands.command()
-    async def rugor(self, ctx):
-        await ctx.send("Everyone SHUT the FUCK up. Lewis has something to say, please speak my good sir.", tts=True)
-
-
 class OneHeadRegistration(commands.Cog):
 
     def __init__(self, database):

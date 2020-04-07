@@ -62,9 +62,10 @@ class OneHeadBalance(object):
         signup_count = len(self.signups)
         await ctx.send("Balancing teams...")
         if len(self.signups) != 10:
-            await ctx.send("Only {} Signups, require {} more.".format(signup_count, 10 - signup_count))
+            err = "Only {} Signups, require {} more.".format(signup_count, 10 - signup_count)
+            await ctx.send(err)
+            raise OneHeadException(err)
 
         balanced_teams = self._calculate_balance()
-        self.signups = []
 
         return balanced_teams
