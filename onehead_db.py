@@ -121,6 +121,7 @@ class OneHeadDB(object):
         else:
             item = response.get("Item")
             player = json.dumps(item, indent=4, cls=DecimalEncoder)
+            player = json.loads(player)
             return player
 
     def retrieve_table(self):

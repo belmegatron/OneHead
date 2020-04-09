@@ -61,6 +61,9 @@ class OneHeadPreGame(commands.Cog):
         """
 
         all_registered_players = self.database.retrieve_table()
+        if not all_registered_players:
+            raise OneHeadException("No players could be found in database.")
+
         names = [x['name'] for x in all_registered_players]
         members = [x for x in ctx.guild.members if x.display_name in names]
         mentions = " ".join([x.mention for x in members])
