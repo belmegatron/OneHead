@@ -22,7 +22,7 @@ class OneHeadRegistration(commands.Cog):
         except ValueError:
             raise OneHeadException("{} is not a valid integer.".format(mmr))
 
-        if not self.database.db.search(self.database.user.name == name):
+        if self.database.player_exists(name) is False:
             self.database.add_player(ctx.author.display_name, mmr)
             await ctx.send("{} successfully registered.".format(name))
         else:
@@ -34,8 +34,11 @@ class OneHeadRegistration(commands.Cog):
         """
         Removes a player from the internal IHL database.
         """
-        if self.database.db.search(self.database.user.name == ctx.author.display_name):
-            self.database.remove_player(ctx.author.display_name)
+
+        name = ctx.author.display_name
+
+        if self.database.player_exists(name):
+            self.database.remove_player(name)
             await ctx.send("Successfully Deregistered.")
         else:
             await ctx.send("Discord Name could not be found.")
@@ -57,7 +60,7 @@ class OneHeadPreGame(commands.Cog):
         Messages all registered players of the IHL to come and sign up.
         """
 
-        all_registered_players = self.database.db.search(self.database.user.name.exists())
+        all_registered_players = self.database.retrieve_table()
         names = [x['name'] for x in all_registered_players]
         members = [x for x in ctx.guild.members if x.display_name in names]
         mentions = " ".join([x.mention for x in members])
@@ -106,7 +109,7 @@ class OneHeadPreGame(commands.Cog):
         """
 
         name = ctx.author.display_name
-        if not self.database.db.search(self.database.user.name == name):
+        if self.database.player_exists(name) is False:
             await ctx.send("Please register first using the !reg command.")
             return
 
