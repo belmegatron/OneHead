@@ -7,9 +7,7 @@ class OneHeadScoreBoard(commands.Cog):
 
     def __init__(self, database):
 
-        self.database = database
-        self.db = self.database.db
-        self.user = self.database.user
+        self.db = database
 
     @commands.command(aliases=['sb'])
     async def scoreboard(self, ctx):
@@ -74,7 +72,7 @@ class OneHeadScoreBoard(commands.Cog):
 
     def get_scoreboard(self):
 
-        scoreboard = self.db.search(self.user.name.exists())
+        scoreboard = self.db.retrieve_table()
 
         if not scoreboard:
             raise OneHeadException("No users found in database.")

@@ -90,5 +90,5 @@ class OneHeadScoreBoardTest(TestCase):
                                   {"name": "JAMES", "win": 6, "loss": 4, "%": 60, "rating": 1550, "#": 5}])
 
     def test_get_scoreboard_db_empty(self):
-        self.database.db.search.return_value = []
+        self.database.retrieve_table.return_value = []
         self.assertRaises(OneHeadException, self.scoreboard.get_scoreboard)
