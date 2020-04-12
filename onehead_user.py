@@ -70,6 +70,9 @@ class OneHeadPreGame(commands.Cog):
         message = "IT'S DOTA TIME BOYS! Summoning all 1Heads - {}".format(mentions)
         await ctx.send(message)
 
+    def clear_signups(self):
+        self.signups = []
+
     async def signup_check(self, ctx):
 
         signups_full = False
@@ -102,7 +105,7 @@ class OneHeadPreGame(commands.Cog):
         Reset current sign ups.
         """
 
-        self.signups = []
+        self.clear_signups()
         await ctx.send("Signups have been reset.")
 
     @commands.command(aliases=['su'])
@@ -128,7 +131,7 @@ class OneHeadPreGame(commands.Cog):
     @commands.command(aliases=['so'])
     async def signout(self, ctx):
         """
-        Remove yourself from the current pool of players wanting to play.
+        Remove yourself from the current pool of signed up players.
         """
         if ctx.author.display_name not in self.signups:
             await ctx.send("{} is not currently signed up.".format(ctx.author.display_name))
@@ -136,6 +139,20 @@ class OneHeadPreGame(commands.Cog):
             self.signups.remove(ctx.author.display_name)
 
         await ctx.send("Current Signups: {}".format(self.signups))
+
+    @commands.has_role("IHL Admin")
+    @commands.command(aliases=['rm'])
+    async def remove(self, ctx, name):
+        """
+        Remove a player who is currently signed up.
+        """
+
+        if name not in self.signups:
+            await ctx.send("{} is not currently signed up.".format(name))
+            return
+
+        self.signups.remove(name)
+        ctx.send("{} has been removed from the signup pool.".format(name))
 
     @commands.command(aliases=['r'])
     async def ready(self, ctx):
@@ -173,4 +190,3 @@ class OneHeadPreGame(commands.Cog):
 
         self.ready_check_in_progress = False
         self.players_ready = []
-
