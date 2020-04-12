@@ -43,16 +43,18 @@ class OneHeadCoreTest(TestCase):
         self.assertFalse(mock_balance.called)
 
     @patch("onehead_common.OneHeadChannels.move_discord_channels")
+    @patch("onehead_common.OneHeadChannels.set_teams")
     @patch("onehead_common.OneHeadChannels.create_discord_channels")
     @patch("discord.ext.commands.core.Command.invoke", new=OneHeadAsyncTest.async_mock())
     @patch("onehead_balance.OneHeadBalance.balance")
-    def test_start_game_success(self, mock_balance, mock_create_discord_channels, mock_move_discord_channels):
+    def test_start_game_success(self, mock_balance, mock_create_discord_channels, mock_set_teams, mock_move_discord_channels):
         self.core.pre_game.signup_check = OneHeadAsyncTest.async_mock(return_value=True)
         self.core.status = OneHeadAsyncTest.async_mock()
         mock_balanced_teams = MagicMock(), MagicMock()
         mock_balance.return_value = mock_balanced_teams
         OneHeadAsyncTest._run(self.core.start(self.core, self.ctx))
         mock_create_discord_channels.is_called_once()
+        mock_set_teams.is_called_once()
         mock_move_discord_channels.is_called_once()
         self.assertEqual(self.core.t1._id, mock_balanced_teams[0]._id)
         self.assertEqual(self.core.t2._id, mock_balanced_teams[1]._id)

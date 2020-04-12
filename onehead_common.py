@@ -7,10 +7,15 @@ class OneHeadException(BaseException):
 
 class OneHeadChannels(object):
 
-    def __init__(self, t1, t2):
+    def __init__(self):
 
         self.channel_names = ['IGC IHL #1', 'IGC IHL #2']
         self.channels = []
+
+        self.t1 = None
+        self.t2 = None
+
+    def set_teams(self, t1, t2):
 
         self.t1 = t1
         self.t2 = t2

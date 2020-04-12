@@ -1,5 +1,6 @@
 from discord.ext import commands
 from tabulate import tabulate
+from version import __version__
 from onehead_balance import OneHeadBalance
 from onehead_scoreboard import OneHeadScoreBoard
 from onehead_db import OneHeadDB
@@ -19,7 +20,7 @@ class OneHeadCore(commands.Cog):
         self.scoreboard = OneHeadScoreBoard(self.database)
         self.pre_game = OneHeadPreGame(self.database)
         self.team_balance = OneHeadBalance(self.database, self.pre_game)
-        self.channels = OneHeadChannels(self.t1, self.t2)
+        self.channels = OneHeadChannels()
         self.registration = OneHeadRegistration(self.database)
 
         bot.add_cog(self.pre_game)
@@ -49,8 +50,7 @@ class OneHeadCore(commands.Cog):
         await ctx.send("Setting up IHL Discord Channels...")
         await self.channels.create_discord_channels(ctx)
         await ctx.send("Moving Players to IHL Discord Channels...")
-        self.channels.t1 = self.t1
-        self.channels.t2 = self.t2
+        self.channels.set_teams(self.t1, self.t2)
         await self.channels.move_discord_channels(ctx)
         await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
 
@@ -128,9 +128,18 @@ class OneHeadCore(commands.Cog):
         else:
             await ctx.send("No currently active game.")
 
+    @commands.command(aliases=['v'])
+    async def version(self, ctx):
+        """
+        Displays the current version of OneHead.
+        """
+
+        await ctx.send("Current Version - {}".format(__version__))
+
     def reset_state(self):
 
         self.game_in_progress = False
+        self.pre_game.clear_signups()
         self.t1 = []
         self.t2 = []
 
