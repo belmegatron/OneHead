@@ -152,7 +152,7 @@ class OneHeadPreGame(commands.Cog):
             return
 
         self.signups.remove(name)
-        ctx.send("{} has been removed from the signup pool.".format(name))
+        await ctx.send("{} has been removed from the signup pool.".format(name))
 
     @commands.command(aliases=['r'])
     async def ready(self, ctx):
