@@ -1,10 +1,10 @@
 from discord.ext import commands
 from tabulate import tabulate
 from version import __version__
-from onehead_balance import OneHeadBalance
+from onehead_balance import OneHeadBalance, OneHeadCaptainsMode
 from onehead_scoreboard import OneHeadScoreBoard
 from onehead_db import OneHeadDB
-from onehead_common import OneHeadChannels
+from onehead_common import OneHeadChannels, OneHeadException
 from onehead_user import OneHeadPreGame, OneHeadRegistration
 
 
@@ -20,16 +20,18 @@ class OneHeadCore(commands.Cog):
         self.scoreboard = OneHeadScoreBoard(self.database)
         self.pre_game = OneHeadPreGame(self.database)
         self.team_balance = OneHeadBalance(self.database, self.pre_game)
+        self.captains_mode = OneHeadCaptainsMode(self.database, self.pre_game)
         self.channels = OneHeadChannels()
         self.registration = OneHeadRegistration(self.database)
 
         bot.add_cog(self.pre_game)
         bot.add_cog(self.scoreboard)
         bot.add_cog(self.registration)
+        bot.add_cog(self.captains_mode)
 
     @commands.has_role("IHL Admin")
     @commands.command()
-    async def start(self, ctx):
+    async def start(self, ctx, mode="rating"):
         """
         Starts an IHL game.
         """
@@ -41,8 +43,15 @@ class OneHeadCore(commands.Cog):
         if signups_full is False:
             return
 
-        balanced_teams = await self.team_balance.balance(ctx)
-        self.t1, self.t2 = balanced_teams
+        if mode == "rating":
+            balanced_teams = await self.team_balance.balance(ctx)
+            self.t1, self.t2 = balanced_teams
+        elif mode == "cm":
+            await self.captains_mode.nomination_phase(ctx)
+            t1, t2 = await self.captains_mode.picking_phase(ctx)
+            self.t1, self.t2 = t1, t2
+        else:
+            raise OneHeadException("{} mode is not currently supported.".format(mode))
 
         self.game_in_progress = True
         status = self.bot.get_command("status")
@@ -140,6 +149,7 @@ class OneHeadCore(commands.Cog):
 
         self.game_in_progress = False
         self.pre_game.clear_signups()
+        self.captains_mode.reset_state()
         self.t1 = []
         self.t2 = []
 
