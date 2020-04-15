@@ -24,6 +24,6 @@ WORKDIR /usr/local/OneHead
 
 RUN python setup.py bdist_wheel
 
-RUN python -m pip install dist/OneHead-1.0-py3-none-any.whl
+RUN python -m pip install dist/OneHead-1.1-py3-none-any.whl
 
 ENTRYPOINT python run.py
