@@ -258,7 +258,7 @@ class OneHeadCaptainsMode(commands.Cog):
         name = ctx.author.display_name
 
         if self.nomination_phase_in_progress is False:
-            await ctx.send("Captain nominations are closed.")
+            await ctx.send("Nominations are closed.")
             return
 
         if name not in self.signups:

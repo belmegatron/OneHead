@@ -133,7 +133,7 @@ class OneHeadCaptainsModeTest(TestCase):
         self.ctx.author.display_name = "RBEEZAY"
         OneHeadAsyncTest._run(self.cm.nominate(self.cm, self.ctx, "GPP"))
         self.assertEqual(self.ctx.send.mock.call_args_list[0][0][0],
-                         "Captain nominations are closed.")
+                         "Nominations are closed.")
 
     def test_nominate_nominatee_not_signed_up(self):
         self.cm.nomination_phase_in_progress = True
