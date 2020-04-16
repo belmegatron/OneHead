@@ -250,30 +250,35 @@ class OneHeadCaptainsMode(commands.Cog):
 
     @commands.command(aliases=['nom'])
     async def nominate(self, ctx, nomination):
+        """
+        Nominate a player to become captain. This command can only be used during the
+        nomination phase of a captain's mode game.
+        """
 
         name = ctx.author.display_name
+
+        if self.nomination_phase_in_progress is False:
+            await ctx.send("Nominations are closed.")
+            return
 
         if name not in self.signups:
             await ctx.send("{} is not currently signed up and therefore cannot nominate.".format(name))
             return
 
-        if self.nomination_phase_in_progress:
-            if self.has_voted[name] is False:
-                if nomination != name:
-                    record = self.votes.get(nomination, None)
-                    if record is not None:
-                        self.votes[nomination] += 1
-                        self.has_voted[name] = True
-                        await ctx.send("{} has nominated {} to be captain.".format(name, nomination))
-                    else:
-                        await ctx.send(
-                            "{} is not currently signed up and therefore cannot be nominated.".format(nomination))
+        if self.has_voted[name] is False:
+            if nomination != name:
+                record = self.votes.get(nomination, None)
+                if record is not None:
+                    self.votes[nomination] += 1
+                    self.has_voted[name] = True
+                    await ctx.send("{} has nominated {} to be captain.".format(name, nomination))
                 else:
-                    await ctx.send("{}, you cannot vote for yourself.".format(name))
+                    await ctx.send(
+                        "{} is not currently signed up and therefore cannot be nominated.".format(nomination))
             else:
-                await ctx.send("{} has already voted.".format(name))
+                await ctx.send("{}, you cannot vote for yourself.".format(name))
         else:
-            await ctx.send("Captain nominations are closed.")
+            await ctx.send("{} has already voted.".format(name))
 
     async def add_pick(self, ctx, pick, team):
 
@@ -289,11 +294,15 @@ class OneHeadCaptainsMode(commands.Cog):
 
     @commands.command()
     async def pick(self, ctx, pick):
+        """
+        This command allows a captain to select a player to join their team during the pick phase of a captain's mode
+        game.
+        """
 
         name = ctx.author.display_name
 
         if self.pick_phase_in_progress is False:
-            await ctx.send("No pick phase is currently in progress.")
+            await ctx.send("Pick phase is not currently in progress.")
             return
 
         if name == self.captain_1:

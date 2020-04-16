@@ -33,7 +33,8 @@ class OneHeadCore(commands.Cog):
     @commands.command()
     async def start(self, ctx, mode="rating"):
         """
-        Starts an IHL game.
+        Starts an IHL game. Can optionally select 'cm' mode to start a Captains mode game. This can be done by passing
+        the game type after the start command e.g. !start cm.
         """
         if self.game_in_progress:
             await ctx.send("Game already in progress...")
