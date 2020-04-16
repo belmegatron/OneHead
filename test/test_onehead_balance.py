@@ -195,7 +195,7 @@ class OneHeadCaptainsModeTest(TestCase):
         self.cm.pick_phase_in_progress = False
         OneHeadAsyncTest._run(self.cm.pick(self.cm, self.ctx, "RBEEZAY"))
         self.assertEqual(self.ctx.send.mock.call_args_list[0][0][0],
-                         "No pick phase is currently in progress.")
+                         "Pick phase is not currently in progress.")
 
     def test_pick_not_captain(self):
 
