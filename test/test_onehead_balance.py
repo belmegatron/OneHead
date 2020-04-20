@@ -120,6 +120,12 @@ class OneHeadCaptainsModeTest(TestCase):
         OneHeadAsyncTest._run(self.cm.nominate(self.cm, self.ctx, "GPP"))
         self.assertEqual(self.cm.votes["GPP"], 1)
 
+    def test_nominate_lowercase(self):
+        self.cm.nomination_phase_in_progress = True
+        self.ctx.author.display_name = "RBEEZAY"
+        OneHeadAsyncTest._run(self.cm.nominate(self.cm, self.ctx, "gpp"))
+        self.assertEqual(self.cm.votes["GPP"], 1)
+
     def test_nominate_nominator_not_signed_up(self):
         self.cm.nomination_phase_in_progress = True
         self.ctx.author.display_name = "JLESCH"
@@ -221,6 +227,23 @@ class OneHeadCaptainsModeTest(TestCase):
         OneHeadAsyncTest._run(self.cm.pick(self.cm, self.ctx, "ARRE"))
         self.assertEqual(self.ctx.send.mock.call_args_list[0][0][0],
                          "It is currently GEE's turn to pick.")
+
+    def test_pick_lowercase_name(self):
+
+        self.cm.add_pick = OneHeadAsyncTest.async_mock(return_value=True)
+
+        self.ctx.author.display_name = "RBEEZAY"
+        self.cm.captain_1 = "RBEEZAY"
+        self.cm.captain_2 = "GEE"
+
+        self.cm.pick_phase_in_progress = True
+        self.cm.captain_1_turn = True
+        self.cm.captain_2_turn = False
+
+        OneHeadAsyncTest._run(self.cm.pick(self.cm, self.ctx, "arre"))
+        self.cm.add_pick.mock.is_called_once()
+        self.assertEqual(self.ctx.send.mock.call_args_list[0][0][0],
+                         "RBEEZAY has selected ARRE to join Team 1.")
 
     def test_pick_success(self):
 
