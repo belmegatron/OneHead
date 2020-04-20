@@ -191,7 +191,7 @@ class OneHeadCaptainsMode(commands.Cog):
                 self.team_2.append(player)
 
         self.pick_phase_in_progress = True
-        await ctx.send("You have 20 seconds to pick a player each turn.")
+        await ctx.send("You have 30 seconds to pick a player each turn.")
 
         captain_round_order = (
             self.captain_1,
@@ -221,7 +221,7 @@ class OneHeadCaptainsMode(commands.Cog):
                             last_player, last_player))
                 else:
                     try:
-                        await wait_for(self.future, timeout=20)
+                        await wait_for(self.future, timeout=30)
                     except TimeoutError:
                         idx = self.pool.index(random.choice(self.pool))
                         pick = self.pool.pop(idx)
@@ -251,11 +251,11 @@ class OneHeadCaptainsMode(commands.Cog):
     @commands.command(aliases=['nom'])
     async def nominate(self, ctx, nomination):
         """
-        Nominate a player to become captain. This command can only be used during the
-        nomination phase of a captain's mode game.
+        Nominate a player to become captain. This command can only be used during the nomination phase of a captain's mode game.
         """
 
         name = ctx.author.display_name
+        nomination = nomination.upper()
 
         if self.nomination_phase_in_progress is False:
             await ctx.send("Nominations are closed.")
@@ -292,14 +292,14 @@ class OneHeadCaptainsMode(commands.Cog):
             await ctx.send("{} is not in the remaining player pool.".format(pick))
             return False
 
-    @commands.command()
+    @commands.command(aliases=['p'])
     async def pick(self, ctx, pick):
         """
-        This command allows a captain to select a player to join their team during the pick phase of a captain's mode
-        game.
+        This command allows a captain to select a player to join their team during the pick phase of a captain's mode game.
         """
 
         name = ctx.author.display_name
+        pick = pick.upper()
 
         if self.pick_phase_in_progress is False:
             await ctx.send("Pick phase is not currently in progress.")

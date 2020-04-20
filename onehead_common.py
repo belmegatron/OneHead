@@ -40,7 +40,7 @@ class OneHeadChannels(object):
         team_1 = [x for x in ctx.guild.members if x.display_name in t1_names]
         team_2 = [x for x in ctx.guild.members if x.display_name in t2_names]
 
-        lobby = [x for x in ctx.guild.voice_channels if x.name == "LOBBY"][0]
+        lobby = [x for x in ctx.guild.voice_channels if x.name == "DOTA 2"][0]
 
         for member in team_1:
             try:
