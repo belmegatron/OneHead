@@ -1,6 +1,6 @@
 from discord.ext import commands
 from tabulate import tabulate
-from version import __version__
+from version import __version__, __changelog__
 from onehead_balance import OneHeadBalance, OneHeadCaptainsMode
 from onehead_scoreboard import OneHeadScoreBoard
 from onehead_db import OneHeadDB
@@ -145,6 +145,7 @@ class OneHeadCore(commands.Cog):
         """
 
         await ctx.send("Current Version - {}".format(__version__))
+        await ctx.send("Changelog - {}".format(__changelog__))
 
     def reset_state(self):
 
