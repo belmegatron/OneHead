@@ -8,8 +8,6 @@ RUN git clone https://$GIT_OAUTH_KEY@github.com/belmegatron/OneHead.git
 
 COPY .env ./OneHead/.env
 
-COPY db.json ./OneHead/db.json
-
 RUN pip install virtualenv
 
 ENV VIRTUAL_ENV=/opt/venv

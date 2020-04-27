@@ -6,6 +6,7 @@ from onehead_scoreboard import OneHeadScoreBoard
 from onehead_db import OneHeadDB
 from onehead_common import OneHeadChannels, OneHeadException
 from onehead_user import OneHeadPreGame, OneHeadRegistration
+from onehead_lobby import OneHeadLobby
 
 
 class OneHeadCore(commands.Cog):
@@ -23,6 +24,7 @@ class OneHeadCore(commands.Cog):
         self.captains_mode = OneHeadCaptainsMode(self.database, self.pre_game)
         self.channels = OneHeadChannels()
         self.registration = OneHeadRegistration(self.database)
+        self.lobby = OneHeadLobby()
 
         bot.add_cog(self.pre_game)
         bot.add_cog(self.scoreboard)
@@ -57,12 +59,16 @@ class OneHeadCore(commands.Cog):
         self.game_in_progress = True
         status = self.bot.get_command("status")
         await commands.Command.invoke(status, ctx)
+
         await ctx.send("Setting up IHL Discord Channels...")
         await self.channels.create_discord_channels(ctx)
         await ctx.send("Moving Players to IHL Discord Channels...")
         self.channels.set_teams(self.t1, self.t2)
         await self.channels.move_discord_channels(ctx)
-        await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
+
+        self.lobby.set_steam_ids("t1", [x.get['steam64'] for x in self.t1])
+        self.lobby.set_steam_ids("t2", [x.get['steam64'] for x in self.t2])
+        self.lobby.setup_lobby()
 
     @commands.has_role("IHL Admin")
     @commands.command()

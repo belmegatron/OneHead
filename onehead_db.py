@@ -22,6 +22,7 @@ class OneHeadDB(object):
 
         self.dynamo = boto3.resource('dynamodb', region_name='eu-west-2')
         self.db = self.dynamo.Table('onehead')
+        self.matches = self.dynamo.Table('matches')
 
     def player_exists(self, player_name):
 
@@ -135,3 +136,10 @@ class OneHeadDB(object):
             table = json.dumps(table, indent=4, cls=DecimalEncoder)
             table = json.loads(table)
             return table
+
+    def add_match_id(self, match_id):
+
+        if not isinstance(match_id, int):
+            raise OneHeadException('match_id is not a valid integer.')
+
+        self.matches.put_item(Item={"match_id": match_id})
