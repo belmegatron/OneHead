@@ -57,9 +57,7 @@ class OneHeadCore(commands.Cog):
         self.game_in_progress = True
         status = self.bot.get_command("status")
         await commands.Command.invoke(status, ctx)
-        await ctx.send("Setting up IHL Discord Channels...")
         await self.channels.create_discord_channels(ctx)
-        await ctx.send("Moving Players to IHL Discord Channels...")
         self.channels.set_teams(self.t1, self.t2)
         await self.channels.move_discord_channels(ctx)
         await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
@@ -74,7 +72,6 @@ class OneHeadCore(commands.Cog):
         if self.game_in_progress:
             await ctx.send("Game stopped.")
             await self.channels.move_back_to_lobby(ctx)
-            await self.channels.teardown_discord_channels()
             self.reset_state()
         else:
             await ctx.send("No currently active game.")
@@ -121,7 +118,6 @@ class OneHeadCore(commands.Cog):
         scoreboard = self.bot.get_command("scoreboard")
         await commands.Command.invoke(scoreboard, ctx)
         await self.channels.move_back_to_lobby(ctx)
-        await self.channels.teardown_discord_channels()
         self.reset_state()
 
     @commands.command(aliases=['stat'])

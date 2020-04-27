@@ -22,16 +22,14 @@ class OneHeadChannels(object):
 
     async def create_discord_channels(self, ctx):
 
+        expected_ihl_channels = [x for x in ctx.guild.voice_channels if x.name in self.channel_names]
+
         for channel in self.channel_names:
-            await ctx.guild.create_voice_channel(channel)
+            if channel not in expected_ihl_channels:
+                await ctx.send("Creating {} channel".format(channel))
+                await ctx.guild.create_voice_channel(channel)
 
         self.channels = [x for x in ctx.guild.voice_channels if x.name in self.channel_names]
-
-    async def teardown_discord_channels(self):
-
-        for channel in self.channels:
-            await channel.delete()
-        self.channels = []
 
     async def move_back_to_lobby(self, ctx):
 
@@ -56,10 +54,16 @@ class OneHeadChannels(object):
 
     async def move_discord_channels(self, ctx):
 
+        n_channels = len(self.channels)
+        if n_channels != 2:
+            raise OneHeadException("Expected 2 Discord Channels, Identified {}.".format(n_channels))
+
         t1_names = [x['name'] for x in self.t1]
         t2_names = [x['name'] for x in self.t2]
         team_1 = [x for x in ctx.guild.members if x.display_name in t1_names]
         team_2 = [x for x in ctx.guild.members if x.display_name in t2_names]
+
+        await ctx.send("Moving Players to IHL Discord Channels...")
 
         for member in team_1:
             try:

@@ -68,7 +68,6 @@ class OneHeadCoreTest(TestCase):
     def test_stop_success(self):
         self.core.game_in_progress = True
         self.core.channels.move_back_to_lobby = OneHeadAsyncTest.async_mock()
-        self.core.channels.teardown_discord_channels = OneHeadAsyncTest.async_mock()
         self.core.reset_state = MagicMock()
         OneHeadAsyncTest._run(self.core.stop(self.core, self.ctx))
         self.assertEqual(self.core.reset_state.call_count, 1)
@@ -114,7 +113,6 @@ class OneHeadCoreTest(TestCase):
             self.assertEqual(args[0], expected_args[i])
 
         self.assertEqual(self.core.channels.move_back_to_lobby.mock.call_count, 1)
-        self.assertEqual(self.core.channels.teardown_discord_channels.mock.call_count, 1)
         self.assertFalse(self.core.game_in_progress)
         self.assertEqual(self.core.t1, [])
         self.assertEqual(self.core.t2, [])
@@ -131,7 +129,6 @@ class OneHeadCoreTest(TestCase):
         OneHeadAsyncTest._run(self.core.result(self.core, self.ctx, "void"))
         self.assertEqual(self.core.database.update_player.call_count, 0)
         self.assertEqual(self.core.channels.move_back_to_lobby.mock.call_count, 1)
-        self.assertEqual(self.core.channels.teardown_discord_channels.mock.call_count, 1)
         self.assertFalse(self.core.game_in_progress)
         self.assertEqual(self.core.t1, [])
         self.assertEqual(self.core.t2, [])
