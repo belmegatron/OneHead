@@ -8,8 +8,6 @@ RUN git clone https://$GIT_OAUTH_KEY@github.com/belmegatron/OneHead.git
 
 COPY .env ./OneHead/.env
 
-COPY db.json ./OneHead/db.json
-
 RUN pip install virtualenv
 
 ENV VIRTUAL_ENV=/opt/venv
@@ -24,6 +22,6 @@ WORKDIR /usr/local/OneHead
 
 RUN python setup.py bdist_wheel
 
-RUN python -m pip install dist/OneHead-1.11-py3-none-any.whl
+RUN python -m pip install dist/OneHead-1.12-py3-none-any.whl
 
 ENTRYPOINT python run.py
