@@ -50,6 +50,7 @@ class OneHeadCoreTest(TestCase):
     def test_start_game_success(self, mock_balance, mock_create_discord_channels, mock_set_teams, mock_move_discord_channels):
         self.core.pre_game.signup_check = OneHeadAsyncTest.async_mock(return_value=True)
         self.core.status = OneHeadAsyncTest.async_mock()
+        self.core.pre_game.handle_signups = OneHeadAsyncTest.async_mock()
         mock_balanced_teams = MagicMock(), MagicMock()
         mock_balance.return_value = mock_balanced_teams
         OneHeadAsyncTest._run(self.core.start(self.core, self.ctx))

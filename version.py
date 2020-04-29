@@ -1,5 +1,5 @@
-__version__ = 1.13
+__version__ = 1.14
 __changelog__ = "```" \
-                "* Fixed bug when performing check to see if IHL Discord Channels already exist. This stopped " \
-                "players from being moved channel and also resulted in duplicate channels." \
+                "* Now handles the case where there are more than 10 players signed up. If this happens then " \
+                "10 players will be selected at random and the remaining players benched." \
                 "```"
