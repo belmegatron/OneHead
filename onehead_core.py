@@ -40,9 +40,11 @@ class OneHeadCore(commands.Cog):
             await ctx.send("Game already in progress...")
             return
 
-        signups_full = await self.pre_game.signup_check(ctx)
-        if signups_full is False:
+        signup_threshold_met = await self.pre_game.signup_check(ctx)
+        if signup_threshold_met is False:
             return
+
+        await self.pre_game.handle_signups(ctx)
 
         if mode == "rating":
             balanced_teams = await self.team_balance.balance(ctx)
