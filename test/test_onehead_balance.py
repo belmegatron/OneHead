@@ -33,16 +33,29 @@ class OneHeadBalanceTest(TestCase):
         self.signups = ['RBEEZAY', 'GEE', 'LOZZA', 'JEFFERIES', 'JAMES', 'PECRO', 'ZEE', 'JOSH', 'EDD',
                         'ARRECOOLAST']
 
-        self.mock_db = [{"name": "RBEEZAY", "win": 10, "loss": 0, "ratio": 10, "mmr": 5000},
-                        {"name": "GPP", "win": 10, "loss": 0, "ratio": 10, "mmr": 2000},
-                        {"name": "LOZZA", "win": 10, "loss": 0, "ratio": 10, "mmr": 5000},
-                        {"name": "JEFFERIES", "win": 10, "loss": 0, "ratio": 10, "mmr": 2000},
-                        {"name": "JAMES", "win": 10, "loss": 0, "ratio": 10, "mmr": 2000},
-                        {"name": "PECRO", "win": 0, "loss": 10, "ratio": 0, "mmr": 2500},
-                        {"name": "ZEE", "win": 10, "loss": 0, "ratio": 10, "mmr": 3500},
-                        {"name": "JOSH", "win": 10, "loss": 0, "ratio": 10, "mmr": 3500},
-                        {"name": "EDD", "win": 10, "loss": 0, "ratio": 10, "mmr": 4000},
-                        {"name": "ARRECOOLAST", "win": 10, "loss": 0, "ratio": 10, "mmr": 3500}]
+        self.mock_profiles = [{"name": "RBEEZAY", "win": 10, "loss": 0, "ratio": 10, "mmr": 5000},
+                              {"name": "GPP", "win": 10, "loss": 0, "ratio": 10, "mmr": 2000},
+                              {"name": "LOZZA", "win": 10, "loss": 0, "ratio": 10, "mmr": 5000},
+                              {"name": "JEFFERIES", "win": 10, "loss": 0, "ratio": 10, "mmr": 2000},
+                              {"name": "JAMES", "win": 10, "loss": 0, "ratio": 10, "mmr": 2000},
+                              {"name": "PECRO", "win": 0, "loss": 10, "ratio": 0, "mmr": 2500},
+                              {"name": "ZEE", "win": 10, "loss": 0, "ratio": 10, "mmr": 3500},
+                              {"name": "JOSH", "win": 10, "loss": 0, "ratio": 10, "mmr": 3500},
+                              {"name": "EDD", "win": 10, "loss": 0, "ratio": 10, "mmr": 4000},
+                              {"name": "ARRECOOLAST", "win": 10, "loss": 0, "ratio": 10, "mmr": 3500}]
+
+        self.mock_profiles_adjusted_mmr = [
+            {'name': 'RBEEZAY', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 5000, 'rating': 1750, 'adjusted_mmr': 5250},
+            {'name': 'GPP', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 2000, 'rating': 1750, 'adjusted_mmr': 2250},
+            {'name': 'LOZZA', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 5000, 'rating': 1750, 'adjusted_mmr': 5250},
+            {'name': 'JEFFERIES', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 2000, 'rating': 1750, 'adjusted_mmr': 2250},
+            {'name': 'JAMES', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 2000, 'rating': 1750, 'adjusted_mmr': 2250},
+            {'name': 'PECRO', 'win': 0, 'loss': 10, 'ratio': 0, 'mmr': 2500, 'rating': 1250, 'adjusted_mmr': 2250},
+            {'name': 'ZEE', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 3500, 'rating': 1750, 'adjusted_mmr': 3750},
+            {'name': 'JOSH', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 3500, 'rating': 1750, 'adjusted_mmr': 3750},
+            {'name': 'EDD', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 4000, 'rating': 1750, 'adjusted_mmr': 4250},
+            {'name': 'ARRECOOLAST', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 3500, 'rating': 1750,
+             'adjusted_mmr': 3750}]
 
         self.database = MagicMock(spec=OneHeadDB)
         self.t1 = None
@@ -50,16 +63,16 @@ class OneHeadBalanceTest(TestCase):
         self.team_balance = OneHeadBalance(self.database, self.pre_game)
 
     def mock_lookup_player(self, *args):
-        return [x for x in self.mock_db if x['name'] == args[0]]
+        return [x for x in self.mock_profiles if x['name'] == args[0]]
 
     @patch("onehead_balance.combinations")
     def test_calculate_balance_success(self, mock_combinations):
         self.team_balance.signups = self.signups
         self.team_balance._get_profiles = MagicMock()
-        self.team_balance._get_profiles.return_value = self.mock_db
-        mock_combination = [self.mock_db[:5], self.mock_db[5:]]
+        self.team_balance._get_profiles.return_value = self.mock_profiles
+        mock_combination = [self.mock_profiles[:5], self.mock_profiles[5:]]
         mock_combinations.side_effect = [MagicMock(), [mock_combination]]
-        result = self.team_balance._calculate_balance()
+        result = self.team_balance._calculate_balance(adjusted=False)
         self.assertEqual(result[0], [{'name': 'RBEEZAY', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 5000},
                                      {'name': 'GPP', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 2000},
                                      {'name': 'LOZZA', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 5000},
@@ -67,10 +80,30 @@ class OneHeadBalanceTest(TestCase):
                                      {'name': 'JAMES', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 2000}])
 
     @patch("onehead_balance.combinations")
+    @patch("onehead_stats.OneHeadStats.calculate_adjusted_mmr")
+    @patch("onehead_stats.OneHeadStats.calculate_rating")
+    def test_calculate_balance_success_adjusted_mmr(self, mock_calculate_rating, mock_calculate_adjusted_mmr, mock_combinations):
+        self.team_balance.signups = self.signups
+        self.team_balance._get_profiles = MagicMock()
+        self.team_balance._get_profiles.return_value = self.mock_profiles_adjusted_mmr
+        mock_combination = [self.mock_profiles_adjusted_mmr[:5], self.mock_profiles_adjusted_mmr[5:]]
+        mock_combinations.side_effect = [MagicMock(), [mock_combination]]
+        result = self.team_balance._calculate_balance(adjusted=True)
+        mock_calculate_rating.is_called_once()
+        mock_calculate_adjusted_mmr.is_called_once()
+        self.assertEqual(result[0], [
+            {'name': 'RBEEZAY', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 5000, 'rating': 1750, 'adjusted_mmr': 5250},
+            {'name': 'GPP', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 2000, 'rating': 1750, 'adjusted_mmr': 2250},
+            {'name': 'LOZZA', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 5000, 'rating': 1750, 'adjusted_mmr': 5250},
+            {'name': 'JEFFERIES', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 2000, 'rating': 1750, 'adjusted_mmr': 2250},
+            {'name': 'JAMES', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 2000, 'rating': 1750, 'adjusted_mmr': 2250}]
+                         )
+
+    @patch("onehead_balance.combinations")
     def test_calculate_balance_non_unique(self, mock_combinations):
         self.team_balance._get_profiles = MagicMock()
-        self.team_balance._get_profiles.return_value = self.mock_db
-        mock_combination = [self.mock_db[:5], self.mock_db[5:]]
+        self.team_balance._get_profiles.return_value = self.mock_profiles
+        mock_combination = [self.mock_profiles[:5], self.mock_profiles[5:]]
         mock_combination[0][0] = mock_combination[1][0]
         mock_combinations.side_effect = [MagicMock(), [mock_combination]]
         self.assertRaises(OneHeadException, self.team_balance._calculate_balance)
@@ -79,7 +112,7 @@ class OneHeadBalanceTest(TestCase):
     def test_calculate_balance_incorrect_profile_count(self, mock_combinations):
         self.team_balance._get_profiles = MagicMock()
         self.team_balance._get_profiles.return_value = []
-        mock_combination = [self.mock_db[:5], self.mock_db[5:]]
+        mock_combination = [self.mock_profiles[:5], self.mock_profiles[5:]]
         mock_combination[0][0] = mock_combination[1][0]
         mock_combinations.side_effect = [MagicMock(), [mock_combination]]
         self.assertRaises(OneHeadException, self.team_balance._calculate_balance)
@@ -197,14 +230,12 @@ class OneHeadCaptainsModeTest(TestCase):
         self.assertIn(c2, expected_second_place_captain_pool)
 
     def test_pick_phase_not_in_progress(self):
-
         self.cm.pick_phase_in_progress = False
         OneHeadAsyncTest._run(self.cm.pick(self.cm, self.ctx, "RBEEZAY"))
         self.assertEqual(self.ctx.send.mock.call_args_list[0][0][0],
                          "Pick phase is not currently in progress.")
 
     def test_pick_not_captain(self):
-
         self.ctx.author.display_name = "PECRO"
         self.cm.captain_1 = "RBEEZAY"
         self.cm.captain_2 = "GEE"
@@ -215,7 +246,6 @@ class OneHeadCaptainsModeTest(TestCase):
                          "PECRO is not a captain and therefore cannot pick.")
 
     def test_pick_not_captains_turn(self):
-
         self.ctx.author.display_name = "RBEEZAY"
         self.cm.captain_1 = "RBEEZAY"
         self.cm.captain_2 = "GEE"
@@ -229,7 +259,6 @@ class OneHeadCaptainsModeTest(TestCase):
                          "It is currently GEE's turn to pick.")
 
     def test_pick_lowercase_name(self):
-
         self.cm.add_pick = OneHeadAsyncTest.async_mock(return_value=True)
 
         self.ctx.author.display_name = "RBEEZAY"
@@ -246,7 +275,6 @@ class OneHeadCaptainsModeTest(TestCase):
                          "RBEEZAY has selected ARRE to join Team 1.")
 
     def test_pick_success(self):
-
         self.cm.add_pick = OneHeadAsyncTest.async_mock(return_value=True)
 
         self.ctx.author.display_name = "RBEEZAY"
@@ -263,7 +291,6 @@ class OneHeadCaptainsModeTest(TestCase):
                          "RBEEZAY has selected ARRE to join Team 1.")
 
     def test_picking_phase_captain_not_assigned(self):
-
         self.cm.captain_1 = "RBEEZAY"
         self.cm.captain_2 = None
         self.assertRaises(OneHeadException, OneHeadAsyncTest._run, self.cm.picking_phase(self.ctx))

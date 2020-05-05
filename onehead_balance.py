@@ -1,11 +1,12 @@
 from itertools import combinations
 from random import choice
-from onehead_common import OneHeadException
 from discord.ext import commands
 from tabulate import tabulate
 from asyncio import sleep, wait_for, TimeoutError
 import asyncio
 import random
+from onehead_common import OneHeadException
+from onehead_stats import OneHeadStats
 
 
 class OneHeadBalance(object):
@@ -26,9 +27,16 @@ class OneHeadBalance(object):
 
         return profiles
 
-    def _calculate_balance(self):
+    def _calculate_balance(self, adjusted=False):
 
         profiles = self._get_profiles()
+
+        if adjusted is False:
+            mmr_field_name = "mmr"
+        else:
+            mmr_field_name = "adjusted_mmr"
+            OneHeadStats.calculate_rating(profiles)
+            OneHeadStats.calculate_adjusted_mmr(profiles)
 
         if len(profiles) != 10:
             raise OneHeadException("Error: Only {} profiles could be found in database.".format(len(profiles)))
@@ -53,8 +61,8 @@ class OneHeadBalance(object):
         rating_differences = []
         for vc in valid_combinations:
             t1, t2 = vc
-            t1_rating = sum([player["mmr"] for player in t1])
-            t2_rating = sum([player["mmr"] for player in t2])
+            t1_rating = sum([player[mmr_field_name] for player in t1])
+            t2_rating = sum([player[mmr_field_name] for player in t2])
             rating_difference = abs(t1_rating - t2_rating)
             rating_differences.append(rating_difference)
 
@@ -77,7 +85,7 @@ class OneHeadBalance(object):
             await ctx.send(err)
             raise OneHeadException(err)
 
-        balanced_teams = self._calculate_balance()
+        balanced_teams = self._calculate_balance(adjusted=True)
 
         return balanced_teams
 
