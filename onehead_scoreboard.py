@@ -1,6 +1,7 @@
 from tabulate import tabulate
 from discord.ext import commands
 from onehead_common import OneHeadException
+from onehead_stats import OneHeadStats
 
 
 class OneHeadScoreBoard(commands.Cog):
@@ -17,24 +18,6 @@ class OneHeadScoreBoard(commands.Cog):
 
         scoreboard = self.get_scoreboard()
         await ctx.send("**IGC Leaderboard** ```\n{}```".format(scoreboard))
-
-    @staticmethod
-    def _calculate_win_percentage(scoreboard):
-
-        for record in scoreboard:
-            if record['win'] == 0:
-                record["%"] = 0
-            else:
-                record["%"] = round(record['win'] / (record['win'] + record['loss']) * 100, 1)
-
-    @staticmethod
-    def _calculate_rating(scoreboard):
-
-        baseline_rating = 1500
-        for record in scoreboard:
-            win_modifier = record['win'] * 25
-            loss_modifier = record['loss'] * 25
-            record['rating'] = baseline_rating + win_modifier - loss_modifier
 
     @staticmethod
     def _sort_scoreboard_key_order(scoreboard):
@@ -77,8 +60,8 @@ class OneHeadScoreBoard(commands.Cog):
         if not scoreboard:
             raise OneHeadException("No users found in database.")
 
-        self._calculate_win_percentage(scoreboard)
-        self._calculate_rating(scoreboard)
+        OneHeadStats.calculate_win_percentage(scoreboard)
+        OneHeadStats.calculate_rating(scoreboard)
         sorted_scoreboard = self._calculate_positions(scoreboard, "rating")
         sorted_scoreboard = self._sort_scoreboard_key_order(sorted_scoreboard)
         sorted_scoreboard = tabulate(sorted_scoreboard, headers="keys", tablefmt="simple")
