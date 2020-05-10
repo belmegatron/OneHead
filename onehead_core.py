@@ -122,6 +122,7 @@ class OneHeadCore(commands.Cog):
         await self.channels.move_back_to_lobby(ctx)
         self.reset_state()
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['stat'])
     async def status(self, ctx):
         """
@@ -136,6 +137,7 @@ class OneHeadCore(commands.Cog):
         else:
             await ctx.send("No currently active game.")
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['v'])
     async def version(self, ctx):
         """
