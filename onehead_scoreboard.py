@@ -10,6 +10,7 @@ class OneHeadScoreBoard(commands.Cog):
 
         self.db = database
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['sb'])
     async def scoreboard(self, ctx):
         """

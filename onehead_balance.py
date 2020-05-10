@@ -256,6 +256,7 @@ class OneHeadCaptainsMode(commands.Cog):
 
         return t1, t2
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['nom'])
     async def nominate(self, ctx, nomination):
         """
@@ -300,6 +301,7 @@ class OneHeadCaptainsMode(commands.Cog):
             await ctx.send("{} is not in the remaining player pool.".format(pick))
             return False
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['p'])
     async def pick(self, ctx, pick):
         """
