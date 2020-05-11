@@ -144,8 +144,8 @@ class OneHeadCore(commands.Cog):
         Displays the current version of OneHead.
         """
 
-        await ctx.send("Current Version - {}".format(__version__))
-        await ctx.send("Changelog - {}".format(__changelog__))
+        await ctx.send("**Current Version** - {}".format(__version__))
+        await ctx.send("**Changelog** - {}".format(__changelog__))
 
     def reset_state(self):
 
