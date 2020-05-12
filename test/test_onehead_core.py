@@ -62,16 +62,16 @@ class OneHeadCoreTest(TestCase):
 
     def test_stop_game_not_in_progress(self):
         self.core.game_in_progress = False
-        self.core.reset_state = MagicMock()
+        self.core._reset_state = MagicMock()
         OneHeadAsyncTest._run(self.core.stop(self.core, self.ctx))
-        self.assertEqual(self.core.reset_state.call_count, 0)
+        self.assertEqual(self.core._reset_state.call_count, 0)
 
     def test_stop_success(self):
         self.core.game_in_progress = True
         self.core.channels.move_back_to_lobby = OneHeadAsyncTest.async_mock()
-        self.core.reset_state = MagicMock()
+        self.core._reset_state = MagicMock()
         OneHeadAsyncTest._run(self.core.stop(self.core, self.ctx))
-        self.assertEqual(self.core.reset_state.call_count, 1)
+        self.assertEqual(self.core._reset_state.call_count, 1)
 
     def test_reset_state(self):
 
@@ -79,7 +79,7 @@ class OneHeadCoreTest(TestCase):
         self.core.t1 = ["foo" for x in range(5)]
         self.core.t2 = ["bar" for x in range(5)]
 
-        self.core.reset_state()
+        self.core._reset_state()
         self.assertFalse(self.core.game_in_progress)
         self.assertEqual(self.core.t1, [])
         self.assertEqual(self.core.t2, [])
@@ -101,11 +101,11 @@ class OneHeadCoreTest(TestCase):
     def test_result_victory(self):
 
         self.core.game_in_progress = True
-        self.core.get_player_names = MagicMock()
+        self.core._get_player_names = MagicMock()
         self.core.database.update_player = MagicMock()
         self.core.channels.move_back_to_lobby = OneHeadAsyncTest.async_mock()
         self.core.channels.teardown_discord_channels = OneHeadAsyncTest.async_mock()
-        self.core.get_player_names.return_value = ([x for x in "abcde"], [x for x in "fghij"])
+        self.core._get_player_names.return_value = ([x for x in "abcde"], [x for x in "fghij"])
         OneHeadAsyncTest._run(self.core.result(self.core, self.ctx, "t1"))
 
         expected_args = [(x, True) for x in "abcde"] + [(x, False) for x in "fghij"]
@@ -122,11 +122,11 @@ class OneHeadCoreTest(TestCase):
     def test_result_void(self):
 
         self.core.game_in_progress = True
-        self.core.get_player_names = MagicMock()
+        self.core._get_player_names = MagicMock()
         self.core.database.update_player = MagicMock()
         self.core.channels.move_back_to_lobby = OneHeadAsyncTest.async_mock()
         self.core.channels.teardown_discord_channels = OneHeadAsyncTest.async_mock()
-        self.core.get_player_names.return_value = ([x for x in "abcde"], [x for x in "fghij"])
+        self.core._get_player_names.return_value = ([x for x in "abcde"], [x for x in "fghij"])
         OneHeadAsyncTest._run(self.core.result(self.core, self.ctx, "void"))
         self.assertEqual(self.core.database.update_player.call_count, 0)
         self.assertEqual(self.core.channels.move_back_to_lobby.mock.call_count, 1)
@@ -145,7 +145,7 @@ class OneHeadCoreTest(TestCase):
     def test_status_success(self, mock_tabulate):
 
         self.core.game_in_progress = True
-        self.core.get_player_names = MagicMock()
-        self.core.get_player_names.return_value = ([x for x in "abcde"], [x for x in "fghij"])
+        self.core._get_player_names = MagicMock()
+        self.core._get_player_names.return_value = ([x for x in "abcde"], [x for x in "fghij"])
         OneHeadAsyncTest._run(self.core.status(self.core, self.ctx))
         self.assertEqual(mock_tabulate.call_count, 1)

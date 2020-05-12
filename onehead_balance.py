@@ -18,6 +18,11 @@ class OneHeadBalance(object):
         self.signups = []
 
     def _get_profiles(self):
+        """
+        Obtains player profiles for all player names contained within self.signups.
+
+        :return: A list of dicts, each dict corresponds to a player profile.
+        """
 
         profiles = []
         for player in self.signups:
@@ -27,9 +32,69 @@ class OneHeadBalance(object):
 
         return profiles
 
+    @staticmethod
+    def _calculate_unique_team_combinations(all_matchups):
+        """
+        Calculates all 5v5 combinations, where the players on each team are unique to that particular team.
+
+        :param all_matchups: All possible 5v5 combinations, including combinations with the same player on each team.
+        :type all_matchups: List of tuples, each tuple contains 2 tuples corresponding to each 5 man lineup.
+                            Each tuple contains 5 dicts where each dict contains player data, e.g. name, mmr, win, etc.
+        :return: List of tuples, each tuple containing 2 tuples corresponding to each unique 5 man lineup.
+                 Each tuple contains 5 unique dicts. These dicts are unique to this team and cannot be present in the
+                 other team.
+        """
+
+        unique_combinations = []
+
+        for matchup in all_matchups:
+            matchup_1, matchup_2 = matchup
+            shared_players = False
+            for player in matchup_1:
+                if player in matchup_2:
+                    shared_players = True
+                    break
+            if shared_players is False:
+                unique_combinations.append(matchup)
+
+        return unique_combinations
+
+    @staticmethod
+    def _calculate_rating_differences(all_unique_combinations, rating_field):
+        """
+        Calculates the net rating difference for each unique combination of teams based on a particular rating field.
+
+        :param all_unique_combinations: All 5v5 unique combinations.
+        :type all_unique_combinations: List of tuples, each tuple contains 2 tuples, each tuple contains 5 dicts.
+        :param rating_field: Specifies which field in the player profile to use for calculating net rating difference.
+        :type rating_field: str
+        :return: List of int's
+        """
+
+        rating_differences = []
+
+        for unique_combination in all_unique_combinations:
+            t1, t2 = unique_combination
+            t1_rating = sum([player[rating_field] for player in t1])
+            t2_rating = sum([player[rating_field] for player in t2])
+            rating_difference = abs(t1_rating - t2_rating)
+            rating_differences.append(rating_difference)
+
+        return rating_differences
+
     def _calculate_balance(self, adjusted=False):
+        """
+        Returns a matchup of two, five-man teams that are evenly(or as close to evenly) matched based on
+        a rating value associated with each player.
+
+        :param adjusted: Species whether to use the 'adjusted_mmr' field to balance or just the 'mmr' field.
+        :type adjusted: bool
+        :return: A tuple of 2 tuples, each tuple contains 5 dicts corresponding to each player profile.
+        """
 
         profiles = self._get_profiles()
+        if len(profiles) != 10:
+            raise OneHeadException("Error: Only {} profiles could be found in database.".format(len(profiles)))
 
         if adjusted is False:
             mmr_field_name = "mmr"
@@ -38,49 +103,44 @@ class OneHeadBalance(object):
             OneHeadStats.calculate_rating(profiles)
             OneHeadStats.calculate_adjusted_mmr(profiles)
 
-        if len(profiles) != 10:
-            raise OneHeadException("Error: Only {} profiles could be found in database.".format(len(profiles)))
+        all_5_man_lineups = list(combinations(profiles, 5))  # Calculate all possible 5 man lineups.
+        all_5v5_matchups = list(combinations(all_5_man_lineups, 2))  # Calculate all possible 5v5 matchups.
 
-        all_five_man_lineups = list(combinations(profiles, 5))
-        all_matchups = list(combinations(all_five_man_lineups, 2))
-        valid_combinations = []
+        unique_combinations = self._calculate_unique_team_combinations(
+            all_5v5_matchups)  # Calculate all valid 5v5 matchups where players are unique to either Team 1 or Team 2.
 
-        for matchup in all_matchups:
-            matchup_1, matchup_2 = matchup
-            shared_players = False
-            for player in list(matchup_1):
-                if player in list(matchup_2):
-                    shared_players = True
-                    break
-            if shared_players is False:
-                valid_combinations.append(matchup)
-
-        if not valid_combinations:
+        if not unique_combinations:
             raise OneHeadException("Error: No valid matchups could be calculated. Possible Duplicate Player Name.")
 
-        rating_differences = []
-        for vc in valid_combinations:
-            t1, t2 = vc
-            t1_rating = sum([player[mmr_field_name] for player in t1])
-            t2_rating = sum([player[mmr_field_name] for player in t2])
-            rating_difference = abs(t1_rating - t2_rating)
-            rating_differences.append(rating_difference)
+        rating_differences = self._calculate_rating_differences(unique_combinations,
+                                                                mmr_field_name)  # Calculate the net rating difference between each 5v5 matchup.
 
-        rating_differences_mapping = dict(enumerate(rating_differences, start=0))
+        rating_differences_mapping = dict(
+            enumerate(rating_differences, start=0))  # Map the net rating differences to a key.
         rating_differences_mapping = {k: v for k, v in
-                                      sorted(rating_differences_mapping.items(), key=lambda item: item[1])}
+                                      sorted(rating_differences_mapping.items(), key=lambda item: item[
+                                          1])}  # Sort by ascending net rating difference.
 
-        indices = list(rating_differences_mapping.keys())[:10]
-        balanced_teams = valid_combinations[choice(indices)]
+        indices = list(rating_differences_mapping.keys())[
+                  :10]  # Obtain the indices for the top 10 closest net rating matchups.
+        balanced_teams = unique_combinations[
+            choice(indices)]  # Pick a random matchup from the top 10 closest net rating matchups.
 
         return balanced_teams
 
     async def balance(self, ctx):
+        """
+        Returns two balanced 5 man teams from 10 players in the signup pool.
+
+        :param ctx: Discord context.
+        :return: A tuple of 2 tuples, each tuple corresponds to a unique 5 man team and contains 5 dicts corresponding
+                 to each player's profile.
+        """
 
         self.signups = self.pre_game.signups
         signup_count = len(self.signups)
         await ctx.send("Balancing teams...")
-        if len(self.signups) != 10:
+        if signup_count != 10:
             err = "Only {} Signups, require {} more.".format(signup_count, 10 - signup_count)
             await ctx.send(err)
             raise OneHeadException(err)
@@ -113,25 +173,6 @@ class OneHeadCaptainsMode(commands.Cog):
         self.captain_2_turn = False
 
         self.event_loop = asyncio.get_event_loop()
-        self.future = None
-
-    def reset_state(self):
-
-        self.signups = []
-        self.pool = []
-        self.votes = {}
-        self.has_voted = {}
-
-        self.captain_1 = None
-        self.captain_2 = None
-        self.team_1 = []
-        self.team_2 = []
-
-        self.nomination_phase_in_progress = False
-        self.pick_phase_in_progress = False
-        self.captain_1_turn = False
-        self.captain_2_turn = False
-
         self.future = None
 
     def calculate_top_nominations(self):

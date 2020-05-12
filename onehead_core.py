@@ -74,16 +74,9 @@ class OneHeadCore(commands.Cog):
         if self.game_in_progress:
             await ctx.send("Game stopped.")
             await self.channels.move_back_to_lobby(ctx)
-            self.reset_state()
+            self._reset_state()
         else:
             await ctx.send("No currently active game.")
-
-    def get_player_names(self):
-
-        t1_names = [x['name'] for x in self.t1]
-        t2_names = [x['name'] for x in self.t2]
-
-        return t1_names, t2_names
 
     @commands.has_role("IHL Admin")
     @commands.command()
@@ -102,7 +95,7 @@ class OneHeadCore(commands.Cog):
             return
 
         await ctx.send("Updating Scores...")
-        t1_names, t2_names = self.get_player_names()
+        t1_names, t2_names = self._get_player_names()
 
         if result == "t1":
             await ctx.send("Team 1 Victory!")
@@ -120,7 +113,7 @@ class OneHeadCore(commands.Cog):
         scoreboard = self.bot.get_command("scoreboard")
         await commands.Command.invoke(scoreboard, ctx)
         await self.channels.move_back_to_lobby(ctx)
-        self.reset_state()
+        self._reset_state()
 
     @commands.has_role("IHL")
     @commands.command(aliases=['stat'])
@@ -130,10 +123,10 @@ class OneHeadCore(commands.Cog):
         """
 
         if self.game_in_progress:
-            t1_names, t2_names = self.get_player_names()
+            t1_names, t2_names = self._get_player_names()
             players = {"Team 1": t1_names, "Team 2": t2_names}
-            ig_players = tabulate(players, headers="keys", tablefmt="simple")
-            await ctx.send("**Current Game** ```\n{}```".format(ig_players))
+            in_game_players = tabulate(players, headers="keys", tablefmt="simple")
+            await ctx.send("**Current Game** ```\n{}```".format(in_game_players))
         else:
             await ctx.send("No currently active game.")
 
@@ -147,12 +140,27 @@ class OneHeadCore(commands.Cog):
         await ctx.send("**Current Version** - {}".format(__version__))
         await ctx.send("**Changelog** - {}".format(__changelog__))
 
-    def reset_state(self):
+    def _get_player_names(self):
+        """
+        Obtain player names from player profiles.
+
+        :return: Tuple of Lists, each item is a string referring to a player name.
+        """
+
+        t1_names = [x['name'] for x in self.t1]
+        t2_names = [x['name'] for x in self.t2]
+
+        return t1_names, t2_names
+
+    def _reset_state(self):
+        """
+        Resets state local to self and creates new instances of OneHeadPreGame and OneHeadCaptainsMode classes.
+        """
 
         self.game_in_progress = False
-        self.pre_game.clear_signups()
-        self.captains_mode.reset_state()
         self.t1 = []
         self.t2 = []
+        self.pre_game = OneHeadPreGame(self.database)
+        self.captains_mode = OneHeadCaptainsMode(self.database, self.pre_game)
 
 

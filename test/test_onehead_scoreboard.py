@@ -61,4 +61,4 @@ class OneHeadScoreBoardTest(TestCase):
 
     def test_get_scoreboard_db_empty(self):
         self.database.retrieve_table.return_value = []
-        self.assertRaises(OneHeadException, self.scoreboard.get_scoreboard)
+        self.assertRaises(OneHeadException, self.scoreboard._get_scoreboard)

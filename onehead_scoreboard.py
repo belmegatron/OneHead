@@ -17,7 +17,7 @@ class OneHeadScoreBoard(commands.Cog):
         Shows the current rankings for the IGC IHL Leaderboard.
         """
 
-        scoreboard = self.get_scoreboard()
+        scoreboard = self._get_scoreboard()
         await ctx.send("**IGC Leaderboard** ```\n{}```".format(scoreboard))
 
     @staticmethod
@@ -54,7 +54,7 @@ class OneHeadScoreBoard(commands.Cog):
 
         return scoreboard_positions
 
-    def get_scoreboard(self):
+    def _get_scoreboard(self):
 
         scoreboard = self.db.retrieve_table()
 
