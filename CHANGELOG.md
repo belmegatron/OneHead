@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add auto-kick feature for players who are AFK and signed up.
 - Add separate scoreboard's for different games e.g. CSGO.
 
+## [1.18] - 200-05-14
+
+### Added
+- Added /src directory and moved onehead_*.py file there.
+
+### Changed
+- Updated README.MD to reflect changes to docker build command.
+- Dockerfile updated.
+- Refactored code in OneHeadBalance and added documentation.
+- Added supporting docstrings throughout.
+
+### Removed
+- Removed need for OAUTH key during build process.
+
+
 ## [1.17] - 2020-05-11
 
 ### Changed

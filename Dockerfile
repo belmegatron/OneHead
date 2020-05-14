@@ -2,7 +2,7 @@ FROM python
 
 WORKDIR /usr/local/
 
-RUN git clone --single-branch --branch feature/refactor-code https://$GIT_OAUTH_KEY@github.com/belmegatron/OneHead.git
+RUN git clone https://github.com/belmegatron/OneHead.git
 
 COPY .env ./OneHead/.env
 

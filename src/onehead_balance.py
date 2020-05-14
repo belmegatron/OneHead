@@ -158,7 +158,7 @@ class OneHeadCaptainsMode(commands.Cog):
         self.pre_game = pregame
 
         self.signups = []
-        self.pool = []
+        self.remaining_players = []
         self.votes = {}
         self.has_voted = {}
 
@@ -176,6 +176,14 @@ class OneHeadCaptainsMode(commands.Cog):
         self.future = None
 
     def calculate_top_nominations(self):
+        """
+        Calculates which two players had the most nominations. If there is a two-way tie for the player
+        with the most votes, then these two players will both be selected as captains. If there is a
+        three-way tie or greater, then a captain will be randomly selected from the tied players.
+
+        :return: The names of the two captains.
+        :type: tuple of str
+        """
 
         sorted_votes = sorted(set(self.votes.values()), reverse=True)
 
@@ -185,19 +193,18 @@ class OneHeadCaptainsMode(commands.Cog):
         captain_1 = None
         captain_2 = None
 
-        if not captain_1:
-            names = list(most_voted.keys())
-            if len(most_voted) == 1:
-                captain_1, = names
-            elif len(most_voted) == 2:
-                captain_1, captain_2 = names
-            else:
-                while not captain_1:
-                    idx = names.index(random.choice(names))
-                    captain_1 = names.pop(idx)
-                while not captain_2:
-                    idx = names.index(random.choice(names))
-                    captain_2 = names.pop(idx)
+        names = list(most_voted.keys())
+        if len(most_voted) == 1:
+            captain_1, = names
+        elif len(most_voted) == 2:
+            captain_1, captain_2 = names
+        else:
+            while not captain_1:
+                idx = names.index(random.choice(names))
+                captain_1 = names.pop(idx)
+            while not captain_2:
+                idx = names.index(random.choice(names))
+                captain_2 = names.pop(idx)
 
         if not captain_2:
             names = list(second_most_voted.keys())
@@ -209,6 +216,13 @@ class OneHeadCaptainsMode(commands.Cog):
         return captain_1, captain_2
 
     async def nomination_phase(self, ctx):
+        """
+        Initiates the nomination phase and allows the '!vote' command to be used by players who have been
+        selected to play in the game. This phase lasts for approximately 30 seconds, after which the
+        '!vote' command can no longer be used.
+
+        :param ctx: Discord context.
+        """
 
         self.nomination_phase_in_progress = True
         self.signups = self.pre_game.signups
@@ -225,15 +239,24 @@ class OneHeadCaptainsMode(commands.Cog):
             "The nominations are in! Your selected captains are {} and {}.".format(self.captain_1, self.captain_2))
 
     async def picking_phase(self, ctx):
+        """
+        Initiates the picking phase where Captains can select which players they want to join their team
+        using the '!pick' command. Each Captain has 30 seconds to select a player, if they fail to do this,
+        a player will be randomly chosen for them.
 
-        self.pool = self.signups.copy()
+        :param ctx: Discord context.
+        :return: The teams selected by each Captain.
+        :type: tuple of lists, each list contains 5 dicts corresponding to each player profile.
+        """
+
+        self.remaining_players = self.signups.copy()
 
         if not self.captain_1 or not self.captain_2:
             raise OneHeadException("Captains have not been selected.")
 
         for captain in (self.captain_1, self.captain_2):
-            idx = self.pool.index(captain)
-            player = self.pool.pop(idx)
+            idx = self.remaining_players.index(captain)
+            player = self.remaining_players.pop(idx)
             if captain == self.captain_1:
                 self.team_1.append(player)
             else:
@@ -250,7 +273,7 @@ class OneHeadCaptainsMode(commands.Cog):
             self.captain_1
         )
 
-        while self.pool:
+        while self.remaining_players:
             for round_number, captain in enumerate(captain_round_order):
                 if captain == self.captain_1:
                     self.captain_1_turn = True
@@ -259,11 +282,11 @@ class OneHeadCaptainsMode(commands.Cog):
                     self.captain_2_turn = True
                     self.captain_1_turn = False
                 await ctx.send("{}'s turn to pick.".format(captain))
-                await ctx.send("**Remaining Player Pool** : ```{}```".format(self.pool))
+                await ctx.send("**Remaining Player Pool** : ```{}```".format(self.remaining_players))
                 self.future = self.event_loop.create_future()
 
                 if round_number == 7:
-                    last_player = self.pool.pop(0)
+                    last_player = self.remaining_players.pop(0)
                     self.team_1.append(last_player)
                     await ctx.send(
                         "{} has been automatically added to Team 2 as {} was the last remaining player.".format(
@@ -272,8 +295,8 @@ class OneHeadCaptainsMode(commands.Cog):
                     try:
                         await wait_for(self.future, timeout=30)
                     except TimeoutError:
-                        idx = self.pool.index(random.choice(self.pool))
-                        pick = self.pool.pop(idx)
+                        idx = self.remaining_players.index(random.choice(self.remaining_players))
+                        pick = self.remaining_players.pop(idx)
                         if captain == self.captain_1:
                             self.team_1.append(pick)
                         else:
@@ -332,9 +355,9 @@ class OneHeadCaptainsMode(commands.Cog):
 
     async def add_pick(self, ctx, pick, team):
 
-        if pick in self.pool:
-            idx = self.pool.index(pick)
-            player = self.pool.pop(idx)
+        if pick in self.remaining_players:
+            idx = self.remaining_players.index(pick)
+            player = self.remaining_players.pop(idx)
             team.append(player)
             self.future.set_result(True)
             return True
