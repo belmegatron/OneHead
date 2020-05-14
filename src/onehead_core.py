@@ -1,11 +1,11 @@
 from discord.ext import commands
 from tabulate import tabulate
 from version import __version__, __changelog__
-from onehead_balance import OneHeadBalance, OneHeadCaptainsMode
-from onehead_scoreboard import OneHeadScoreBoard
-from onehead_db import OneHeadDB
-from onehead_common import OneHeadChannels, OneHeadException
-from onehead_user import OneHeadPreGame, OneHeadRegistration
+from src.onehead_balance import OneHeadBalance, OneHeadCaptainsMode
+from src.onehead_scoreboard import OneHeadScoreBoard
+from src.onehead_db import OneHeadDB
+from src.onehead_common import OneHeadChannels, OneHeadException
+from src.onehead_user import OneHeadPreGame, OneHeadRegistration
 
 
 class OneHeadCore(commands.Cog):
@@ -36,6 +36,7 @@ class OneHeadCore(commands.Cog):
         Starts an IHL game. Can optionally select 'cm' mode to start a Captains mode game. This can be done by passing
         the game type after the start command e.g. !start cm.
         """
+
         if self.game_in_progress:
             await ctx.send("Game already in progress...")
             return
@@ -84,6 +85,7 @@ class OneHeadCore(commands.Cog):
         """
         Provide the result of game that has finished. Can pass 'void' if the match did not correctly terminate.
         """
+
         if self.game_in_progress is False:
             await ctx.send("No currently active game.")
             return
@@ -144,7 +146,8 @@ class OneHeadCore(commands.Cog):
         """
         Obtain player names from player profiles.
 
-        :return: Tuple of Lists, each item is a string referring to a player name.
+        :return: Names for players on each team.
+        :type: tuple of lists, each list item is a str referring to a player name.
         """
 
         t1_names = [x['name'] for x in self.t1]

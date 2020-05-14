@@ -2,7 +2,7 @@ import boto3
 from botocore.exceptions import ClientError
 import json
 import decimal
-from onehead_common import OneHeadException
+from src.onehead_common import OneHeadException
 
 
 # Helper class to convert a DynamoDB item to JSON.

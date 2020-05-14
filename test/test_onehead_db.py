@@ -2,7 +2,7 @@ from unittest import TestCase
 import asyncio
 from decimal import Decimal
 from mock import MagicMock
-from onehead_db import OneHeadDB
+from src.onehead_db import OneHeadDB
 
 
 class OneHeadAsyncTest(object):

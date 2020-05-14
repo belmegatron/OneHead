@@ -5,8 +5,8 @@ from tabulate import tabulate
 from asyncio import sleep, wait_for, TimeoutError
 import asyncio
 import random
-from onehead_common import OneHeadException
-from onehead_stats import OneHeadStats
+from src.onehead_common import OneHeadException
+from src.onehead_stats import OneHeadStats
 
 
 class OneHeadBalance(object):

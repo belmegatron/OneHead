@@ -1,6 +1,6 @@
 from discord.ext import commands
 from asyncio import sleep
-from onehead_common import OneHeadException
+from src.onehead_common import OneHeadException
 import random
 
 
@@ -93,6 +93,7 @@ class OneHeadPreGame(commands.Cog):
         """
         Handle the case where there are less than 10 signups, exactly 10 signups or more than 10 signups. If there are
         more, then players will be randomly removed until there are only 10 players in self.signups.
+
         :param ctx: Discord context
         """
 

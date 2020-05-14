@@ -1,7 +1,7 @@
 from tabulate import tabulate
 from discord.ext import commands
-from onehead_common import OneHeadException
-from onehead_stats import OneHeadStats
+from src.onehead_common import OneHeadException
+from src.onehead_stats import OneHeadStats
 
 
 class OneHeadScoreBoard(commands.Cog):
@@ -22,6 +22,14 @@ class OneHeadScoreBoard(commands.Cog):
 
     @staticmethod
     def _sort_scoreboard_key_order(scoreboard):
+        """
+        Sets the column order for the scoreboard by ordering the keys for each row.
+
+        :param scoreboard: Unsorted scoreboard
+        :type scoreboard: list of dicts
+        :return: Sorted scoreboard
+        :type: list of dicts
+        """
 
         key_order = ["#", "name", "win", "loss", "%", "rating"]
         sorted_scoreboard = []
@@ -34,6 +42,16 @@ class OneHeadScoreBoard(commands.Cog):
 
     @staticmethod
     def _calculate_positions(scoreboard, sort_key):
+        """
+        Calculates the position for each player on the scoreboard based on a particular sort key.
+
+        :param scoreboard: Scoreboard containing all IHL players.
+        :type scoreboard: list of dicts
+        :param sort_key: The key by which to sort the scoreboard.
+        :type sort_key: str
+        :return: Scoreboard sorted in descending order with additional '#' field.
+        :type: list of dicts
+        """
 
         scoreboard = sorted(scoreboard, key=lambda k: k[sort_key], reverse=True)
         scoreboard_positions = []
@@ -55,6 +73,12 @@ class OneHeadScoreBoard(commands.Cog):
         return scoreboard_positions
 
     def _get_scoreboard(self):
+        """
+        Returns current scoreboard for the IHL.
+
+        :return: Scoreboard string to be displayed in Discord chat.
+        :type: str
+        """
 
         scoreboard = self.db.retrieve_table()
 

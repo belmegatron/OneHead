@@ -1,4 +1,4 @@
-from onehead_common import OneHeadChannels, OneHeadException
+from src.onehead_common import OneHeadChannels, OneHeadException
 from unittest import TestCase
 from mock import MagicMock, patch, call
 import asyncio
@@ -75,8 +75,8 @@ class OneHeadChannelsTest(TestCase):
         self.oh_channels.ihl_discord_channels = []
         self.assertRaises(OneHeadException, OneHeadAsyncTest._run, self.oh_channels.move_discord_channels(self.ctx))
 
-    @patch("onehead_common.OneHeadChannels._get_discord_members")
-    @patch("onehead_common.OneHeadChannels._get_names_from_teams", return_value=(MagicMock(), MagicMock()))
+    @patch("src.onehead_common.OneHeadChannels._get_discord_members")
+    @patch("src.onehead_common.OneHeadChannels._get_names_from_teams", return_value=(MagicMock(), MagicMock()))
     def test_move_discord_channels_success(self, mock_get_name_from_teams, mock_get_discord_members):
 
         ihl_1 = MagicMock()
