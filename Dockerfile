@@ -20,6 +20,6 @@ WORKDIR /usr/local/OneHead
 
 RUN python setup.py bdist_wheel
 
-RUN python -m pip install --no-index --find-links=dist/ OneHead
+RUN python -m pip install --find-links=dist/ OneHead
 
 ENTRYPOINT python run.py
