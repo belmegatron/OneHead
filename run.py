@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from discord.ext import commands
-from onehead_core import OneHeadCore
+from src.onehead_core import OneHeadCore
 
 
 if __name__ == "__main__":

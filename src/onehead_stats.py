@@ -6,6 +6,12 @@ class OneHeadStats(object):
 
     @staticmethod
     def calculate_win_percentage(profiles):
+        """
+        Calculates the win percentage for each profile in profiles.
+
+        :param profiles: list of player profiles.
+        :type profiles: list of dicts.
+        """
 
         for record in profiles:
             if record['win'] == 0:
@@ -15,6 +21,12 @@ class OneHeadStats(object):
 
     @classmethod
     def calculate_rating(cls, profiles):
+        """
+        Calculates the IHL rating for each profile in profiles.
+
+        :param profiles: list of player profiles.
+        :type profiles: list of dicts.
+        """
 
         for record in profiles:
             win_modifier = record['win'] * 25

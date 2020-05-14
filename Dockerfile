@@ -2,9 +2,7 @@ FROM python
 
 WORKDIR /usr/local/
 
-ARG GIT_OAUTH_KEY
-
-RUN git clone https://$GIT_OAUTH_KEY@github.com/belmegatron/OneHead.git
+RUN git clone https://github.com/belmegatron/OneHead.git
 
 COPY .env ./OneHead/.env
 
@@ -22,6 +20,6 @@ WORKDIR /usr/local/OneHead
 
 RUN python setup.py bdist_wheel
 
-RUN python -m pip install dist/OneHead-1.17-py3-none-any.whl
+RUN python -m pip install --find-links=dist/ OneHead
 
 ENTRYPOINT python run.py

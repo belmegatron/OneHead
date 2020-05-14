@@ -1,9 +1,5 @@
 import discord
-
-
-class OneHeadException(BaseException):
-    pass
-
+from src.onehead_common import OneHeadException, OneHeadCommon
 
 class OneHeadChannels(object):
 
@@ -30,18 +26,6 @@ class OneHeadChannels(object):
 
         self.t1 = t1
         self.t2 = t2
-
-    def _get_names_from_teams(self):
-        """
-        Helper function for obtaining names from player objects for Team 1 and Team 2.
-
-        :return: Tuple of lists, each element is a string.
-        """
-
-        t1_names = [x['name'] for x in self.t1]
-        t2_names = [x['name'] for x in self.t2]
-
-        return t1_names, t2_names
 
     def _get_discord_members(self, ctx, t1_names, t2_names):
         """
@@ -107,7 +91,7 @@ class OneHeadChannels(object):
         if channel_count != 2:
             raise OneHeadException("Expected 2 Discord Channels, Identified {}.".format(channel_count))
 
-        t1_names, t2_names = self._get_names_from_teams()
+        t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)
         self._get_discord_members(ctx, t1_names, t2_names)
 
         await ctx.send("Moving Players to IHL Discord Channels...")
