@@ -42,9 +42,9 @@ class OneHeadCoreTest(TestCase):
         OneHeadAsyncTest._run(self.core.start(self.core, self.ctx))
         self.assertFalse(mock_balance.called)
 
-    @patch("src.onehead_common.OneHeadChannels.move_discord_channels")
-    @patch("src.onehead_common.OneHeadChannels.set_teams")
-    @patch("src.onehead_common.OneHeadChannels.create_discord_channels")
+    @patch("src.onehead_channels.OneHeadChannels.move_discord_channels")
+    @patch("src.onehead_channels.OneHeadChannels.set_teams")
+    @patch("src.onehead_channels.OneHeadChannels.create_discord_channels")
     @patch("discord.ext.commands.core.Command.invoke", new=OneHeadAsyncTest.async_mock())
     @patch("src.onehead_balance.OneHeadBalance.balance")
     def test_start_game_success(self, mock_balance, mock_create_discord_channels, mock_set_teams, mock_move_discord_channels):

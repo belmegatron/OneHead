@@ -4,7 +4,8 @@ from version import __version__, __changelog__
 from src.onehead_balance import OneHeadBalance, OneHeadCaptainsMode
 from src.onehead_scoreboard import OneHeadScoreBoard
 from src.onehead_db import OneHeadDB
-from src.onehead_common import OneHeadChannels, OneHeadException
+from src.onehead_common import OneHeadCommon, OneHeadException
+from src.onehead_channels import OneHeadChannels
 from src.onehead_user import OneHeadPreGame, OneHeadRegistration
 
 
@@ -97,7 +98,7 @@ class OneHeadCore(commands.Cog):
             return
 
         await ctx.send("Updating Scores...")
-        t1_names, t2_names = self._get_player_names()
+        t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)
 
         if result == "t1":
             await ctx.send("Team 1 Victory!")
@@ -125,7 +126,7 @@ class OneHeadCore(commands.Cog):
         """
 
         if self.game_in_progress:
-            t1_names, t2_names = self._get_player_names()
+            t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)
             players = {"Team 1": t1_names, "Team 2": t2_names}
             in_game_players = tabulate(players, headers="keys", tablefmt="simple")
             await ctx.send("**Current Game** ```\n{}```".format(in_game_players))
@@ -142,18 +143,7 @@ class OneHeadCore(commands.Cog):
         await ctx.send("**Current Version** - {}".format(__version__))
         await ctx.send("**Changelog** - {}".format(__changelog__))
 
-    def _get_player_names(self):
-        """
-        Obtain player names from player profiles.
 
-        :return: Names for players on each team.
-        :type: tuple of lists, each list item is a str referring to a player name.
-        """
-
-        t1_names = [x['name'] for x in self.t1]
-        t2_names = [x['name'] for x in self.t2]
-
-        return t1_names, t2_names
 
     def _reset_state(self):
         """
