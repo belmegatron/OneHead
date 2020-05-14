@@ -12,15 +12,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added /src directory and moved onehead_*.py file there.
+- Added supporting docstrings/comments throughout.
 
 ### Changed
 - Updated README.MD to reflect changes to docker build command.
-- Dockerfile updated.
-- Refactored code in OneHeadBalance and added documentation.
-- Added supporting docstrings throughout.
+- Refactored code in OneHeadBalance.
+- Moved OneHeadChannels into separate file for consistency.
 
 ### Removed
 - Removed need for OAUTH key during build process.
+- Removed code duplication in OneHeadCore/OneHeadChannels.
+- Removed need to explicitly reference OneHead version number when calling pip install inside Dockerfile.
 
 
 ## [1.17] - 2020-05-11
