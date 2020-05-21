@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add auto-kick feature for players who are AFK and signed up.
 - Add separate scoreboard's for different games e.g. CSGO.
 
+## [1.19] - 2020-05-21
+
+### Added
+- Added config.json and config_example.json to enable the user to configure their bot.
+- Updated README.md with information on requirements, features and config.json
+
+### Removed
+- Removed .env file and python-dotenv dependency.
+
 ## [1.18] - 2020-05-14
 
 ### Added

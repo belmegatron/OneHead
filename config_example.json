@@ -1,0 +1,20 @@
+{
+  "aws": {
+    "dynamodb": {
+      "region": "eu-west-3",
+      "tables": {
+        "dota": "some-table-name"
+      }
+    }
+  },
+  "discord": {
+    "token": "discord-token",
+    "channels": {
+      "lobby": "lobby-channel-name",
+      "match": "match-channel-name prefix"
+    }
+  },
+  "rating": {
+    "is_adjusted": true
+  }
+}

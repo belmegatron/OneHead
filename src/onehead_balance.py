@@ -11,11 +11,12 @@ from src.onehead_stats import OneHeadStats
 
 class OneHeadBalance(object):
 
-    def __init__(self, database, pregame):
+    def __init__(self, database, pregame, config):
 
         self.database = database
         self.pre_game = pregame
         self.signups = []
+        self.is_adjusted = config["rating"]["is_adjusted"]
 
     def _get_profiles(self):
         """
@@ -145,7 +146,7 @@ class OneHeadBalance(object):
             await ctx.send(err)
             raise OneHeadException(err)
 
-        balanced_teams = self._calculate_balance(adjusted=True)
+        balanced_teams = self._calculate_balance(adjusted=self.is_adjusted)
 
         return balanced_teams
 

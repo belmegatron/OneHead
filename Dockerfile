@@ -4,7 +4,7 @@ WORKDIR /usr/local/
 
 RUN git clone https://github.com/belmegatron/OneHead.git
 
-COPY .env ./OneHead/.env
+COPY config.json ./OneHead/config.json
 
 RUN pip install virtualenv
 

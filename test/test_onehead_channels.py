@@ -25,7 +25,27 @@ class OneHeadAsyncTest(object):
 class OneHeadChannelsTest(TestCase):
 
     def setUp(self):
-        self.oh_channels = OneHeadChannels()
+        self.config = {
+            "aws": {
+                "dynamodb": {
+                    "region": "eu-west-2",
+                    "tables": {
+                        "dota": "example-table"
+                    }
+                }
+            },
+            "discord": {
+                "token": "",
+                "channels": {
+                    "lobby": "DOTA 2",
+                    "match": "IGC IHL"
+                }
+            },
+            "rating": {
+                "is_adjusted": True
+            }
+        }
+        self.oh_channels = OneHeadChannels(self.config)
         self.ctx = MagicMock()
         self.ctx.send = OneHeadAsyncTest.async_mock(return_value=None)
 
@@ -54,7 +74,6 @@ class OneHeadChannelsTest(TestCase):
         self.assertEqual(self.ctx.guild.create_voice_channel.mock.call_count, 2)
 
     def test_move_back_to_lobby(self):
-
         lobby = MagicMock()
         lobby.name = "LOBBY"
         csgo = MagicMock()
@@ -72,14 +91,12 @@ class OneHeadChannelsTest(TestCase):
         self.assertEqual(member.move_to.mock.call_count, 10)
 
     def test_move_discord_channels_exception(self):
-
         self.oh_channels.ihl_discord_channels = []
         self.assertRaises(OneHeadException, OneHeadAsyncTest._run, self.oh_channels.move_discord_channels(self.ctx))
 
     @patch("src.onehead_channels.OneHeadChannels._get_discord_members")
     @patch("src.onehead_common.OneHeadCommon.get_player_names", return_value=(MagicMock(), MagicMock()))
     def test_move_discord_channels_success(self, mock_get_player_names, mock_get_discord_members):
-
         ihl_1 = MagicMock()
         ihl_1.name = "IGC IHL #1"
         ihl_2 = MagicMock()

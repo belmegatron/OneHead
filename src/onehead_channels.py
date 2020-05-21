@@ -1,12 +1,14 @@
 import discord
 from src.onehead_common import OneHeadException, OneHeadCommon
 
+
 class OneHeadChannels(object):
 
-    def __init__(self):
+    def __init__(self, config):
 
-        self.channel_names = ['IGC IHL #1', 'IGC IHL #2']
-        self.lobby_name = 'DOTA 2'
+        channel_config_settings = config["discord"]["channels"]
+        self.channel_names = ["{} #{}".format(channel_config_settings["match"], x) for x in (1, 2)]
+        self.lobby_name = channel_config_settings["lobby"]
 
         self.ihl_discord_channels = []
         self.t1 = []
