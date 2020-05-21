@@ -60,7 +60,27 @@ class OneHeadBalanceTest(TestCase):
         self.database = MagicMock(spec=OneHeadDB)
         self.t1 = None
         self.t2 = None
-        self.team_balance = OneHeadBalance(self.database, self.pre_game)
+        self.config = {
+            "aws": {
+                "dynamodb": {
+                    "region": "eu-west-2",
+                    "tables": {
+                        "dota": "example-table"
+                    }
+                }
+            },
+            "discord": {
+                "token": "",
+                "channels": {
+                    "lobby": "DOTA 2",
+                    "match": "IGC IHL"
+                }
+            },
+            "rating": {
+                "is_adjusted": True
+            }
+        }
+        self.team_balance = OneHeadBalance(self.database, self.pre_game, self.config)
 
     @patch("src.onehead_balance.combinations")
     def test_calculate_balance_success(self, mock_combinations):
@@ -71,7 +91,7 @@ class OneHeadBalanceTest(TestCase):
         mock_combinations.side_effect = [MagicMock(), [mock_combination]]
         self.team_balance._calculate_unique_team_combinations = MagicMock()
         self.team_balance._calculate_unique_team_combinations.return_value = [(self.mock_profiles[:5],
-                                                                              self.mock_profiles[5:])]
+                                                                               self.mock_profiles[5:])]
         self.team_balance._calculate_rating_differences = MagicMock()
         self.team_balance._calculate_rating_differences.return_value = [500]
         result = self.team_balance._calculate_balance(adjusted=False)
@@ -93,7 +113,7 @@ class OneHeadBalanceTest(TestCase):
         mock_combinations.side_effect = [MagicMock(), [mock_combination]]
         self.team_balance._calculate_unique_team_combinations = MagicMock()
         self.team_balance._calculate_unique_team_combinations.return_value = [(self.mock_profiles_adjusted_mmr[:5],
-                                                                              self.mock_profiles_adjusted_mmr[5:])]
+                                                                               self.mock_profiles_adjusted_mmr[5:])]
         self.team_balance._calculate_rating_differences = MagicMock()
         self.team_balance._calculate_rating_differences.return_value = [500]
         result = self.team_balance._calculate_balance(adjusted=True)

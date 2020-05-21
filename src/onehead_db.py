@@ -18,10 +18,11 @@ class DecimalEncoder(json.JSONEncoder):
 
 class OneHeadDB(object):
 
-    def __init__(self):
+    def __init__(self, config):
 
-        self.dynamo = boto3.resource('dynamodb', region_name='eu-west-2')
-        self.db = self.dynamo.Table('onehead')
+        dynamo_config_settings = config["aws"]["dynamodb"]
+        self.dynamo = boto3.resource('dynamodb', region_name=dynamo_config_settings["region"])
+        self.db = self.dynamo.Table(dynamo_config_settings["tables"]["dota"])
 
     def player_exists(self, player_name):
 
@@ -45,14 +46,14 @@ class OneHeadDB(object):
             raise OneHeadException('Player Name not a valid string.')
 
         if self.player_exists(player_name) is False:
-                self.db.put_item(
-                    Item={
-                        "name": player_name,
-                        "win": 0,
-                        "loss": 0,
-                        "mmr": int(mmr)
-                    }
-                )
+            self.db.put_item(
+                Item={
+                    "name": player_name,
+                    "win": 0,
+                    "loss": 0,
+                    "mmr": int(mmr)
+                }
+            )
 
     def remove_player(self, player_name):
 

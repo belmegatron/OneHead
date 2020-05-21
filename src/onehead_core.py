@@ -17,12 +17,13 @@ class OneHeadCore(commands.Cog):
         self.t2 = []
 
         self.bot = bot
-        self.database = OneHeadDB()
+        self.config = OneHeadCommon.load_config()
+        self.database = OneHeadDB(self.config)
         self.scoreboard = OneHeadScoreBoard(self.database)
         self.pre_game = OneHeadPreGame(self.database)
-        self.team_balance = OneHeadBalance(self.database, self.pre_game)
+        self.team_balance = OneHeadBalance(self.database, self.pre_game, self.config)
         self.captains_mode = OneHeadCaptainsMode(self.database, self.pre_game)
-        self.channels = OneHeadChannels()
+        self.channels = OneHeadChannels(self.config)
         self.registration = OneHeadRegistration(self.database)
 
         bot.add_cog(self.pre_game)
@@ -142,8 +143,6 @@ class OneHeadCore(commands.Cog):
 
         await ctx.send("**Current Version** - {}".format(__version__))
         await ctx.send("**Changelog** - {}".format(__changelog__))
-
-
 
     def _reset_state(self):
         """
