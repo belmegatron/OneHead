@@ -60,4 +60,4 @@ Coming Soon!
 
 ## Run
 
-`docker run -d onehead:latest`
+`docker run -d -v ${HOME}/.aws/credentials:/root/.aws/credentials:ro onehead:latest`
