@@ -1,7 +1,8 @@
 from unittest import TestCase
 from mock import MagicMock
-from src.onehead_scoreboard import OneHeadScoreBoard
-from src.onehead_common import OneHeadException
+
+from onehead.scoreboard import OneHeadScoreBoard
+from onehead.common import OneHeadException
 
 
 class OneHeadScoreBoardTest(TestCase):

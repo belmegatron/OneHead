@@ -1,7 +1,8 @@
 from tabulate import tabulate
 from discord.ext import commands
-from src.onehead_common import OneHeadException
-from src.onehead_stats import OneHeadStats
+
+from onehead.common import OneHeadException
+from onehead.stats import OneHeadStats
 
 
 class OneHeadScoreBoard(commands.Cog):

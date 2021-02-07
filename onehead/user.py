@@ -1,7 +1,9 @@
+import random
+
 from discord.ext import commands
 from asyncio import sleep
-from src.onehead_common import OneHeadException
-import random
+
+from onehead.common import OneHeadException
 
 
 class OneHeadRegistration(commands.Cog):

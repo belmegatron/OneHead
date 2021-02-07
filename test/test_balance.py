@@ -1,10 +1,11 @@
 from unittest import TestCase
-import asyncio
 from mock import MagicMock, patch
-from src.onehead_balance import OneHeadBalance, OneHeadCaptainsMode
-from src.onehead_db import OneHeadDB
-from src.onehead_user import OneHeadPreGame
-from src.onehead_common import OneHeadException
+import asyncio
+
+from onehead.balance import OneHeadBalance, OneHeadCaptainsMode
+from onehead.db import OneHeadDB
+from onehead.user import OneHeadPreGame
+from onehead.common import OneHeadException
 
 
 class OneHeadAsyncTest(object):
@@ -82,7 +83,7 @@ class OneHeadBalanceTest(TestCase):
         }
         self.team_balance = OneHeadBalance(self.database, self.pre_game, self.config)
 
-    @patch("src.onehead_balance.combinations")
+    @patch("onehead.balance.itertools.combinations")
     def test_calculate_balance_success(self, mock_combinations):
         self.team_balance.signups = self.signups
         self.team_balance._get_profiles = MagicMock()
@@ -101,9 +102,9 @@ class OneHeadBalanceTest(TestCase):
                                      {'name': 'JEFFERIES', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 2000},
                                      {'name': 'JAMES', 'win': 10, 'loss': 0, 'ratio': 10, 'mmr': 2000}))
 
-    @patch("src.onehead_balance.combinations")
-    @patch("src.onehead_stats.OneHeadStats.calculate_adjusted_mmr")
-    @patch("src.onehead_stats.OneHeadStats.calculate_rating")
+    @patch("onehead.balance.itertools.combinations")
+    @patch("onehead.stats.OneHeadStats.calculate_adjusted_mmr")
+    @patch("onehead.stats.OneHeadStats.calculate_rating")
     def test_calculate_balance_success_adjusted_mmr(self, mock_calculate_rating, mock_calculate_adjusted_mmr,
                                                     mock_combinations):
         self.team_balance.signups = self.signups
@@ -162,7 +163,7 @@ class OneHeadBalanceTest(TestCase):
         self.assertRaises(OneHeadException, OneHeadAsyncTest._run, self.team_balance.balance(ctx))
         self.assertEqual(self.team_balance.signups, mock_signups)
 
-    @patch("src.onehead_balance.OneHeadBalance._calculate_balance")
+    @patch("onehead.balance.OneHeadBalance._calculate_balance")
     def test_balance_success(self, mock_calculate_balance):
         self.pre_game.signups = self.signups  # Expected list of 10 signups.
         ctx = MagicMock()
