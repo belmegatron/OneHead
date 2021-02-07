@@ -1,8 +1,9 @@
-import discord
-from src.onehead_common import OneHeadException, OneHeadCommon
+from discord.ext import commands
+
+from onehead.common import OneHeadException, OneHeadCommon
 
 
-class OneHeadChannels(object):
+class OneHeadChannels(commands.Cog):
 
     def __init__(self, config):
 

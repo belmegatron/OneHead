@@ -1,15 +1,15 @@
-from itertools import combinations
-from random import choice
-from discord.ext import commands
-from tabulate import tabulate
-from asyncio import sleep, wait_for, TimeoutError
+import itertools
 import asyncio
 import random
-from src.onehead_common import OneHeadException
-from src.onehead_stats import OneHeadStats
+
+from discord.ext import commands
+from tabulate import tabulate
+
+from onehead.common import OneHeadException
+from onehead.stats import OneHeadStats
 
 
-class OneHeadBalance(object):
+class OneHeadBalance(commands.Cog):
 
     def __init__(self, database, pregame, config):
 
@@ -88,7 +88,7 @@ class OneHeadBalance(object):
         Returns a matchup of two, five-man teams that are evenly(or as close to evenly) matched based on
         a rating value associated with each player.
 
-        :param adjusted: Species whether to use the 'adjusted_mmr' field to balance or just the 'mmr' field.
+        :param adjusted: Specifies whether to use the 'adjusted_mmr' field to balance or just the 'mmr' field.
         :type adjusted: bool
         :return: A tuple of 2 tuples, each tuple contains 5 dicts corresponding to each player profile.
         """
@@ -104,8 +104,8 @@ class OneHeadBalance(object):
             OneHeadStats.calculate_rating(profiles)
             OneHeadStats.calculate_adjusted_mmr(profiles)
 
-        all_5_man_lineups = list(combinations(profiles, 5))  # Calculate all possible 5 man lineups.
-        all_5v5_matchups = list(combinations(all_5_man_lineups, 2))  # Calculate all possible 5v5 matchups.
+        all_5_man_lineups = list(itertools.combinations(profiles, 5))  # Calculate all possible 5 man lineups.
+        all_5v5_matchups = list(itertools.combinations(all_5_man_lineups, 2))  # Calculate all possible 5v5 matchups.
 
         unique_combinations = self._calculate_unique_team_combinations(
             all_5v5_matchups)  # Calculate all valid 5v5 matchups where players are unique to either Team 1 or Team 2.
@@ -125,7 +125,7 @@ class OneHeadBalance(object):
         indices = list(rating_differences_mapping.keys())[
                   :10]  # Obtain the indices for the top 10 closest net rating matchups.
         balanced_teams = unique_combinations[
-            choice(indices)]  # Pick a random matchup from the top 10 closest net rating matchups.
+            random.choice(indices)]  # Pick a random matchup from the top 10 closest net rating matchups.
 
         return balanced_teams
 
@@ -230,7 +230,7 @@ class OneHeadCaptainsMode(commands.Cog):
         self.votes = {x: 0 for x in self.signups}
         self.has_voted = {x: False for x in self.signups}
         await ctx.send("You have 30 seconds to nominate a captain. Type !nom <name> to nominate a captain.")
-        await sleep(30)
+        await asyncio.sleep(30)
         self.nomination_phase_in_progress = False
         self.captain_1, self.captain_2 = self.calculate_top_nominations()
         nominations = [(k, v) for k, v in self.votes.items()]
@@ -294,7 +294,7 @@ class OneHeadCaptainsMode(commands.Cog):
                             last_player, last_player))
                 else:
                     try:
-                        await wait_for(self.future, timeout=30)
+                        await asyncio.wait_for(self.future, timeout=30)
                     except TimeoutError:
                         idx = self.remaining_players.index(random.choice(self.remaining_players))
                         pick = self.remaining_players.pop(idx)

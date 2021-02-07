@@ -1,5 +1,6 @@
 from unittest import TestCase
-from src.onehead_stats import OneHeadStats
+
+from onehead.stats import OneHeadStats
 
 
 class OneHeadStatsTest(TestCase):

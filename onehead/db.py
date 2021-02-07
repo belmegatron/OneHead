@@ -1,8 +1,11 @@
-import boto3
-from botocore.exceptions import ClientError
 import json
 import decimal
-from src.onehead_common import OneHeadException
+
+import boto3
+from botocore.exceptions import ClientError
+from discord.ext import commands
+
+from onehead.common import OneHeadException
 
 
 # Helper class to convert a DynamoDB item to JSON.
@@ -16,7 +19,7 @@ class DecimalEncoder(json.JSONEncoder):
         return super(DecimalEncoder, self).default(o)
 
 
-class OneHeadDB(object):
+class OneHeadDB(commands.Cog):
 
     def __init__(self, config):
 

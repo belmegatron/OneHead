@@ -1,12 +1,10 @@
 from discord.ext import commands
 from tabulate import tabulate
+
 from version import __version__, __changelog__
-from src.onehead_balance import OneHeadBalance, OneHeadCaptainsMode
-from src.onehead_scoreboard import OneHeadScoreBoard
-from src.onehead_db import OneHeadDB
-from src.onehead_common import OneHeadCommon, OneHeadException
-from src.onehead_channels import OneHeadChannels
-from src.onehead_user import OneHeadPreGame, OneHeadRegistration
+from onehead.balance import OneHeadCaptainsMode
+from onehead.common import OneHeadCommon, OneHeadException
+from onehead.user import OneHeadPreGame
 
 
 class OneHeadCore(commands.Cog):
@@ -17,19 +15,25 @@ class OneHeadCore(commands.Cog):
         self.t2 = []
 
         self.bot = bot
-        self.config = OneHeadCommon.load_config()
-        self.database = OneHeadDB(self.config)
-        self.scoreboard = OneHeadScoreBoard(self.database)
-        self.pre_game = OneHeadPreGame(self.database)
-        self.team_balance = OneHeadBalance(self.database, self.pre_game, self.config)
-        self.captains_mode = OneHeadCaptainsMode(self.database, self.pre_game)
-        self.channels = OneHeadChannels(self.config)
-        self.registration = OneHeadRegistration(self.database)
 
-        bot.add_cog(self.pre_game)
-        bot.add_cog(self.scoreboard)
-        bot.add_cog(self.registration)
-        bot.add_cog(self.captains_mode)
+        self.config = OneHeadCommon.load_config()
+        self.database = bot.get_cog("OneHeadDB")
+        self.scoreboard = bot.get_cog("OneHeadScoreBoard")
+        self.pre_game = bot.get_cog("OneHeadPreGame")
+        self.team_balance = bot.get_cog("OneHeadBalance")
+        self.captains_mode = bot.get_cog("OneHeadCaptainsMode")
+        self.channels = bot.get_cog("OneHeadChannels")
+        self.registration = bot.get_cog("OneHeadRegistration")
+
+        if None in (self.database,
+                    self.scoreboard,
+                    self.pre_game,
+                    self.team_balance,
+                    self.captains_mode,
+                    self.channels,
+                    self.registration
+                    ):
+            raise OneHeadException("Unable to find cog(s)")
 
     @commands.has_role("IHL Admin")
     @commands.command()
@@ -152,7 +156,13 @@ class OneHeadCore(commands.Cog):
         self.game_in_progress = False
         self.t1 = []
         self.t2 = []
+
         self.pre_game = OneHeadPreGame(self.database)
+        self.bot.remove_cog("OneHeadPreGame")
+        self.bot.add_cog(self.pre_game)
+
         self.captains_mode = OneHeadCaptainsMode(self.database, self.pre_game)
+        self.bot.remove_cog("OneHeadCaptainsMode")
+        self.bot.add_cog(self.captains_mode)
 
 
