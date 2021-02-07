@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add auto-kick feature for players who are AFK and signed up.
 - Add separate scoreboard's for different games e.g. CSGO.
 
-# [1.20] - 2021-02-07
+## [1.20] - 2021-02-07
 
 ### Changed
 - Tidying up of imports and file names.
