@@ -1,7 +1,8 @@
 from unittest import TestCase
 from mock import MagicMock
-from onehead_scoreboard import OneHeadScoreBoard
-from onehead_common import OneHeadException
+
+from onehead.scoreboard import OneHeadScoreBoard
+from onehead.common import OneHeadException
 
 
 class OneHeadScoreBoardTest(TestCase):
@@ -10,40 +11,10 @@ class OneHeadScoreBoardTest(TestCase):
         self.database = MagicMock()
         self.scoreboard = OneHeadScoreBoard(self.database)
 
-    def test_calculate_win_percentage_loss_0(self):
-        scoreboard = [{"name": "RBEEZAY", "win": 10, "loss": 0}]
-        self.scoreboard._calculate_win_percentage(scoreboard)
-        self.assertEqual(scoreboard[0]["%"], 100)
-
-    def test_calculate_win_percentage_win_0(self):
-        scoreboard = [{"name": "RBEEZAY", "win": 0, "loss": 10}]
-        self.scoreboard._calculate_win_percentage(scoreboard)
-        self.assertEqual(scoreboard[0]["%"], 0)
-
-    def test_calculate_win_percentage_int_result(self):
-        scoreboard = [{"name": "RBEEZAY", "win": 5, "loss": 5}]
-        self.scoreboard._calculate_win_percentage(scoreboard)
-        self.assertEqual(scoreboard[0]["%"], 50)
-
-    def test_calculate_win_loss_ratio_float_result(self):
-        scoreboard = [{"name": "RBEEZAY", "win": 10, "loss": 5}]
-        self.scoreboard._calculate_win_percentage(scoreboard)
-        self.assertEqual(scoreboard[0]["%"], 66.7)
-
     def test_sort_scoreboard_key_order(self):
         scoreboard = [{"%": 71.4, "win": 10, "name": "RBEEZAY", "loss": 4, "#": 1, "rating": 1650}]
         result = self.scoreboard._sort_scoreboard_key_order(scoreboard)
         self.assertEqual(list(result[0].keys()), ["#", "name", "win", "loss", "%", "rating"])
-
-    def test_calculate_rating_gain(self):
-        scoreboard = [{"name": "RBEEZAY", "win": 10, "loss": 5}]
-        self.scoreboard._calculate_rating(scoreboard)
-        self.assertEqual(scoreboard[0]["rating"], 1625)
-
-    def test_calculate_rating_loss(self):
-        scoreboard = [{"name": "RBEEZAY", "win": 5, "loss": 10}]
-        self.scoreboard._calculate_rating(scoreboard)
-        self.assertEqual(scoreboard[0]["rating"], 1375)
 
     def test_calculate_positions_single_tie(self):
         scoreboard = [{"name": "RBEEZAY", "win": 10, "loss": 0, "%": 100, "rating": 1750},
@@ -91,4 +62,4 @@ class OneHeadScoreBoardTest(TestCase):
 
     def test_get_scoreboard_db_empty(self):
         self.database.retrieve_table.return_value = []
-        self.assertRaises(OneHeadException, self.scoreboard.get_scoreboard)
+        self.assertRaises(OneHeadException, self.scoreboard._get_scoreboard)

@@ -1,8 +1,9 @@
 from unittest import TestCase
-import asyncio
-from decimal import Decimal
 from mock import MagicMock
-from onehead_db import OneHeadDB
+from decimal import Decimal
+import asyncio
+
+from onehead.db import OneHeadDB
 
 
 class OneHeadAsyncTest(object):
@@ -71,7 +72,27 @@ class OneHeadDBTest(TestCase):
                                                  'x-amzn-requestid': 'BJ5U2L36NDUFDBPIGR91J59NNFVV4KQNSO5AEMVJF66Q9ASUAAJG',
                                                  'x-amz-crc32': '27472350'}, 'RetryAttempts': 0}}
 
-        self.database = OneHeadDB()
+        self.config = {
+            "aws": {
+                "dynamodb": {
+                    "region": "eu-west-2",
+                    "tables": {
+                        "dota": "example-table"
+                    }
+                }
+            },
+            "discord": {
+                "token": "",
+                "channels": {
+                    "lobby": "DOTA 2",
+                    "match": "IGC IHL"
+                }
+            },
+            "rating": {
+                "is_adjusted": True
+            }
+        }
+        self.database = OneHeadDB(self.config)
 
     def test_retrieve_table_success(self):
         self.database.db.scan = MagicMock()

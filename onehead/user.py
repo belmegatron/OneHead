@@ -1,6 +1,9 @@
+import random
+
 from discord.ext import commands
 from asyncio import sleep
-from onehead_common import OneHeadException
+
+from onehead.common import OneHeadException
 
 
 class OneHeadRegistration(commands.Cog):
@@ -9,6 +12,7 @@ class OneHeadRegistration(commands.Cog):
 
         self.database = database
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['reg'])
     async def register(self, ctx, mmr):
         """
@@ -18,7 +22,7 @@ class OneHeadRegistration(commands.Cog):
         name = ctx.author.display_name
 
         try:
-            tmp = int(mmr)
+            int(mmr)
         except ValueError:
             raise OneHeadException("{} is not a valid integer.".format(mmr))
 
@@ -28,20 +32,18 @@ class OneHeadRegistration(commands.Cog):
         else:
             await ctx.send("{} is already registered.".format(name))
 
-    @commands.has_permissions(administrator=True)
+    @commands.has_role("IHL Admin")
     @commands.command(aliases=['dereg'])
-    async def deregister(self, ctx):
+    async def deregister(self, ctx, name):
         """
         Removes a player from the internal IHL database.
         """
 
-        name = ctx.author.display_name
-
         if self.database.player_exists(name):
             self.database.remove_player(name)
-            await ctx.send("Successfully Deregistered.")
+            await ctx.send("{} successfully removed from the database.".format(name))
         else:
-            await ctx.send("Discord Name could not be found.")
+            await ctx.send("{} could not be found in the database.".format(name))
 
 
 class OneHeadPreGame(commands.Cog):
@@ -75,9 +77,9 @@ class OneHeadPreGame(commands.Cog):
 
     async def signup_check(self, ctx):
 
-        signups_full = False
+        signup_threshold_met = False
         signup_count = len(self.signups)
-        if signup_count != 10:
+        if signup_count < 10:
             if signup_count == 0:
                 await ctx.send("There are currently no signups.")
             elif signup_count == 1:
@@ -85,10 +87,34 @@ class OneHeadPreGame(commands.Cog):
             else:
                 await ctx.send("Only {} Signups, require {} more.".format(signup_count, 10 - signup_count))
         else:
-            signups_full = True
+            signup_threshold_met = True
 
-        return signups_full
+        return signup_threshold_met
 
+    async def handle_signups(self, ctx):
+        """
+        Handle the case where there are less than 10 signups, exactly 10 signups or more than 10 signups. If there are
+        more, then players will be randomly removed until there are only 10 players in self.signups.
+
+        :param ctx: Discord context
+        """
+
+        number_of_signups = len(self.signups)
+        if number_of_signups <= 10:
+            return
+
+        benched_players = []
+        await ctx.send("{} Players have signed up and therefore {} players will be benched.".format(number_of_signups,
+                                                                                                    number_of_signups - 10))
+        while len(self.signups) > 10:
+            idx = self.signups.index(random.choice(self.signups))
+            random_selection = self.signups.pop(idx)
+            benched_players.append(random_selection)
+
+        await ctx.send("**Benched Players:** ```\n{}```".format(benched_players))
+        await ctx.send("**Selected Players:** ```\n{}```".format(self.signups))
+
+    @commands.has_role("IHL")
     @commands.command()
     async def who(self, ctx):
         """
@@ -108,6 +134,7 @@ class OneHeadPreGame(commands.Cog):
         self.clear_signups()
         await ctx.send("Signups have been reset.")
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['su'])
     async def signup(self, ctx):
         """
@@ -121,13 +148,12 @@ class OneHeadPreGame(commands.Cog):
 
         if name in self.signups:
             await ctx.send("{} is already signed up.".format(name))
-        elif len(self.signups) >= 10:
-            await ctx.send("Signups full.")
         else:
             self.signups.append(name)
 
         await ctx.send("Current Signups: {}".format(self.signups))
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['so'])
     async def signout(self, ctx):
         """
@@ -154,6 +180,7 @@ class OneHeadPreGame(commands.Cog):
         self.signups.remove(name)
         await ctx.send("{} has been removed from the signup pool.".format(name))
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['r'])
     async def ready(self, ctx):
         """
@@ -172,6 +199,7 @@ class OneHeadPreGame(commands.Cog):
         self.players_ready.append(name)
         await ctx.send("{} is ready.".format(name))
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['rc'])
     async def ready_check(self, ctx):
         """

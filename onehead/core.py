@@ -1,11 +1,10 @@
 from discord.ext import commands
 from tabulate import tabulate
+
 from version import __version__, __changelog__
-from onehead_balance import OneHeadBalance, OneHeadCaptainsMode
-from onehead_scoreboard import OneHeadScoreBoard
-from onehead_db import OneHeadDB
-from onehead_common import OneHeadChannels, OneHeadException
-from onehead_user import OneHeadPreGame, OneHeadRegistration
+from onehead.balance import OneHeadCaptainsMode
+from onehead.common import OneHeadCommon, OneHeadException
+from onehead.user import OneHeadPreGame
 
 
 class OneHeadCore(commands.Cog):
@@ -16,18 +15,25 @@ class OneHeadCore(commands.Cog):
         self.t2 = []
 
         self.bot = bot
-        self.database = OneHeadDB()
-        self.scoreboard = OneHeadScoreBoard(self.database)
-        self.pre_game = OneHeadPreGame(self.database)
-        self.team_balance = OneHeadBalance(self.database, self.pre_game)
-        self.captains_mode = OneHeadCaptainsMode(self.database, self.pre_game)
-        self.channels = OneHeadChannels()
-        self.registration = OneHeadRegistration(self.database)
 
-        bot.add_cog(self.pre_game)
-        bot.add_cog(self.scoreboard)
-        bot.add_cog(self.registration)
-        bot.add_cog(self.captains_mode)
+        self.config = OneHeadCommon.load_config()
+        self.database = bot.get_cog("OneHeadDB")
+        self.scoreboard = bot.get_cog("OneHeadScoreBoard")
+        self.pre_game = bot.get_cog("OneHeadPreGame")
+        self.team_balance = bot.get_cog("OneHeadBalance")
+        self.captains_mode = bot.get_cog("OneHeadCaptainsMode")
+        self.channels = bot.get_cog("OneHeadChannels")
+        self.registration = bot.get_cog("OneHeadRegistration")
+
+        if None in (self.database,
+                    self.scoreboard,
+                    self.pre_game,
+                    self.team_balance,
+                    self.captains_mode,
+                    self.channels,
+                    self.registration
+                    ):
+            raise OneHeadException("Unable to find cog(s)")
 
     @commands.has_role("IHL Admin")
     @commands.command()
@@ -36,13 +42,16 @@ class OneHeadCore(commands.Cog):
         Starts an IHL game. Can optionally select 'cm' mode to start a Captains mode game. This can be done by passing
         the game type after the start command e.g. !start cm.
         """
+
         if self.game_in_progress:
             await ctx.send("Game already in progress...")
             return
 
-        signups_full = await self.pre_game.signup_check(ctx)
-        if signups_full is False:
+        signup_threshold_met = await self.pre_game.signup_check(ctx)
+        if signup_threshold_met is False:
             return
+
+        await self.pre_game.handle_signups(ctx)
 
         if mode == "rating":
             balanced_teams = await self.team_balance.balance(ctx)
@@ -57,9 +66,7 @@ class OneHeadCore(commands.Cog):
         self.game_in_progress = True
         status = self.bot.get_command("status")
         await commands.Command.invoke(status, ctx)
-        await ctx.send("Setting up IHL Discord Channels...")
         await self.channels.create_discord_channels(ctx)
-        await ctx.send("Moving Players to IHL Discord Channels...")
         self.channels.set_teams(self.t1, self.t2)
         await self.channels.move_discord_channels(ctx)
         await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
@@ -74,17 +81,9 @@ class OneHeadCore(commands.Cog):
         if self.game_in_progress:
             await ctx.send("Game stopped.")
             await self.channels.move_back_to_lobby(ctx)
-            await self.channels.teardown_discord_channels()
-            self.reset_state()
+            self._reset_state()
         else:
             await ctx.send("No currently active game.")
-
-    def get_player_names(self):
-
-        t1_names = [x['name'] for x in self.t1]
-        t2_names = [x['name'] for x in self.t2]
-
-        return t1_names, t2_names
 
     @commands.has_role("IHL Admin")
     @commands.command()
@@ -92,6 +91,7 @@ class OneHeadCore(commands.Cog):
         """
         Provide the result of game that has finished. Can pass 'void' if the match did not correctly terminate.
         """
+
         if self.game_in_progress is False:
             await ctx.send("No currently active game.")
             return
@@ -103,7 +103,7 @@ class OneHeadCore(commands.Cog):
             return
 
         await ctx.send("Updating Scores...")
-        t1_names, t2_names = self.get_player_names()
+        t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)
 
         if result == "t1":
             await ctx.send("Team 1 Victory!")
@@ -121,9 +121,9 @@ class OneHeadCore(commands.Cog):
         scoreboard = self.bot.get_command("scoreboard")
         await commands.Command.invoke(scoreboard, ctx)
         await self.channels.move_back_to_lobby(ctx)
-        await self.channels.teardown_discord_channels()
-        self.reset_state()
+        self._reset_state()
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['stat'])
     async def status(self, ctx):
         """
@@ -131,28 +131,38 @@ class OneHeadCore(commands.Cog):
         """
 
         if self.game_in_progress:
-            t1_names, t2_names = self.get_player_names()
+            t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)
             players = {"Team 1": t1_names, "Team 2": t2_names}
-            ig_players = tabulate(players, headers="keys", tablefmt="simple")
-            await ctx.send("**Current Game** ```\n{}```".format(ig_players))
+            in_game_players = tabulate(players, headers="keys", tablefmt="simple")
+            await ctx.send("**Current Game** ```\n{}```".format(in_game_players))
         else:
             await ctx.send("No currently active game.")
 
+    @commands.has_role("IHL")
     @commands.command(aliases=['v'])
     async def version(self, ctx):
         """
         Displays the current version of OneHead.
         """
 
-        await ctx.send("Current Version - {}".format(__version__))
-        await ctx.send("Changelog - {}".format(__changelog__))
+        await ctx.send("**Current Version** - {}".format(__version__))
+        await ctx.send("**Changelog** - {}".format(__changelog__))
 
-    def reset_state(self):
+    def _reset_state(self):
+        """
+        Resets state local to self and creates new instances of OneHeadPreGame and OneHeadCaptainsMode classes.
+        """
 
         self.game_in_progress = False
-        self.pre_game.clear_signups()
-        self.captains_mode.reset_state()
         self.t1 = []
         self.t2 = []
+
+        self.pre_game = OneHeadPreGame(self.database)
+        self.bot.remove_cog("OneHeadPreGame")
+        self.bot.add_cog(self.pre_game)
+
+        self.captains_mode = OneHeadCaptainsMode(self.database, self.pre_game)
+        self.bot.remove_cog("OneHeadCaptainsMode")
+        self.bot.add_cog(self.captains_mode)
 
 

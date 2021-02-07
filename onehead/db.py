@@ -1,8 +1,11 @@
-import boto3
-from botocore.exceptions import ClientError
 import json
 import decimal
-from onehead_common import OneHeadException
+
+import boto3
+from botocore.exceptions import ClientError
+from discord.ext import commands
+
+from onehead.common import OneHeadException
 
 
 # Helper class to convert a DynamoDB item to JSON.
@@ -16,12 +19,13 @@ class DecimalEncoder(json.JSONEncoder):
         return super(DecimalEncoder, self).default(o)
 
 
-class OneHeadDB(object):
+class OneHeadDB(commands.Cog):
 
-    def __init__(self):
+    def __init__(self, config):
 
-        self.dynamo = boto3.resource('dynamodb', region_name='eu-west-2')
-        self.db = self.dynamo.Table('onehead')
+        dynamo_config_settings = config["aws"]["dynamodb"]
+        self.dynamo = boto3.resource('dynamodb', region_name=dynamo_config_settings["region"])
+        self.db = self.dynamo.Table(dynamo_config_settings["tables"]["dota"])
 
     def player_exists(self, player_name):
 
@@ -45,14 +49,14 @@ class OneHeadDB(object):
             raise OneHeadException('Player Name not a valid string.')
 
         if self.player_exists(player_name) is False:
-                self.db.put_item(
-                    Item={
-                        "name": player_name,
-                        "win": 0,
-                        "loss": 0,
-                        "mmr": int(mmr)
-                    }
-                )
+            self.db.put_item(
+                Item={
+                    "name": player_name,
+                    "win": 0,
+                    "loss": 0,
+                    "mmr": int(mmr)
+                }
+            )
 
     def remove_player(self, player_name):
 
