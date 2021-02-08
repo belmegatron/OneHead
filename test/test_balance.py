@@ -161,7 +161,7 @@ class OneHeadBalanceTest(TestCase):
         ctx = MagicMock()
         ctx.send = OneHeadAsyncTest.async_mock(return_value=None)
         self.assertRaises(OneHeadException, OneHeadAsyncTest._run, self.team_balance.balance(ctx))
-        self.assertEqual(self.team_balance.signups, mock_signups)
+        self.assertEqual(self.team_balance.pre_game.signups, mock_signups)
 
     @patch("onehead.balance.OneHeadBalance._calculate_balance")
     def test_balance_success(self, mock_calculate_balance):
@@ -178,10 +178,10 @@ class OneHeadCaptainsModeTest(TestCase):
         self.database = MagicMock(spec=OneHeadDB)
         self.pre_game = MagicMock(spec=OneHeadPreGame)
         self.cm = OneHeadCaptainsMode(self.database, self.pre_game)
-        self.cm.signups = ['RBEEZAY', 'GPP', 'LOZZA', 'JEFFERIES', 'JAMES', 'PECRO', 'ZEE', 'JOSH', 'EDD',
-                           'ARRECOOLAST']
-        self.cm.votes = {x: 0 for x in self.cm.signups}
-        self.cm.has_voted = {x: False for x in self.cm.signups}
+        self.cm.pre_game.signups = ['RBEEZAY', 'GPP', 'LOZZA', 'JEFFERIES', 'JAMES', 'PECRO', 'ZEE', 'JOSH', 'EDD',
+                                    'ARRECOOLAST']
+        self.cm.votes = {x: 0 for x in self.cm.pre_game.signups}
+        self.cm.has_voted = {x: False for x in self.cm.pre_game.signups}
         self.ctx = MagicMock()
         self.ctx.send = OneHeadAsyncTest.async_mock(return_value=None)
 

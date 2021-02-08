@@ -11,22 +11,21 @@ from onehead.stats import OneHeadStats
 
 class OneHeadBalance(commands.Cog):
 
-    def __init__(self, database, pregame, config):
+    def __init__(self, database, pre_game, config):
 
         self.database = database
-        self.pre_game = pregame
-        self.signups = []
+        self.pre_game = pre_game
         self.is_adjusted = config["rating"]["is_adjusted"]
 
     def _get_profiles(self):
         """
-        Obtains player profiles for all player names contained within self.signups.
+        Obtains player profiles for all player names contained within self.pre_game.signups.
 
         :return: A list of dicts, each dict corresponds to a player profile.
         """
 
         profiles = []
-        for player in self.signups:
+        for player in self.pre_game.signups:
             profile = self.database.lookup_player(player)
             if profile:
                 profiles.append(profile)
@@ -138,8 +137,7 @@ class OneHeadBalance(commands.Cog):
                  to each player's profile.
         """
 
-        self.signups = self.pre_game.signups
-        signup_count = len(self.signups)
+        signup_count = len(self.pre_game.signups)
         await ctx.send("Balancing teams...")
         if signup_count != 10:
             err = "Only {} Signups, require {} more.".format(signup_count, 10 - signup_count)
@@ -153,12 +151,11 @@ class OneHeadBalance(commands.Cog):
 
 class OneHeadCaptainsMode(commands.Cog):
 
-    def __init__(self, database, pregame):
+    def __init__(self, database, pre_game):
 
         self.database = database
-        self.pre_game = pregame
+        self.pre_game = pre_game
 
-        self.signups = []
         self.remaining_players = []
         self.votes = {}
         self.has_voted = {}
@@ -226,9 +223,9 @@ class OneHeadCaptainsMode(commands.Cog):
         """
 
         self.nomination_phase_in_progress = True
-        self.signups = self.pre_game.signups
-        self.votes = {x: 0 for x in self.signups}
-        self.has_voted = {x: False for x in self.signups}
+
+        self.votes = {x: 0 for x in self.pre_game.signups}
+        self.has_voted = {x: False for x in self.pre_game.signups}
         await ctx.send("You have 30 seconds to nominate a captain. Type !nom <name> to nominate a captain.")
         await asyncio.sleep(30)
         self.nomination_phase_in_progress = False
@@ -250,7 +247,7 @@ class OneHeadCaptainsMode(commands.Cog):
         :type: tuple of lists, each list contains 5 dicts corresponding to each player profile.
         """
 
-        self.remaining_players = self.signups.copy()
+        self.remaining_players = self.pre_game.signups.copy()
 
         if not self.captain_1 or not self.captain_2:
             raise OneHeadException("Captains have not been selected.")
@@ -335,7 +332,7 @@ class OneHeadCaptainsMode(commands.Cog):
             await ctx.send("Nominations are closed.")
             return
 
-        if name not in self.signups:
+        if name not in self.pre_game.signups:
             await ctx.send("{} is not currently signed up and therefore cannot nominate.".format(name))
             return
 
@@ -394,3 +391,20 @@ class OneHeadCaptainsMode(commands.Cog):
                 await ctx.send("It is currently {}'s turn to pick.".format(self.captain_1))
         else:
             await ctx.send("{} is not a captain and therefore cannot pick.".format(name))
+
+    def reset_state(self):
+
+        self.remaining_players = []
+        self.votes = {}
+        self.has_voted = {}
+
+        self.captain_1 = None
+        self.captain_2 = None
+        self.team_1 = []
+        self.team_2 = []
+
+        self.nomination_phase_in_progress = False
+        self.pick_phase_in_progress = False
+        self.captain_1_turn = False
+        self.captain_2_turn = False
+        self.future = None
