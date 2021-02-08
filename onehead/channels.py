@@ -1,4 +1,5 @@
 from discord.ext import commands
+import discord
 
 from onehead.common import OneHeadException, OneHeadCommon
 
@@ -82,6 +83,11 @@ class OneHeadChannels(commands.Cog):
                 await member.move_to(lobby)
             except discord.errors.HTTPException:
                 pass
+
+        self.t1 = []
+        self.t2 = []
+        self.t1_discord_members = []
+        self.t2_discord_members = []
 
     async def move_discord_channels(self, ctx):
         """

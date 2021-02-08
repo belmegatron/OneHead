@@ -72,7 +72,7 @@ class OneHeadPreGame(commands.Cog):
         message = "IT'S DOTA TIME BOYS! Summoning all 1Heads - {}".format(mentions)
         await ctx.send(message)
 
-    def clear_signups(self):
+    def reset_state(self):
         self.signups = []
 
     async def signup_check(self, ctx):
@@ -123,16 +123,6 @@ class OneHeadPreGame(commands.Cog):
 
         await ctx.send("There are currently {} players signed up.".format(len(self.signups)))
         await ctx.send("Current Signups: {}".format(self.signups))
-
-    @commands.has_role("IHL Admin")
-    @commands.command()
-    async def reset(self, ctx):
-        """
-        Reset current sign ups.
-        """
-
-        self.clear_signups()
-        await ctx.send("Signups have been reset.")
 
     @commands.has_role("IHL")
     @commands.command(aliases=['su'])

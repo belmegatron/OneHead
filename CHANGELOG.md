@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add auto-kick feature for players who are AFK and signed up.
 - Add separate scoreboard's for different games e.g. CSGO.
 
+## [1.21] - 2021-02-08
+
+### Changed
+- Fixed bug where stale reference to OneHeadPreGame object was present in the OneHeadBalance object. This was causing
+  players who were not signed up to be present in the lineups produced when a game was started.
+
 ## [1.20] - 2021-02-07
 
 ### Changed

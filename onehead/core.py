@@ -2,19 +2,51 @@ from discord.ext import commands
 from tabulate import tabulate
 
 from version import __version__, __changelog__
-from onehead.balance import OneHeadCaptainsMode
+from onehead.balance import OneHeadBalance, OneHeadCaptainsMode
+from onehead.scoreboard import OneHeadScoreBoard
+from onehead.db import OneHeadDB
 from onehead.common import OneHeadCommon, OneHeadException
-from onehead.user import OneHeadPreGame
+from onehead.channels import OneHeadChannels
+from onehead.user import OneHeadPreGame, OneHeadRegistration
+
+
+def bot_factory():
+    bot = commands.Bot(command_prefix='!')
+    config = OneHeadCommon.load_config()
+
+    database = OneHeadDB(config)
+    scoreboard = OneHeadScoreBoard(database)
+    pre_game = OneHeadPreGame(database)
+    team_balance = OneHeadBalance(database, pre_game, config)
+    captains_mode = OneHeadCaptainsMode(database, pre_game)
+    channels = OneHeadChannels(config)
+    registration = OneHeadRegistration(database)
+
+    bot.add_cog(database)
+    bot.add_cog(pre_game)
+    bot.add_cog(scoreboard)
+    bot.add_cog(registration)
+    bot.add_cog(captains_mode)
+    bot.add_cog(team_balance)
+    bot.add_cog(channels)
+
+    # Add cogs first, then instantiate OneHeadCore as we reference them as instance variables
+    token = config["discord"]["token"]
+    core = OneHeadCore(bot, token)
+    bot.add_cog(core)
+
+    return bot
 
 
 class OneHeadCore(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, token):
 
         self.game_in_progress = False
         self.t1 = []
         self.t2 = []
 
         self.bot = bot
+        self.token = token
 
         self.config = OneHeadCommon.load_config()
         self.database = bot.get_cog("OneHeadDB")
@@ -148,6 +180,16 @@ class OneHeadCore(commands.Cog):
         await ctx.send("**Current Version** - {}".format(__version__))
         await ctx.send("**Changelog** - {}".format(__changelog__))
 
+    @commands.has_role("IHL Admin")
+    @commands.command(aliases=['rs'])
+    async def reset(self, ctx):
+        """
+        Resets the current bot state.
+        """
+
+        self._reset_state()
+        await ctx.send("Reset state.")
+
     def _reset_state(self):
         """
         Resets state local to self and creates new instances of OneHeadPreGame and OneHeadCaptainsMode classes.
@@ -157,12 +199,5 @@ class OneHeadCore(commands.Cog):
         self.t1 = []
         self.t2 = []
 
-        self.pre_game = OneHeadPreGame(self.database)
-        self.bot.remove_cog("OneHeadPreGame")
-        self.bot.add_cog(self.pre_game)
-
-        self.captains_mode = OneHeadCaptainsMode(self.database, self.pre_game)
-        self.bot.remove_cog("OneHeadCaptainsMode")
-        self.bot.add_cog(self.captains_mode)
-
-
+        self.pre_game.reset_state()
+        self.captains_mode.reset_state()
