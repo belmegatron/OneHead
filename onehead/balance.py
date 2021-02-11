@@ -226,12 +226,16 @@ class OneHeadCaptainsMode(commands.Cog):
 
         self.votes = {x: 0 for x in self.pre_game.signups}
         self.has_voted = {x: False for x in self.pre_game.signups}
+
         await ctx.send("You have 30 seconds to nominate a captain. Type !nom <name> to nominate a captain.")
         await asyncio.sleep(30)
+
         self.nomination_phase_in_progress = False
         self.captain_1, self.captain_2 = self.calculate_top_nominations()
+
         nominations = [(k, v) for k, v in self.votes.items()]
         nominations = tabulate(nominations, headers=["Name", "Votes"], tablefmt="simple")
+
         await ctx.send("```{}```".format(nominations))
         await ctx.send(
             "The nominations are in! Your selected captains are {} and {}.".format(self.captain_1, self.captain_2))
