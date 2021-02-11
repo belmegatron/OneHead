@@ -1,7 +1,8 @@
 import random
+from asyncio import sleep
 
 from discord.ext import commands
-from asyncio import sleep
+from tabulate import tabulate
 
 from onehead.common import OneHeadException
 
@@ -62,14 +63,10 @@ class OneHeadPreGame(commands.Cog):
         Messages all registered players of the IHL to come and sign up.
         """
 
-        all_registered_players = self.database.retrieve_table()
-        if not all_registered_players:
-            raise OneHeadException("No players could be found in database.")
-
-        names = [x['name'] for x in all_registered_players]
-        members = [x for x in ctx.guild.members if x.display_name in names]
-        mentions = " ".join([x.mention for x in members])
-        message = "IT'S DOTA TIME BOYS! Summoning all 1Heads - {}".format(mentions)
+        ihl_role = [x for x in ctx.guild.roles if x.name == "IHL"]
+        if not ihl_role:
+            return
+        message = "IHL DOTA - LET'S GO! {}".format(ihl_role[0].mention)
         await ctx.send(message)
 
     def reset_state(self):
@@ -122,7 +119,10 @@ class OneHeadPreGame(commands.Cog):
         """
 
         await ctx.send("There are currently {} players signed up.".format(len(self.signups)))
-        await ctx.send("Current Signups: {}".format(self.signups))
+        signups_dict = [{"#": i + 1, "name": name} for i, name in enumerate(self.signups)]
+        signups = tabulate(signups_dict, headers="keys", tablefmt="simple")
+
+        await ctx.send("**Current Signups** ```\n{}```".format(signups))
 
     @commands.has_role("IHL")
     @commands.command(aliases=['su'])
@@ -141,7 +141,7 @@ class OneHeadPreGame(commands.Cog):
         else:
             self.signups.append(name)
 
-        await ctx.send("Current Signups: {}".format(self.signups))
+        await commands.Command.invoke(self.who, ctx)
 
     @commands.has_role("IHL")
     @commands.command(aliases=['so'])
@@ -154,7 +154,7 @@ class OneHeadPreGame(commands.Cog):
         else:
             self.signups.remove(ctx.author.display_name)
 
-        await ctx.send("Current Signups: {}".format(self.signups))
+        await commands.Command.invoke(self.who, ctx)
 
     @commands.has_role("IHL Admin")
     @commands.command(aliases=['rm'])
