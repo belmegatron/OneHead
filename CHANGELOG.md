@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add auto-kick feature for players who are AFK and signed up.
 - Add separate scoreboard's for different games e.g. CSGO.
 
+## [1.22] - 2021-02-11
+
+### Changed
+- !summon command now mentions by role instead of by user to comply with Discord 1.5 changes and the addition of 'intents'.
+- !signup command output tidied up.
+
 ## [1.21] - 2021-02-08
 
 ### Changed
