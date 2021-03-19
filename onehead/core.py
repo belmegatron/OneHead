@@ -8,6 +8,7 @@ from onehead.db import OneHeadDB
 from onehead.common import OneHeadCommon, OneHeadException
 from onehead.channels import OneHeadChannels
 from onehead.user import OneHeadPreGame, OneHeadRegistration
+from onehead.mental_health import OneHeadMentalHealth
 
 
 def bot_factory():
@@ -21,6 +22,7 @@ def bot_factory():
     captains_mode = OneHeadCaptainsMode(database, pre_game)
     channels = OneHeadChannels(config)
     registration = OneHeadRegistration(database)
+    mental_health = OneHeadMentalHealth()
 
     bot.add_cog(database)
     bot.add_cog(pre_game)
@@ -29,6 +31,7 @@ def bot_factory():
     bot.add_cog(captains_mode)
     bot.add_cog(team_balance)
     bot.add_cog(channels)
+    bot.add_cog(mental_health)
 
     # Add cogs first, then instantiate OneHeadCore as we reference them as instance variables
     token = config["discord"]["token"]
