@@ -148,6 +148,22 @@ class OneHeadBalance(commands.Cog):
 
         return balanced_teams
 
+    @commands.has_role("IHL")
+    @commands.command(aliases=['mmr'])
+    async def show_internal_mmr(self, ctx):
+        """
+        Shows the internal MMR used for balancing teams.
+        """
+
+        scoreboard = self.database.retrieve_table()
+        OneHeadStats.calculate_rating(scoreboard)
+        OneHeadStats.calculate_adjusted_mmr(scoreboard)
+
+        ratings = [{"name": profile["name"], "base": profile["mmr"], "adjusted": profile["adjusted_mmr"]} for profile in scoreboard]
+        sorted_ratings = sorted(ratings, key=lambda k: k["adjusted"], reverse=True)
+        sorted_ratings = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
+        await ctx.send("**Internal MMR** ```\n{}```".format(sorted_ratings))
+
 
 class OneHeadCaptainsMode(commands.Cog):
 
