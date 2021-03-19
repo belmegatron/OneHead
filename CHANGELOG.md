@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added !mh command to provide other players with inspirational mental health quotes.
+- Added !mmr command to show the MMR that is used internally for balancing teams.
 
 ## [1.22] - 2021-02-11
 

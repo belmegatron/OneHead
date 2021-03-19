@@ -94,3 +94,4 @@ class OneHeadScoreBoard(commands.Cog):
 
         return sorted_scoreboard
 
+
