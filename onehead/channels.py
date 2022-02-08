@@ -5,11 +5,12 @@ from onehead.common import OneHeadException, OneHeadCommon
 
 
 class OneHeadChannels(commands.Cog):
-
     def __init__(self, config):
 
         channel_config_settings = config["discord"]["channels"]
-        self.channel_names = ["{} #{}".format(channel_config_settings["match"], x) for x in (1, 2)]
+        self.channel_names = [
+            "{} #{}".format(channel_config_settings["match"], x) for x in (1, 2)
+        ]
         self.lobby_name = channel_config_settings["lobby"]
 
         self.ihl_discord_channels = []
@@ -42,8 +43,12 @@ class OneHeadChannels(commands.Cog):
         :type t2_names: List of Strings
         """
 
-        self.t1_discord_members = [x for x in ctx.guild.members if x.display_name in t1_names]
-        self.t2_discord_members = [x for x in ctx.guild.members if x.display_name in t2_names]
+        self.t1_discord_members = [
+            x for x in ctx.guild.members if x.display_name in t1_names
+        ]
+        self.t2_discord_members = [
+            x for x in ctx.guild.members if x.display_name in t2_names
+        ]
 
     async def create_discord_channels(self, ctx):
         """
@@ -52,16 +57,18 @@ class OneHeadChannels(commands.Cog):
         :param ctx: Discord Context
         """
 
-        expected_ihl_channels = [x.name for x in ctx.guild.voice_channels if
-                                 x.name in self.channel_names]  # List of Strings
+        expected_ihl_channels = [
+            x.name for x in ctx.guild.voice_channels if x.name in self.channel_names
+        ]  # List of Strings
 
         for channel in self.channel_names:
             if channel not in expected_ihl_channels:
                 await ctx.send("Creating {} channel".format(channel))
                 await ctx.guild.create_voice_channel(channel)
 
-        self.ihl_discord_channels = [x for x in ctx.guild.voice_channels if
-                                     x.name in self.channel_names]  # List of Discord Voice Channel Objects
+        self.ihl_discord_channels = [
+            x for x in ctx.guild.voice_channels if x.name in self.channel_names
+        ]  # List of Discord Voice Channel Objects
 
     async def move_back_to_lobby(self, ctx):
         """
@@ -70,7 +77,7 @@ class OneHeadChannels(commands.Cog):
         :param ctx: Discord Context
         """
 
-        lobby, = [x for x in ctx.guild.voice_channels if x.name == self.lobby_name]
+        (lobby,) = [x for x in ctx.guild.voice_channels if x.name == self.lobby_name]
 
         for member in self.t1_discord_members:
             try:
@@ -98,7 +105,9 @@ class OneHeadChannels(commands.Cog):
 
         channel_count = len(self.ihl_discord_channels)
         if channel_count != 2:
-            raise OneHeadException("Expected 2 Discord Channels, Identified {}.".format(channel_count))
+            raise OneHeadException(
+                "Expected 2 Discord Channels, Identified {}.".format(channel_count)
+            )
 
         t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)
         self._get_discord_members(ctx, t1_names, t2_names)

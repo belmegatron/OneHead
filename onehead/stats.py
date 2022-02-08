@@ -1,5 +1,3 @@
-
-
 class OneHeadStats(object):
 
     BASELINE_RATING = 1500
@@ -14,10 +12,12 @@ class OneHeadStats(object):
         """
 
         for record in profiles:
-            if record['win'] == 0:
+            if record["win"] == 0:
                 record["%"] = 0
             else:
-                record["%"] = round(record['win'] / (record['win'] + record['loss']) * 100, 1)
+                record["%"] = round(
+                    record["win"] / (record["win"] + record["loss"]) * 100, 1
+                )
 
     @classmethod
     def calculate_rating(cls, profiles):
@@ -29,9 +29,9 @@ class OneHeadStats(object):
         """
 
         for record in profiles:
-            win_modifier = record['win'] * 25
-            loss_modifier = record['loss'] * 25
-            record['rating'] = cls.BASELINE_RATING + win_modifier - loss_modifier
+            win_modifier = record["win"] * 25
+            loss_modifier = record["loss"] * 25
+            record["rating"] = cls.BASELINE_RATING + win_modifier - loss_modifier
 
     @classmethod
     def calculate_adjusted_mmr(cls, profiles):
@@ -43,9 +43,8 @@ class OneHeadStats(object):
         """
 
         for record in profiles:
-            rating = record['rating']
-            mmr = record['mmr']
+            rating = record["rating"]
+            mmr = record["mmr"]
             difference = rating - cls.BASELINE_RATING
             hidden_mmr = mmr + difference
-            record['adjusted_mmr'] = hidden_mmr
-
+            record["adjusted_mmr"] = hidden_mmr

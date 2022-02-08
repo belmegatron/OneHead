@@ -10,7 +10,6 @@ from onehead.stats import OneHeadStats
 
 
 class OneHeadBalance(commands.Cog):
-
     def __init__(self, database, pre_game, config):
 
         self.database = database
@@ -94,7 +93,11 @@ class OneHeadBalance(commands.Cog):
 
         profiles = self._get_profiles()
         if len(profiles) != 10:
-            raise OneHeadException("Error: Only {} profiles could be found in database.".format(len(profiles)))
+            raise OneHeadException(
+                "Error: Only {} profiles could be found in database.".format(
+                    len(profiles)
+                )
+            )
 
         if adjusted is False:
             mmr_field_name = "mmr"
@@ -103,28 +106,42 @@ class OneHeadBalance(commands.Cog):
             OneHeadStats.calculate_rating(profiles)
             OneHeadStats.calculate_adjusted_mmr(profiles)
 
-        all_5_man_lineups = list(itertools.combinations(profiles, 5))  # Calculate all possible 5 man lineups.
-        all_5v5_matchups = list(itertools.combinations(all_5_man_lineups, 2))  # Calculate all possible 5v5 matchups.
+        all_5_man_lineups = list(
+            itertools.combinations(profiles, 5)
+        )  # Calculate all possible 5 man lineups.
+        all_5v5_matchups = list(
+            itertools.combinations(all_5_man_lineups, 2)
+        )  # Calculate all possible 5v5 matchups.
 
         unique_combinations = self._calculate_unique_team_combinations(
-            all_5v5_matchups)  # Calculate all valid 5v5 matchups where players are unique to either Team 1 or Team 2.
+            all_5v5_matchups
+        )  # Calculate all valid 5v5 matchups where players are unique to either Team 1 or Team 2.
 
         if not unique_combinations:
-            raise OneHeadException("Error: No valid matchups could be calculated. Possible Duplicate Player Name.")
+            raise OneHeadException(
+                "Error: No valid matchups could be calculated. Possible Duplicate Player Name."
+            )
 
-        rating_differences = self._calculate_rating_differences(unique_combinations,
-                                                                mmr_field_name)  # Calculate the net rating difference between each 5v5 matchup.
+        rating_differences = self._calculate_rating_differences(
+            unique_combinations, mmr_field_name
+        )  # Calculate the net rating difference between each 5v5 matchup.
 
         rating_differences_mapping = dict(
-            enumerate(rating_differences, start=0))  # Map the net rating differences to a key.
-        rating_differences_mapping = {k: v for k, v in
-                                      sorted(rating_differences_mapping.items(), key=lambda item: item[
-                                          1])}  # Sort by ascending net rating difference.
+            enumerate(rating_differences, start=0)
+        )  # Map the net rating differences to a key.
+        rating_differences_mapping = {
+            k: v
+            for k, v in sorted(
+                rating_differences_mapping.items(), key=lambda item: item[1]
+            )
+        }  # Sort by ascending net rating difference.
 
         indices = list(rating_differences_mapping.keys())[
-                  :10]  # Obtain the indices for the top 10 closest net rating matchups.
+            :10
+        ]  # Obtain the indices for the top 10 closest net rating matchups.
         balanced_teams = unique_combinations[
-            random.choice(indices)]  # Pick a random matchup from the top 10 closest net rating matchups.
+            random.choice(indices)
+        ]  # Pick a random matchup from the top 10 closest net rating matchups.
 
         return balanced_teams
 
@@ -140,7 +157,9 @@ class OneHeadBalance(commands.Cog):
         signup_count = len(self.pre_game.signups)
         await ctx.send("Balancing teams...")
         if signup_count != 10:
-            err = "Only {} Signups, require {} more.".format(signup_count, 10 - signup_count)
+            err = "Only {} Signups, require {} more.".format(
+                signup_count, 10 - signup_count
+            )
             await ctx.send(err)
             raise OneHeadException(err)
 
@@ -149,7 +168,7 @@ class OneHeadBalance(commands.Cog):
         return balanced_teams
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['mmr'])
+    @commands.command(aliases=["mmr"])
     async def show_internal_mmr(self, ctx):
         """
         Shows the internal MMR used for balancing teams.
@@ -159,14 +178,20 @@ class OneHeadBalance(commands.Cog):
         OneHeadStats.calculate_rating(scoreboard)
         OneHeadStats.calculate_adjusted_mmr(scoreboard)
 
-        ratings = [{"name": profile["name"], "base": profile["mmr"], "adjusted": profile["adjusted_mmr"]} for profile in scoreboard]
+        ratings = [
+            {
+                "name": profile["name"],
+                "base": profile["mmr"],
+                "adjusted": profile["adjusted_mmr"],
+            }
+            for profile in scoreboard
+        ]
         sorted_ratings = sorted(ratings, key=lambda k: k["adjusted"], reverse=True)
         sorted_ratings = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
         await ctx.send("**Internal MMR** ```\n{}```".format(sorted_ratings))
 
 
 class OneHeadCaptainsMode(commands.Cog):
-
     def __init__(self, database, pre_game):
 
         self.database = database
@@ -202,14 +227,16 @@ class OneHeadCaptainsMode(commands.Cog):
         sorted_votes = sorted(set(self.votes.values()), reverse=True)
 
         most_voted = {k: v for k, v in self.votes.items() if v == sorted_votes[0]}
-        second_most_voted = {k: v for k, v in self.votes.items() if v == sorted_votes[1]}
+        second_most_voted = {
+            k: v for k, v in self.votes.items() if v == sorted_votes[1]
+        }
 
         captain_1 = None
         captain_2 = None
 
         names = list(most_voted.keys())
         if len(most_voted) == 1:
-            captain_1, = names
+            (captain_1,) = names
         elif len(most_voted) == 2:
             captain_1, captain_2 = names
         else:
@@ -223,7 +250,7 @@ class OneHeadCaptainsMode(commands.Cog):
         if not captain_2:
             names = list(second_most_voted.keys())
             if len(second_most_voted) == 1:
-                captain_2, = names
+                (captain_2,) = names
             else:
                 captain_2 = random.choice(names)
 
@@ -243,18 +270,25 @@ class OneHeadCaptainsMode(commands.Cog):
         self.votes = {x: 0 for x in self.pre_game.signups}
         self.has_voted = {x: False for x in self.pre_game.signups}
 
-        await ctx.send("You have 30 seconds to nominate a captain. Type !nom <name> to nominate a captain.")
+        await ctx.send(
+            "You have 30 seconds to nominate a captain. Type !nom <name> to nominate a captain."
+        )
         await asyncio.sleep(30)
 
         self.nomination_phase_in_progress = False
         self.captain_1, self.captain_2 = self.calculate_top_nominations()
 
         nominations = [(k, v) for k, v in self.votes.items()]
-        nominations = tabulate(nominations, headers=["Name", "Votes"], tablefmt="simple")
+        nominations = tabulate(
+            nominations, headers=["Name", "Votes"], tablefmt="simple"
+        )
 
         await ctx.send("```{}```".format(nominations))
         await ctx.send(
-            "The nominations are in! Your selected captains are {} and {}.".format(self.captain_1, self.captain_2))
+            "The nominations are in! Your selected captains are {} and {}.".format(
+                self.captain_1, self.captain_2
+            )
+        )
 
     async def picking_phase(self, ctx):
         """
@@ -285,10 +319,13 @@ class OneHeadCaptainsMode(commands.Cog):
 
         captain_round_order = (
             self.captain_1,
-            self.captain_2, self.captain_2,
-            self.captain_1, self.captain_1,
-            self.captain_2, self.captain_2,
-            self.captain_1
+            self.captain_2,
+            self.captain_2,
+            self.captain_1,
+            self.captain_1,
+            self.captain_2,
+            self.captain_2,
+            self.captain_1,
         )
 
         while self.remaining_players:
@@ -300,7 +337,11 @@ class OneHeadCaptainsMode(commands.Cog):
                     self.captain_2_turn = True
                     self.captain_1_turn = False
                 await ctx.send("{}'s turn to pick.".format(captain))
-                await ctx.send("**Remaining Player Pool** : ```{}```".format(self.remaining_players))
+                await ctx.send(
+                    "**Remaining Player Pool** : ```{}```".format(
+                        self.remaining_players
+                    )
+                )
                 self.future = self.event_loop.create_future()
 
                 if round_number == 7:
@@ -308,18 +349,26 @@ class OneHeadCaptainsMode(commands.Cog):
                     self.team_1.append(last_player)
                     await ctx.send(
                         "{} has been automatically added to Team 2 as {} was the last remaining player.".format(
-                            last_player, last_player))
+                            last_player, last_player
+                        )
+                    )
                 else:
                     try:
                         await asyncio.wait_for(self.future, timeout=30)
                     except TimeoutError:
-                        idx = self.remaining_players.index(random.choice(self.remaining_players))
+                        idx = self.remaining_players.index(
+                            random.choice(self.remaining_players)
+                        )
                         pick = self.remaining_players.pop(idx)
                         if captain == self.captain_1:
                             self.team_1.append(pick)
                         else:
                             self.team_2.append(pick)
-                        await ctx.send("{} has randomed {} to join their team.".format(captain, pick))
+                        await ctx.send(
+                            "{} has randomed {} to join their team.".format(
+                                captain, pick
+                            )
+                        )
 
         self.pick_phase_in_progress = False
         self.captain_1_turn = False
@@ -339,7 +388,7 @@ class OneHeadCaptainsMode(commands.Cog):
         return t1, t2
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['nom'])
+    @commands.command(aliases=["nom"])
     async def nominate(self, ctx, nomination):
         """
         Nominate a player to become captain. This command can only be used during the nomination phase of a captain's mode game.
@@ -353,7 +402,11 @@ class OneHeadCaptainsMode(commands.Cog):
             return
 
         if name not in self.pre_game.signups:
-            await ctx.send("{} is not currently signed up and therefore cannot nominate.".format(name))
+            await ctx.send(
+                "{} is not currently signed up and therefore cannot nominate.".format(
+                    name
+                )
+            )
             return
 
         if self.has_voted[name] is False:
@@ -362,10 +415,15 @@ class OneHeadCaptainsMode(commands.Cog):
                 if record is not None:
                     self.votes[nomination] += 1
                     self.has_voted[name] = True
-                    await ctx.send("{} has nominated {} to be captain.".format(name, nomination))
+                    await ctx.send(
+                        "{} has nominated {} to be captain.".format(name, nomination)
+                    )
                 else:
                     await ctx.send(
-                        "{} is not currently signed up and therefore cannot be nominated.".format(nomination))
+                        "{} is not currently signed up and therefore cannot be nominated.".format(
+                            nomination
+                        )
+                    )
             else:
                 await ctx.send("{}, you cannot vote for yourself.".format(name))
         else:
@@ -384,7 +442,7 @@ class OneHeadCaptainsMode(commands.Cog):
             return False
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['p'])
+    @commands.command(aliases=["p"])
     async def pick(self, ctx, pick):
         """
         This command allows a captain to select a player to join their team during the pick phase of a captain's mode game.
@@ -400,17 +458,27 @@ class OneHeadCaptainsMode(commands.Cog):
         if name == self.captain_1:
             if self.captain_1_turn:
                 if await self.add_pick(ctx, pick, self.team_1):
-                    await ctx.send("{} has selected {} to join Team 1.".format(name, pick))
+                    await ctx.send(
+                        "{} has selected {} to join Team 1.".format(name, pick)
+                    )
             else:
-                await ctx.send("It is currently {}'s turn to pick.".format(self.captain_2))
+                await ctx.send(
+                    "It is currently {}'s turn to pick.".format(self.captain_2)
+                )
         elif name == self.captain_2:
             if self.captain_2_turn:
                 if await self.add_pick(ctx, pick, self.team_2):
-                    await ctx.send("{} has selected {} to join Team 2.".format(name, pick))
+                    await ctx.send(
+                        "{} has selected {} to join Team 2.".format(name, pick)
+                    )
             else:
-                await ctx.send("It is currently {}'s turn to pick.".format(self.captain_1))
+                await ctx.send(
+                    "It is currently {}'s turn to pick.".format(self.captain_1)
+                )
         else:
-            await ctx.send("{} is not a captain and therefore cannot pick.".format(name))
+            await ctx.send(
+                "{} is not a captain and therefore cannot pick.".format(name)
+            )
 
     def reset_state(self):
 

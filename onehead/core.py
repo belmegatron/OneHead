@@ -12,7 +12,7 @@ from onehead.mental_health import OneHeadMentalHealth
 
 
 def bot_factory():
-    bot = commands.Bot(command_prefix='!')
+    bot = commands.Bot(command_prefix="!")
     config = OneHeadCommon.load_config()
 
     database = OneHeadDB(config)
@@ -60,14 +60,15 @@ class OneHeadCore(commands.Cog):
         self.channels = bot.get_cog("OneHeadChannels")
         self.registration = bot.get_cog("OneHeadRegistration")
 
-        if None in (self.database,
-                    self.scoreboard,
-                    self.pre_game,
-                    self.team_balance,
-                    self.captains_mode,
-                    self.channels,
-                    self.registration
-                    ):
+        if None in (
+            self.database,
+            self.scoreboard,
+            self.pre_game,
+            self.team_balance,
+            self.captains_mode,
+            self.channels,
+            self.registration,
+        ):
             raise OneHeadException("Unable to find cog(s)")
 
     @commands.has_role("IHL Admin")
@@ -134,7 +135,9 @@ class OneHeadCore(commands.Cog):
         accepted_results = ["t1", "t2", "void"]
 
         if result not in accepted_results:
-            await ctx.send("Invalid Value - Must be either 't1' or 't2' or 'void' if appropriate.")
+            await ctx.send(
+                "Invalid Value - Must be either 't1' or 't2' or 'void' if appropriate."
+            )
             return
 
         await ctx.send("Updating Scores...")
@@ -159,7 +162,7 @@ class OneHeadCore(commands.Cog):
         self._reset_state()
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['stat'])
+    @commands.command(aliases=["stat"])
     async def status(self, ctx):
         """
         If a game is active, displays the teams and their respective players.
@@ -174,7 +177,7 @@ class OneHeadCore(commands.Cog):
             await ctx.send("No currently active game.")
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['v'])
+    @commands.command(aliases=["v"])
     async def version(self, ctx):
         """
         Displays the current version of OneHead.
@@ -184,7 +187,7 @@ class OneHeadCore(commands.Cog):
         await ctx.send("**Changelog** - {}".format(__changelog__))
 
     @commands.has_role("IHL Admin")
-    @commands.command(aliases=['rs'])
+    @commands.command(aliases=["rs"])
     async def reset(self, ctx):
         """
         Resets the current bot state.

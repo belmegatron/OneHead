@@ -6,7 +6,6 @@ from discord.ext import commands
 class OneHeadMentalHealth(commands.Cog):
 
     quotes = [
-
         """'It's not whether you get knocked down; it's whether you get up.' — Vince Lombardi""",
         """'The only way to prove that you’re a good sport is to lose.' - Ernie Banks""",
         """'When you’re riding, only the race in which you’re riding is important.' - Bill Shoemaker""",
@@ -112,12 +111,11 @@ class OneHeadMentalHealth(commands.Cog):
         """'Gold medals aren’t really made of gold. They’re made of sweat, determination, and a hard-to-find alloy called guts.' - Dan Gable""",
         """'I’ve missed more than 9,000 shots in my career. I’ve lost almost 300 games. 26 times, I’ve been trusted to take the game winning shot and missed. I’ve failed over and over and over again in my life. And that is why I succeed.' - Michael Jordan""",
         """'It’s not whether you get knocked down; it’s whether you get up.' - Vince Lombardi""",
-        """'Push mid and end.' - James Peckham"""
-
+        """'Push mid and end.' - James Peckham""",
     ]
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['mh'])
+    @commands.command(aliases=["mh"])
     async def mental_health(self, ctx, name):
         """
         Provides mental health to the target player.

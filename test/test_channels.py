@@ -1,5 +1,5 @@
 from unittest import TestCase
-from mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch, call
 import asyncio
 
 from onehead.channels import OneHeadChannels
