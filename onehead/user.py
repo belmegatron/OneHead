@@ -8,13 +8,12 @@ from onehead.common import OneHeadException
 
 
 class OneHeadRegistration(commands.Cog):
-
     def __init__(self, database):
 
         self.database = database
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['reg'])
+    @commands.command(aliases=["reg"])
     async def register(self, ctx, mmr):
         """
         Register yourself to the IHL by typing !register <your mmr>.
@@ -34,7 +33,7 @@ class OneHeadRegistration(commands.Cog):
             await ctx.send("{} is already registered.".format(name))
 
     @commands.has_role("IHL Admin")
-    @commands.command(aliases=['dereg'])
+    @commands.command(aliases=["dereg"])
     async def deregister(self, ctx, name):
         """
         Removes a player from the internal IHL database.
@@ -48,7 +47,6 @@ class OneHeadRegistration(commands.Cog):
 
 
 class OneHeadPreGame(commands.Cog):
-
     def __init__(self, database):
 
         self.database = database
@@ -80,9 +78,17 @@ class OneHeadPreGame(commands.Cog):
             if signup_count == 0:
                 await ctx.send("There are currently no signups.")
             elif signup_count == 1:
-                await ctx.send("Only {} Signup, require {} more.".format(signup_count, 10 - signup_count))
+                await ctx.send(
+                    "Only {} Signup, require {} more.".format(
+                        signup_count, 10 - signup_count
+                    )
+                )
             else:
-                await ctx.send("Only {} Signups, require {} more.".format(signup_count, 10 - signup_count))
+                await ctx.send(
+                    "Only {} Signups, require {} more.".format(
+                        signup_count, 10 - signup_count
+                    )
+                )
         else:
             signup_threshold_met = True
 
@@ -101,8 +107,11 @@ class OneHeadPreGame(commands.Cog):
             return
 
         benched_players = []
-        await ctx.send("{} Players have signed up and therefore {} players will be benched.".format(number_of_signups,
-                                                                                                    number_of_signups - 10))
+        await ctx.send(
+            "{} Players have signed up and therefore {} players will be benched.".format(
+                number_of_signups, number_of_signups - 10
+            )
+        )
         while len(self.signups) > 10:
             idx = self.signups.index(random.choice(self.signups))
             random_selection = self.signups.pop(idx)
@@ -118,14 +127,18 @@ class OneHeadPreGame(commands.Cog):
         Shows all players currently signed up to play in the IHL.
         """
 
-        await ctx.send("There are currently {} players signed up.".format(len(self.signups)))
-        signups_dict = [{"#": i + 1, "name": name} for i, name in enumerate(self.signups)]
+        await ctx.send(
+            "There are currently {} players signed up.".format(len(self.signups))
+        )
+        signups_dict = [
+            {"#": i + 1, "name": name} for i, name in enumerate(self.signups)
+        ]
         signups = tabulate(signups_dict, headers="keys", tablefmt="simple")
 
         await ctx.send("**Current Signups** ```\n{}```".format(signups))
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['su'])
+    @commands.command(aliases=["su"])
     async def signup(self, ctx):
         """
         Signup to join a game in the IHL.
@@ -144,20 +157,22 @@ class OneHeadPreGame(commands.Cog):
         await commands.Command.invoke(self.who, ctx)
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['so'])
+    @commands.command(aliases=["so"])
     async def signout(self, ctx):
         """
         Remove yourself from the current pool of signed up players.
         """
         if ctx.author.display_name not in self.signups:
-            await ctx.send("{} is not currently signed up.".format(ctx.author.display_name))
+            await ctx.send(
+                "{} is not currently signed up.".format(ctx.author.display_name)
+            )
         else:
             self.signups.remove(ctx.author.display_name)
 
         await commands.Command.invoke(self.who, ctx)
 
     @commands.has_role("IHL Admin")
-    @commands.command(aliases=['rm'])
+    @commands.command(aliases=["rm"])
     async def remove(self, ctx, name):
         """
         Remove a player who is currently signed up.
@@ -171,7 +186,7 @@ class OneHeadPreGame(commands.Cog):
         await ctx.send("{} has been removed from the signup pool.".format(name))
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['r'])
+    @commands.command(aliases=["r"])
     async def ready(self, ctx):
         """
         Use this command in response to a ready check.
@@ -190,21 +205,29 @@ class OneHeadPreGame(commands.Cog):
         await ctx.send("{} is ready.".format(name))
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['rc'])
+    @commands.command(aliases=["rc"])
     async def ready_check(self, ctx):
         """
         Initiates a ready check, after approx. 30s the result of the check will be displayed.
         """
         if await self.signup_check(ctx):
-            await ctx.send("Ready Check Started, 30s remaining - type '!ready' to ready up.")
+            await ctx.send(
+                "Ready Check Started, 30s remaining - type '!ready' to ready up."
+            )
             self.ready_check_in_progress = True
             await sleep(30)
             players_ready_count = len(self.players_ready)
-            players_not_ready = " ,".join([x for x in self.signups if x not in self.players_ready])
+            players_not_ready = " ,".join(
+                [x for x in self.signups if x not in self.players_ready]
+            )
             if players_ready_count == 10:
                 await ctx.send("Ready Check Complete - All players ready.")
             else:
-                await ctx.send("Still waiting on {} players: {}".format(10 - players_ready_count, players_not_ready))
+                await ctx.send(
+                    "Still waiting on {} players: {}".format(
+                        10 - players_ready_count, players_not_ready
+                    )
+                )
 
         self.ready_check_in_progress = False
         self.players_ready = []

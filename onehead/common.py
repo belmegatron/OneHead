@@ -23,8 +23,8 @@ class OneHeadCommon(object):
         :type: tuple of lists, each list item is a str referring to a player name.
         """
 
-        t1_names = [x['name'] for x in t1]
-        t2_names = [x['name'] for x in t2]
+        t1_names = [x["name"] for x in t1]
+        t2_names = [x["name"] for x in t2]
 
         return t1_names, t2_names
 
@@ -38,4 +38,3 @@ class OneHeadCommon(object):
             raise OneHeadException("{}".format(e))
 
         return config
-

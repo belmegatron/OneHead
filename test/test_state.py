@@ -1,8 +1,6 @@
 from unittest import TestCase
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 import asyncio
-
-from discord.ext import commands
 
 from onehead.core import bot_factory
 

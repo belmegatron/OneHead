@@ -6,13 +6,12 @@ from onehead.stats import OneHeadStats
 
 
 class OneHeadScoreBoard(commands.Cog):
-
     def __init__(self, database):
 
         self.db = database
 
     @commands.has_role("IHL")
-    @commands.command(aliases=['sb'])
+    @commands.command(aliases=["sb"])
     async def scoreboard(self, ctx):
         """
         Shows the current rankings for the IGC IHL Leaderboard.
@@ -90,7 +89,8 @@ class OneHeadScoreBoard(commands.Cog):
         OneHeadStats.calculate_rating(scoreboard)
         sorted_scoreboard = self._calculate_positions(scoreboard, "rating")
         sorted_scoreboard = self._sort_scoreboard_key_order(sorted_scoreboard)
-        sorted_scoreboard = tabulate(sorted_scoreboard, headers="keys", tablefmt="simple")
+        sorted_scoreboard = tabulate(
+            sorted_scoreboard, headers="keys", tablefmt="simple"
+        )
 
         return sorted_scoreboard
-

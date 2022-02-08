@@ -14,6 +14,6 @@ setup(
     author='Richard Belmega',
     author_email='richardbelmega@gmail.com',
     description='OneHead',
-    python_requires='>=3.8',
+    python_requires='>=3.10',
     install_requires=install_requires,
 )

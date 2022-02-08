@@ -1,5 +1,5 @@
 from unittest import TestCase
-from mock import MagicMock, call
+from unittest.mock import MagicMock, call
 import asyncio
 
 from onehead.user import OneHeadPreGame
