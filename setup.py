@@ -11,8 +11,6 @@ setup(
     packages=['OneHead'],
     url='https://github.com/belmegatron/OneHead/',
     license='',
-    author='Richard Belmega',
-    author_email='richardbelmega@gmail.com',
     description='OneHead',
     python_requires='>=3.10',
     install_requires=install_requires,
