@@ -8,6 +8,9 @@ from tabulate import tabulate
 from onehead.common import OneHeadException
 from onehead.stats import OneHeadStats
 
+Team = tuple[dict, dict, dict, dict, dict]
+TeamCombination = tuple[Team, Team]
+
 
 class OneHeadBalance(commands.Cog):
     def __init__(self, database, pre_game, config):
@@ -16,11 +19,11 @@ class OneHeadBalance(commands.Cog):
         self.pre_game = pre_game
         self.is_adjusted = config["rating"]["is_adjusted"]
 
-    def _get_profiles(self):
+    def _get_profiles(self) -> list[dict]:
         """
-        Obtains player profiles for all player names contained within self.pre_game.signups.
+        Obtains player profiles for all players that have signed up to play.
 
-        :return: A list of dicts, each dict corresponds to a player profile.
+        :return: Player profiles for all signed up players.
         """
 
         profiles = []
@@ -32,25 +35,21 @@ class OneHeadBalance(commands.Cog):
         return profiles
 
     @staticmethod
-    def _calculate_unique_team_combinations(all_matchups):
+    def _calculate_unique_team_combinations(all_matchups: list[TeamCombination]) -> list[TeamCombination]:
         """
         Calculates all 5v5 combinations, where the players on each team are unique to that particular team.
 
         :param all_matchups: All possible 5v5 combinations, including combinations with the same player on each team.
-        :type all_matchups: List of tuples, each tuple contains 2 tuples corresponding to each 5 man lineup.
-                            Each tuple contains 5 dicts where each dict contains player data, e.g. name, mmr, win, etc.
-        :return: List of tuples, each tuple containing 2 tuples corresponding to each unique 5 man lineup.
-                 Each tuple contains 5 unique dicts. These dicts are unique to this team and cannot be present in the
-                 other team.
+
+        :return: Unique team combinations.
         """
 
         unique_combinations = []
 
         for matchup in all_matchups:
-            matchup_1, matchup_2 = matchup
             shared_players = False
-            for player in matchup_1:
-                if player in matchup_2:
+            for player in matchup[0]:
+                if player in matchup[1]:
                     shared_players = True
                     break
             if shared_players is False:
@@ -59,15 +58,13 @@ class OneHeadBalance(commands.Cog):
         return unique_combinations
 
     @staticmethod
-    def _calculate_rating_differences(all_unique_combinations, rating_field):
+    def _calculate_rating_differences(all_unique_combinations: list, rating_field: str) -> list[int]:
         """
         Calculates the net rating difference for each unique combination of teams based on a particular rating field.
 
         :param all_unique_combinations: All 5v5 unique combinations.
-        :type all_unique_combinations: List of tuples, each tuple contains 2 tuples, each tuple contains 5 dicts.
         :param rating_field: Specifies which field in the player profile to use for calculating net rating difference.
-        :type rating_field: str
-        :return: List of int's
+        :return: Rating differences.
         """
 
         rating_differences = []
@@ -83,20 +80,18 @@ class OneHeadBalance(commands.Cog):
 
     def _calculate_balance(self, adjusted=False):
         """
-        Returns a matchup of two, five-man teams that are evenly(or as close to evenly) matched based on
+        Returns a matchup of two, five-man teams that are evenly (or as close to evenly) matched based on
         a rating value associated with each player.
 
         :param adjusted: Specifies whether to use the 'adjusted_mmr' field to balance or just the 'mmr' field.
-        :type adjusted: bool
         :return: A tuple of 2 tuples, each tuple contains 5 dicts corresponding to each player profile.
         """
 
         profiles = self._get_profiles()
-        if len(profiles) != 10:
+        profile_count = len(profiles)
+        if profile_count != 10:
             raise OneHeadException(
-                "Error: Only {} profiles could be found in database.".format(
-                    len(profiles)
-                )
+                f"Error: Only {profile_count} profiles could be found in database."
             )
 
         if adjusted is False:
@@ -137,21 +132,20 @@ class OneHeadBalance(commands.Cog):
         }  # Sort by ascending net rating difference.
 
         indices = list(rating_differences_mapping.keys())[
-            :10
-        ]  # Obtain the indices for the top 10 closest net rating matchups.
+                  :10
+                  ]  # Obtain the indices for the top 10 closest net rating matchups.
         balanced_teams = unique_combinations[
             random.choice(indices)
         ]  # Pick a random matchup from the top 10 closest net rating matchups.
 
         return balanced_teams
 
-    async def balance(self, ctx):
+    async def balance(self, ctx) -> tuple[Team, Team]:
         """
-        Returns two balanced 5 man teams from 10 players in the signup pool.
+        Returns two balanced 5-man teams from 10 players in the signup pool.
 
         :param ctx: Discord context.
-        :return: A tuple of 2 tuples, each tuple corresponds to a unique 5 man team and contains 5 dicts corresponding
-                 to each player's profile.
+        :return: Balanced teams.
         """
 
         signup_count = len(self.pre_game.signups)
