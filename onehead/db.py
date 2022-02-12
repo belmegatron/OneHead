@@ -99,7 +99,7 @@ class OneHeadDB(commands.Cog):
             player = json.loads(player)
             return player
 
-    def retrieve_table(self) -> dict:
+    def retrieve_table(self) -> list[dict]:
 
         try:
             response = self.db.scan()
