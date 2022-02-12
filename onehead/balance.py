@@ -1,8 +1,7 @@
-from typing import TYPE_CHECKING
-
-import itertools
 import asyncio
+import itertools
 import random
+from typing import TYPE_CHECKING
 
 from discord.ext import commands
 from tabulate import tabulate

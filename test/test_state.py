@@ -1,6 +1,6 @@
+import asyncio
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
-import asyncio
 
 from onehead.core import bot_factory
 

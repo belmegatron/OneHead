@@ -1,7 +1,7 @@
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
-from onehead.common import OneHeadException, OneHeadCommon
+from onehead.common import OneHeadCommon, OneHeadException
 
 
 class OneHeadChannels(commands.Cog):

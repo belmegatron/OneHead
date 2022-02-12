@@ -1,5 +1,5 @@
-from tabulate import tabulate
 from discord.ext import commands
+from tabulate import tabulate
 
 from onehead.common import OneHeadException
 from onehead.stats import OneHeadStats

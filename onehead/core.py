@@ -1,14 +1,14 @@
 from discord.ext import commands
 from tabulate import tabulate
+from version import __changelog__, __version__
 
-from version import __version__, __changelog__
 from onehead.balance import OneHeadBalance, OneHeadCaptainsMode
-from onehead.scoreboard import OneHeadScoreBoard
-from onehead.db import OneHeadDB
-from onehead.common import OneHeadCommon, OneHeadException
 from onehead.channels import OneHeadChannels
-from onehead.user import OneHeadPreGame, OneHeadRegistration
+from onehead.common import OneHeadCommon, OneHeadException
+from onehead.db import OneHeadDB
 from onehead.mental_health import OneHeadMentalHealth
+from onehead.scoreboard import OneHeadScoreBoard
+from onehead.user import OneHeadPreGame, OneHeadRegistration
 
 
 def bot_factory() -> commands.Bot:

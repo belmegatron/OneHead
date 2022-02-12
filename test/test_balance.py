@@ -1,11 +1,11 @@
+import asyncio
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
-import asyncio
 
 from onehead.balance import OneHeadBalance, OneHeadCaptainsMode
+from onehead.common import OneHeadException
 from onehead.db import OneHeadDB
 from onehead.user import OneHeadPreGame
-from onehead.common import OneHeadException
 
 
 class OneHeadAsyncTest(object):

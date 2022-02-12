@@ -1,6 +1,6 @@
+import asyncio
 from unittest import TestCase
 from unittest.mock import MagicMock, call
-import asyncio
 
 from onehead.user import OneHeadPreGame
 

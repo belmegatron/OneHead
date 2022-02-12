@@ -1,6 +1,6 @@
-from typing import TYPE_CHECKING
 import random
 from asyncio import sleep
+from typing import TYPE_CHECKING
 
 from discord.ext import commands
 from tabulate import tabulate

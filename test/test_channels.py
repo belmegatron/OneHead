@@ -1,6 +1,6 @@
-from unittest import TestCase
-from unittest.mock import MagicMock, patch, call
 import asyncio
+from unittest import TestCase
+from unittest.mock import MagicMock, call, patch
 
 from onehead.channels import OneHeadChannels
 from onehead.common import OneHeadException
