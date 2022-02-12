@@ -159,7 +159,6 @@ class OneHeadBalance(commands.Cog):
         if signup_count != 10:
             err = f"Only {signup_count} Signups, require {10 - signup_count} more."
             await ctx.send(err)
-            raise OneHeadException(err)
 
         balanced_teams = self._calculate_balance(adjusted=self.is_adjusted)
 
