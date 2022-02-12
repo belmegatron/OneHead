@@ -20,7 +20,7 @@ class DecimalEncoder(json.JSONEncoder):
 
 
 class OneHeadDB(commands.Cog):
-    def __init__(self, config):
+    def __init__(self, config: dict):
 
         dynamo_config_settings = config["aws"]["dynamodb"]
         self.dynamo = boto3.resource(
@@ -28,19 +28,19 @@ class OneHeadDB(commands.Cog):
         )
         self.db = self.dynamo.Table(dynamo_config_settings["tables"]["dota"])
 
-    def player_exists(self, player_name):
+    def player_exists(self, player_name: str) -> bool:
 
         try:
             response = self.db.get_item(Key={"name": player_name})
         except ClientError as e:
-            print(e)
+            raise OneHeadException(e)
         else:
             if response.get("Item"):
                 return True
             else:
                 return False
 
-    def add_player(self, player_name, mmr):
+    def add_player(self, player_name: str, mmr: str):
 
         if not isinstance(player_name, str):
             raise OneHeadException("Player Name not a valid string.")
@@ -50,7 +50,7 @@ class OneHeadDB(commands.Cog):
                 Item={"name": player_name, "win": 0, "loss": 0, "mmr": int(mmr)}
             )
 
-    def remove_player(self, player_name):
+    def remove_player(self, player_name: str):
 
         if not isinstance(player_name, str):
             raise OneHeadException("Player name not a valid string.")
@@ -59,14 +59,9 @@ class OneHeadDB(commands.Cog):
             try:
                 self.db.delete_item(Key={"name": player_name})
             except ClientError as e:
-                if e.response["Error"]["Code"] == "ConditionalCheckFailedException":
-                    print(e.response["Error"]["Message"])
-                else:
-                    raise
-            else:
-                print("{} has been deleted.".format(player_name))
+                raise OneHeadException(e)
 
-    def update_player(self, player_name, win):
+    def update_player(self, player_name: str, win: bool):
 
         if not isinstance(win, bool):
             raise OneHeadException("Win parameter must be a valid bool.")
@@ -75,7 +70,7 @@ class OneHeadDB(commands.Cog):
             raise OneHeadException("Player Name not a valid string.")
 
         if self.player_exists(player_name) is False:
-            raise OneHeadException("{} cannot be found.".format(player_name))
+            raise OneHeadException(f"{player_name} cannot be found.")
 
         if win:
             self.db.update_item(
@@ -92,24 +87,24 @@ class OneHeadDB(commands.Cog):
                 ReturnValues="UPDATED_NEW",
             )
 
-    def lookup_player(self, player_name):
+    def lookup_player(self, player_name: str) -> dict:
 
         try:
             response = self.db.get_item(Key={"name": player_name})
         except ClientError as e:
-            print(e)
+            raise OneHeadException(e)
         else:
             item = response.get("Item")
             player = json.dumps(item, indent=4, cls=DecimalEncoder)
             player = json.loads(player)
             return player
 
-    def retrieve_table(self):
+    def retrieve_table(self) -> dict:
 
         try:
             response = self.db.scan()
         except ClientError as e:
-            print(e)
+            raise OneHeadException(e)
         else:
             table = response.get("Items")
             table = json.dumps(table, indent=4, cls=DecimalEncoder)

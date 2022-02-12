@@ -116,10 +116,10 @@ class OneHeadMentalHealth(commands.Cog):
 
     @commands.has_role("IHL")
     @commands.command(aliases=["mh"])
-    async def mental_health(self, ctx, name):
+    async def mental_health(self, ctx: commands.Context, name: str):
         """
         Provides mental health to the target player.
         """
 
         quote = random.choice(self.quotes)
-        await ctx.send("**{}**\n {}".format(name, quote))
+        await ctx.send(f"**{name}**\n {quote}")

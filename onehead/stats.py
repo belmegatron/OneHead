@@ -3,12 +3,11 @@ class OneHeadStats(object):
     BASELINE_RATING = 1500
 
     @staticmethod
-    def calculate_win_percentage(profiles):
+    def calculate_win_percentage(profiles: list[dict]):
         """
         Calculates the win percentage for each profile in profiles.
 
-        :param profiles: list of player profiles.
-        :type profiles: list of dicts.
+        :param profiles: List of player profiles.
         """
 
         for record in profiles:
@@ -20,12 +19,11 @@ class OneHeadStats(object):
                 )
 
     @classmethod
-    def calculate_rating(cls, profiles):
+    def calculate_rating(cls, profiles: list[dict]):
         """
         Calculates the IHL rating for each profile in profiles.
 
-        :param profiles: list of player profiles.
-        :type profiles: list of dicts.
+        :param profiles: List of player profiles.
         """
 
         for record in profiles:
@@ -34,7 +32,7 @@ class OneHeadStats(object):
             record["rating"] = cls.BASELINE_RATING + win_modifier - loss_modifier
 
     @classmethod
-    def calculate_adjusted_mmr(cls, profiles):
+    def calculate_adjusted_mmr(cls, profiles: list[dict]):
         """
         Calculates an adjusted mmr to aid balancing. It adds the difference between baseline rating and your IHL
         rating to your MMR that was added when the player registered.

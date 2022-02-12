@@ -11,7 +11,13 @@ from onehead.user import OneHeadPreGame, OneHeadRegistration
 from onehead.mental_health import OneHeadMentalHealth
 
 
-def bot_factory():
+def bot_factory() -> commands.Bot:
+    """
+    Factory method for generating an instance of our Bot.
+
+    :return: OneHead Bot
+    """
+
     bot = commands.Bot(command_prefix="!")
     config = OneHeadCommon.load_config()
 
@@ -42,7 +48,7 @@ def bot_factory():
 
 
 class OneHeadCore(commands.Cog):
-    def __init__(self, bot, token):
+    def __init__(self, bot: commands.Bot, token: str):
 
         self.game_in_progress = False
         self.t1 = []
@@ -73,9 +79,9 @@ class OneHeadCore(commands.Cog):
 
     @commands.has_role("IHL Admin")
     @commands.command()
-    async def start(self, ctx, mode="rating"):
+    async def start(self, ctx: commands.Context, captains_mode=False):
         """
-        Starts an IHL game. Can optionally select 'cm' mode to start a Captains mode game. This can be done by passing
+        Starts an IHL game. Can optionally select 'cm' mode to start a Captain's mode game. This can be done by passing
         the game type after the start command e.g. !start cm.
         """
 
@@ -89,15 +95,13 @@ class OneHeadCore(commands.Cog):
 
         await self.pre_game.handle_signups(ctx)
 
-        if mode == "rating":
+        if captains_mode is False:
             balanced_teams = await self.team_balance.balance(ctx)
             self.t1, self.t2 = balanced_teams
-        elif mode == "cm":
+        else:
             await self.captains_mode.nomination_phase(ctx)
             t1, t2 = await self.captains_mode.picking_phase(ctx)
             self.t1, self.t2 = t1, t2
-        else:
-            raise OneHeadException("{} mode is not currently supported.".format(mode))
 
         self.game_in_progress = True
         status = self.bot.get_command("status")
@@ -109,7 +113,7 @@ class OneHeadCore(commands.Cog):
 
     @commands.has_role("IHL Admin")
     @commands.command()
-    async def stop(self, ctx):
+    async def stop(self, ctx: commands.Context):
         """
         Cancels an IHL game. Can alternatively void a result using the !result command.
         """
@@ -136,7 +140,7 @@ class OneHeadCore(commands.Cog):
 
         if result not in accepted_results:
             await ctx.send(
-                "Invalid Value - Must be either 't1' or 't2' or 'void' if appropriate."
+                "Invalid Value - Must be either 't1' or 't2' or 'void'."
             )
             return
 
@@ -172,7 +176,7 @@ class OneHeadCore(commands.Cog):
             t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)
             players = {"Team 1": t1_names, "Team 2": t2_names}
             in_game_players = tabulate(players, headers="keys", tablefmt="simple")
-            await ctx.send("**Current Game** ```\n{}```".format(in_game_players))
+            await ctx.send(f"**Current Game** ```\n{in_game_players}```")
         else:
             await ctx.send("No currently active game.")
 
@@ -183,8 +187,8 @@ class OneHeadCore(commands.Cog):
         Displays the current version of OneHead.
         """
 
-        await ctx.send("**Current Version** - {}".format(__version__))
-        await ctx.send("**Changelog** - {}".format(__changelog__))
+        await ctx.send(f"**Current Version** - {__version__}")
+        await ctx.send(f"**Changelog** - {__changelog__}")
 
     @commands.has_role("IHL Admin")
     @commands.command(aliases=["rs"])
