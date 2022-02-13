@@ -426,7 +426,7 @@ class OneHeadCaptainsMode(commands.Cog):
         return False
 
     @commands.has_role("IHL")
-    @commands.command(aliases=["p"])
+    @commands.command()
     async def pick(self, ctx: commands.Context, pick: str):
         """
         This command allows a captain to select a player to join their team during the pick phase of a captain's mode game.

@@ -127,7 +127,7 @@ class OneHeadCore(commands.Cog):
 
     @commands.has_role("IHL Admin")
     @commands.command()
-    async def result(self, ctx, result):
+    async def result(self, ctx: commands.Context, result: str):
         """
         Provide the result of game that has finished. Can pass 'void' if the match did not correctly terminate.
         """
@@ -166,8 +166,8 @@ class OneHeadCore(commands.Cog):
         self._reset_state()
 
     @commands.has_role("IHL")
-    @commands.command(aliases=["stat"])
-    async def status(self, ctx):
+    @commands.command()
+    async def status(self, ctx: commands.Context):
         """
         If a game is active, displays the teams and their respective players.
         """
@@ -181,8 +181,8 @@ class OneHeadCore(commands.Cog):
             await ctx.send("No currently active game.")
 
     @commands.has_role("IHL")
-    @commands.command(aliases=["v"])
-    async def version(self, ctx):
+    @commands.command()
+    async def version(self, ctx: commands.Context):
         """
         Displays the current version of OneHead.
         """
@@ -191,8 +191,8 @@ class OneHeadCore(commands.Cog):
         await ctx.send(f"**Changelog** - {__changelog__}")
 
     @commands.has_role("IHL Admin")
-    @commands.command(aliases=["rs"])
-    async def reset(self, ctx):
+    @commands.command()
+    async def reset(self, ctx: commands.Context):
         """
         Resets the current bot state.
         """
