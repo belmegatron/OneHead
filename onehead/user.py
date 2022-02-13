@@ -54,8 +54,8 @@ class OneHeadPreGame(commands.Cog):
     def __init__(self, database: "OneHeadDB"):
 
         self.database = database
-        self.signups = []
-        self.players_ready = []
+        self.signups = []  # type: list[str]
+        self.players_ready = []  # type: list[str]
         self.ready_check_in_progress = False
 
     @commands.has_role("IHL Admin")

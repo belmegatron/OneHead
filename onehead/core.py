@@ -51,8 +51,8 @@ class OneHeadCore(commands.Cog):
     def __init__(self, bot: commands.Bot, token: str):
 
         self.game_in_progress = False
-        self.t1 = []
-        self.t2 = []
+        self.t1 = []    # type: list[dict]
+        self.t2 = []    # type: list[dict]
 
         self.bot = bot
         self.token = token
@@ -199,6 +199,13 @@ class OneHeadCore(commands.Cog):
 
         self._reset_state()
         await ctx.send("Reset state.")
+
+    @commands.command()
+    async def matches(self, ctx: commands.Context):
+        """
+        Display the top 10 most recent matches in the IHL.
+        """
+        await ctx.send("https://www.dotabuff.com/esports/leagues/13630-igc-inhouse-league")
 
     def _reset_state(self):
         """

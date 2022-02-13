@@ -81,10 +81,11 @@ class OneHeadScoreBoard(commands.Cog):
 
         OneHeadStats.calculate_win_percentage(scoreboard)
         OneHeadStats.calculate_rating(scoreboard)
-        sorted_scoreboard = self._calculate_positions(scoreboard, "rating")
-        sorted_scoreboard = self._sort_scoreboard_key_order(sorted_scoreboard)
+
+        scoreboard_sorted_rows = self._calculate_positions(scoreboard, "rating")
+        scoreboard_sorted_rows_and_columns = self._sort_scoreboard_key_order(scoreboard_sorted_rows)
         sorted_scoreboard = tabulate(
-            sorted_scoreboard, headers="keys", tablefmt="simple"
+            scoreboard_sorted_rows_and_columns, headers="keys", tablefmt="simple"
         )
 
         return sorted_scoreboard

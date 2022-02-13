@@ -13,11 +13,11 @@ class OneHeadChannels(commands.Cog):
         ]
         self.lobby_name = channel_config_settings["lobby"]
 
-        self.ihl_discord_channels = []
-        self.t1 = []
-        self.t2 = []
-        self.t1_discord_members = []
-        self.t2_discord_members = []
+        self.ihl_discord_channels = []  # type: list[discord.channel.VoiceChannel]
+        self.t1 = []    # type: list[dict]
+        self.t2 = []    # type: list[dict]
+        self.t1_discord_members = []    # type: list[discord.member]
+        self.t2_discord_members = []    # type: list[discord.member]
 
     def set_teams(self, t1: list, t2: list):
         """
@@ -57,7 +57,7 @@ class OneHeadChannels(commands.Cog):
 
         expected_ihl_channels = [
             x.name for x in ctx.guild.voice_channels if x.name in self.channel_names
-        ]   # type: list[str]
+        ]  # type: list[str]
 
         for channel in self.channel_names:
             if channel not in expected_ihl_channels:
@@ -66,7 +66,7 @@ class OneHeadChannels(commands.Cog):
 
         self.ihl_discord_channels = [
             x for x in ctx.guild.voice_channels if x.name in self.channel_names
-        ]  # List of Discord Voice Channel Objects
+        ]
 
     async def move_back_to_lobby(self, ctx: commands.Context):
         """
@@ -96,7 +96,7 @@ class OneHeadChannels(commands.Cog):
 
     async def move_discord_channels(self, ctx: commands.Context):
         """
-        Move players to IHL Team Channels.
+        Move players to IHL Team sChannels.
 
         :param ctx: Discord Context
         """

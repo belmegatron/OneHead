@@ -184,8 +184,8 @@ class OneHeadBalance(commands.Cog):
             for profile in scoreboard
         ]
         sorted_ratings = sorted(ratings, key=lambda k: k["adjusted"], reverse=True)
-        sorted_ratings = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
-        await ctx.send(f"**Internal MMR** ```\n{sorted_ratings}```")
+        tabulated_ratings = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
+        await ctx.send(f"**Internal MMR** ```\n{tabulated_ratings}```")
 
 
 class OneHeadCaptainsMode(commands.Cog):
@@ -194,14 +194,14 @@ class OneHeadCaptainsMode(commands.Cog):
         self.database = database
         self.pre_game = pre_game
 
-        self.remaining_players = []
-        self.votes = {}
-        self.has_voted = {}
+        self.remaining_players = []  # type: list[str]
+        self.votes = {}  # type: dict[str, int]
+        self.has_voted = {}  # type: dict[str, bool]
 
-        self.captain_1 = None
-        self.captain_2 = None
-        self.team_1 = []
-        self.team_2 = []
+        self.captain_1 = ""
+        self.captain_2 = ""
+        self.team_1 = []  # type: list[str]
+        self.team_2 = []  # type: list[str]
 
         self.nomination_phase_in_progress = False
         self.pick_phase_in_progress = False
@@ -275,11 +275,11 @@ class OneHeadCaptainsMode(commands.Cog):
         self.captain_1, self.captain_2 = self.calculate_top_nominations()
 
         nominations = [(k, v) for k, v in self.votes.items()]
-        nominations = tabulate(
+        tabulated_nominations = tabulate(
             nominations, headers=["Name", "Votes"], tablefmt="simple"
         )
 
-        await ctx.send(f"```{nominations}```")
+        await ctx.send(f"```{tabulated_nominations}```")
         await ctx.send(
             f"The nominations are in! Your selected captains are {self.captain_1} and {self.captain_2}."
         )
