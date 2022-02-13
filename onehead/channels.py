@@ -96,7 +96,7 @@ class OneHeadChannels(commands.Cog):
 
     async def move_discord_channels(self, ctx: commands.Context):
         """
-        Move players to IHL Team sChannels.
+        Move players to IHL Team Channels.
 
         :param ctx: Discord Context
         """
