@@ -1,3 +1,4 @@
 boto3
 discord.py
 tabulate
+types-tabulate

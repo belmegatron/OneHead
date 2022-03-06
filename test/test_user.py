@@ -1,6 +1,6 @@
+import asyncio
 from unittest import TestCase
 from unittest.mock import MagicMock, call
-import asyncio
 
 from onehead.user import OneHeadPreGame
 
@@ -55,11 +55,11 @@ class OneHeadPreGameTest(TestCase):
     def test_signup_check_single_signup(self):
         self.pregame.signups = [1]
         result = OneHeadAsyncTest._run(self.pregame.signup_check(self.ctx))
-        self.assertEqual(self.ctx.method_calls[0], call.send('Only 1 Signup, require 9 more.'))
+        self.assertEqual(self.ctx.method_calls[0], call.send('Only 1 Signup(s), require 9 more.'))
         self.assertFalse(result)
 
     def test_signup_check_less_than_10_signups(self):
         self.pregame.signups = [x for x in range(8)]
         result = OneHeadAsyncTest._run(self.pregame.signup_check(self.ctx))
-        self.assertEqual(self.ctx.method_calls[0], call.send('Only 8 Signups, require 2 more.'))
+        self.assertEqual(self.ctx.method_calls[0], call.send('Only 8 Signup(s), require 2 more.'))
         self.assertFalse(result)

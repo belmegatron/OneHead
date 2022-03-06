@@ -2,9 +2,7 @@ FROM python
 
 WORKDIR /usr/local/
 
-RUN git clone https://github.com/belmegatron/OneHead.git
-
-COPY config.json ./OneHead/config.json
+COPY onehead/ config.json requirements.txt run.py setup.py version.py onehead/
 
 RUN pip install virtualenv
 
@@ -14,12 +12,8 @@ RUN python -m venv $VIRTUAL_ENV
 
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-RUN pip install --upgrade pip setuptools wheel
+WORKDIR /usr/local/onehead
 
-WORKDIR /usr/local/OneHead
-
-RUN python setup.py bdist_wheel
-
-RUN python -m pip install --find-links=dist/ OneHead
+RUN pip install -e .
 
 ENTRYPOINT python run.py

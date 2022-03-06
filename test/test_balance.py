@@ -1,11 +1,11 @@
+import asyncio
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
-import asyncio
 
 from onehead.balance import OneHeadBalance, OneHeadCaptainsMode
+from onehead.common import OneHeadException
 from onehead.db import OneHeadDB
 from onehead.user import OneHeadPreGame
-from onehead.common import OneHeadException
 
 
 class OneHeadAsyncTest(object):
@@ -202,8 +202,7 @@ class OneHeadCaptainsModeTest(TestCase):
         self.ctx.author.display_name = "JLESCH"
         OneHeadAsyncTest._run(self.cm.nominate(self.cm, self.ctx, "GPP"))
         self.assertEqual(self.ctx.send.mock.call_args_list[0][0][0],
-                         "{} is not currently signed up and therefore cannot nominate.".format(
-                             self.ctx.author.display_name))
+                         f"{self.ctx.author.display_name} is not currently signed up and therefore cannot nominate.")
 
     def test_nominate_nominations_not_open(self):
         self.cm.nomination_phase_in_progress = False
@@ -225,14 +224,14 @@ class OneHeadCaptainsModeTest(TestCase):
         self.cm.has_voted["RBEEZAY"] = True
         OneHeadAsyncTest._run(self.cm.nominate(self.cm, self.ctx, "GPP"))
         self.assertEqual(self.ctx.send.mock.call_args_list[0][0][0],
-                         "{} has already voted.".format(self.ctx.author.display_name))
+                         f"{self.ctx.author.display_name} has already voted.")
 
     def test_nominate_self_vote(self):
         self.cm.nomination_phase_in_progress = True
         self.ctx.author.display_name = "RBEEZAY"
         OneHeadAsyncTest._run(self.cm.nominate(self.cm, self.ctx, "RBEEZAY"))
         self.assertEqual(self.ctx.send.mock.call_args_list[0][0][0],
-                         "{}, you cannot vote for yourself.".format(self.ctx.author.display_name))
+                         f"{self.ctx.author.display_name}, you cannot vote for yourself.")
 
     def test_calculate_top_nominations_no_tie(self):
         self.cm.votes = {'RBEEZAY': 3, 'GPP': 2, 'LOZZA': 1, 'JEFFERIES': 0, 'JAMES': 0, 'PECRO': 0, 'ZEE': 0,

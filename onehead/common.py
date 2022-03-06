@@ -1,5 +1,5 @@
-import os
 import json
+import os
 
 
 class OneHeadException(BaseException):
@@ -11,16 +11,13 @@ class OneHeadCommon(object):
     ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     @staticmethod
-    def get_player_names(t1, t2):
+    def get_player_names(t1: list[dict], t2: list[dict]) -> tuple[list, list]:
         """
         Obtain player names from player profiles.
 
         :param t1: Player Profiles for Team 1.
-        :type t1: list of dicts.
         :param t2: Player Profiles for Team 2.
-        :type t2: list of dicts.
-        :return: Names for players on each team.
-        :type: tuple of lists, each list item is a str referring to a player name.
+        :return: Names of players on each team.
         """
 
         t1_names = [x["name"] for x in t1]
@@ -29,12 +26,12 @@ class OneHeadCommon(object):
         return t1_names, t2_names
 
     @classmethod
-    def load_config(cls):
+    def load_config(cls) -> dict:
 
         try:
             with open(os.path.join(cls.ROOT_DIR, "config.json"), "r") as f:
                 config = json.load(f)
         except IOError as e:
-            raise OneHeadException("{}".format(e))
+            raise OneHeadException(e)
 
         return config

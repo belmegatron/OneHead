@@ -1,6 +1,6 @@
+import asyncio
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
-import asyncio
 
 from onehead.core import bot_factory
 
@@ -99,7 +99,7 @@ class OneHeadCoreTest(TestCase):
         OneHeadAsyncTest._run(self.core.result(self.ctx, "foo"))
         self.assertEqual(self.ctx.send.mock.call_count, 1)
         self.assertEqual(self.ctx.send.mock.call_args_list[0][0][0],
-                         "Invalid Value - Must be either 't1' or 't2' or 'void' if appropriate.")
+                         "Invalid Value - Must be either 't1' or 't2' or 'void'.")
 
     @patch("discord.ext.commands.core.Command.invoke", new=OneHeadAsyncTest.async_mock())
     def test_result_victory(self):
