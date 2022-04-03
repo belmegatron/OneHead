@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add auto-kick feature for players who are AFK and signed up.
 - Add separate scoreboard's for different games e.g. CSGO.
 
+## [1.29] - 2022-04-03
+
+### Changed
+- A w/l results in a +/- 50 rating score (previously this was 25).
+
 ## [1.28] - 2022-03-06
 
 ### Changed

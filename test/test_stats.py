@@ -31,12 +31,12 @@ class OneHeadStatsTest(TestCase):
     def test_calculate_rating_gain(self):
         scoreboard = [{"name": "RBEEZAY", "win": 10, "loss": 5}]
         self.stats.calculate_rating(scoreboard)
-        self.assertEqual(scoreboard[0]["rating"], 1625)
+        self.assertEqual(scoreboard[0]["rating"], 1750)
 
     def test_calculate_rating_loss(self):
         scoreboard = [{"name": "RBEEZAY", "win": 5, "loss": 10}]
         self.stats.calculate_rating(scoreboard)
-        self.assertEqual(scoreboard[0]["rating"], 1375)
+        self.assertEqual(scoreboard[0]["rating"], 1250)
 
     def test_calculate_adjusted_mmr(self):
         scoreboard = [{"name": "RBEEZAY", "win": 5, "loss": 10, "rating": 1375, "mmr": 2000}]

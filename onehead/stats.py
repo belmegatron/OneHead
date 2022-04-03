@@ -1,6 +1,7 @@
 class OneHeadStats(object):
 
     BASELINE_RATING = 1500
+    MMR_DELTA = 50
 
     @staticmethod
     def calculate_win_percentage(profiles: list[dict]):
@@ -27,8 +28,8 @@ class OneHeadStats(object):
         """
 
         for record in profiles:
-            win_modifier = record["win"] * 25
-            loss_modifier = record["loss"] * 25
+            win_modifier = record["win"] * cls.MMR_DELTA
+            loss_modifier = record["loss"] * cls.MMR_DELTA
             record["rating"] = cls.BASELINE_RATING + win_modifier - loss_modifier
 
     @classmethod
@@ -44,5 +45,4 @@ class OneHeadStats(object):
             rating = record["rating"]
             mmr = record["mmr"]
             difference = rating - cls.BASELINE_RATING
-            hidden_mmr = mmr + difference
-            record["adjusted_mmr"] = hidden_mmr
+            record["adjusted_mmr"] = mmr + difference
