@@ -214,7 +214,7 @@ class OneHeadPreGame(commands.Cog):
             self.ready_check_in_progress = True
             await sleep(30)
             players_ready_count = len(self.players_ready)
-            players_not_ready = " ,".join(
+            players_not_ready = ", ".join(
                 [x for x in self.signups if x not in self.players_ready]
             )
             if players_ready_count == 10:

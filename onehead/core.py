@@ -176,7 +176,8 @@ class OneHeadCore(commands.Cog):
             t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)
             players = {"Team 1": t1_names, "Team 2": t2_names}
             in_game_players = tabulate(players, headers="keys", tablefmt="simple")
-            await ctx.send(f"**Current Game** ```\n{in_game_players}```")
+            await ctx.send(f"**Current Game** ```\n"
+                           f"{in_game_players}```")
         else:
             await ctx.send("No currently active game.")
 
@@ -198,7 +199,7 @@ class OneHeadCore(commands.Cog):
         """
 
         self._reset_state()
-        await ctx.send("Reset state.")
+        await ctx.send("Reset.")
 
     @commands.command()
     async def matches(self, ctx: commands.Context):

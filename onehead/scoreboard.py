@@ -29,7 +29,7 @@ class OneHeadScoreBoard(commands.Cog):
         :return: Sorted scoreboard
         """
 
-        key_order = ["#", "name", "win", "loss", "%", "rating"]
+        key_order = ["#", "name", "win", "loss", "%", "rating", "streak"]
         sorted_scoreboard = []
 
         for record in scoreboard:
