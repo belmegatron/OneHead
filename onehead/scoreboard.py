@@ -6,9 +6,37 @@ from onehead.stats import OneHeadStats
 
 
 class OneHeadScoreBoard(commands.Cog):
+
+    # It's actually 2000, but we prepend a small number of characters before our scoreboard so need to take
+    # this into account.
+    DISCORD_MAX_MESSAGE_LENGTH = 1950
+
     def __init__(self, database):
 
         self.db = database
+
+    def _chunk_scoreboard(self, scoreboard: str) -> tuple[str]:
+
+        if len(scoreboard) < self.DISCORD_MAX_MESSAGE_LENGTH:
+            return tuple(scoreboard)
+
+        offset = 0
+        chunks = []
+
+        while offset < len(scoreboard):
+            remaining_size = len(scoreboard) - offset
+            if remaining_size <= self.DISCORD_MAX_MESSAGE_LENGTH:
+                chunk = scoreboard[offset:]
+                chunks.append(chunk)
+            else:
+                rough_chunk = scoreboard[offset: offset + self.DISCORD_MAX_MESSAGE_LENGTH]
+                eol = rough_chunk.rfind("\n")
+                chunk = rough_chunk[:eol]
+                chunks.append(chunk)
+
+            offset += len(chunk)
+
+        return tuple(chunks)
 
     @commands.has_role("IHL")
     @commands.command(aliases=["sb"])
@@ -18,7 +46,10 @@ class OneHeadScoreBoard(commands.Cog):
         """
 
         scoreboard = self._get_scoreboard()
-        await ctx.send(f"**IGC Leaderboard** ```\n{scoreboard}```")
+        chunked_scoreboard = self._chunk_scoreboard(scoreboard)
+
+        for chunk in chunked_scoreboard:
+            await ctx.send(f"**IGC Leaderboard** ```\n{chunk}```")
 
     @staticmethod
     def _sort_scoreboard_key_order(scoreboard: list[dict]) -> list[dict]:
@@ -29,7 +60,7 @@ class OneHeadScoreBoard(commands.Cog):
         :return: Sorted scoreboard
         """
 
-        key_order = ["#", "name", "win", "loss", "%", "rating", "streak"]
+        key_order = ["#", "name", "win", "loss", "%", "rating", "win streak", "loss streak"]
         sorted_scoreboard = []
 
         for record in scoreboard:
