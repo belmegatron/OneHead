@@ -76,7 +76,7 @@ class OneHeadDB(commands.Cog):
             self.db.update_item(
                 Key={"name": player_name},
                 UpdateExpression="set win = win + :val, win_streak = win_streak + :val, loss_streak = :zero",
-                ExpressionAttributeValues={":val": decimal.Decimal(1)},
+                ExpressionAttributeValues={":val": decimal.Decimal(1), ":zero": decimal.Decimal(0)},
                 ReturnValues="UPDATED_NEW",
             )
         else:
