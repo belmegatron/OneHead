@@ -12,11 +12,11 @@ class OneHeadScoreBoardTest(TestCase):
         self.scoreboard = OneHeadScoreBoard(self.database)
 
     def test_sort_scoreboard_key_order(self):
-        scoreboard = [{"%": 71.4, "win": 10, "name": "RBEEZAY", "loss": 4, "#": 1, "rating": 1650, "win streak": 0,
-                       "loss streak": 0}]
+        scoreboard = [{"%": 71.4, "win": 10, "name": "RBEEZAY", "loss": 4, "#": 1, "rating": 1650, "win_streak": 0,
+                       "loss_streak": 0}]
         result = self.scoreboard._sort_scoreboard_key_order(scoreboard)
         self.assertEqual(list(result[0].keys()),
-                         ["#", "name", "win", "loss", "%", "rating", "win streak", "loss streak"])
+                         ["#", "name", "win", "loss", "%", "rating", "win_streak", "loss_streak"])
 
     def test_calculate_positions_single_tie(self):
         scoreboard = [{"name": "RBEEZAY", "win": 10, "loss": 0, "%": 100, "rating": 1750},
