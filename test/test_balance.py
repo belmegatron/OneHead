@@ -408,8 +408,8 @@ class OneHeadCaptainsModeTest(TestCase):
         self.cm.captain_2 = "GEE"
 
         self.cm.pick_phase_in_progress = True
-        self.cm.captain_1_turn = False
-        self.cm.captain_2_turn = True
+        self.cm.radiant_captain_turn = False
+        self.cm.dire_captain_turn = True
 
         OneHeadAsyncTest._run(self.cm.pick(self.cm, self.ctx, "ARRE"))
         self.assertEqual(
@@ -425,8 +425,8 @@ class OneHeadCaptainsModeTest(TestCase):
         self.cm.captain_2 = "GEE"
 
         self.cm.pick_phase_in_progress = True
-        self.cm.captain_1_turn = True
-        self.cm.captain_2_turn = False
+        self.cm.radiant_captain_turn = True
+        self.cm.dire_captain_turn = False
 
         OneHeadAsyncTest._run(self.cm.pick(self.cm, self.ctx, "arre"))
         self.cm.add_pick.mock.is_called_once()
@@ -443,8 +443,8 @@ class OneHeadCaptainsModeTest(TestCase):
         self.cm.captain_2 = "GEE"
 
         self.cm.pick_phase_in_progress = True
-        self.cm.captain_1_turn = True
-        self.cm.captain_2_turn = False
+        self.cm.radiant_captain_turn = True
+        self.cm.dire_captain_turn = False
 
         OneHeadAsyncTest._run(self.cm.pick(self.cm, self.ctx, "ARRE"))
         self.cm.add_pick.mock.is_called_once()

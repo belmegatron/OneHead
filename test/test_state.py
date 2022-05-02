@@ -77,8 +77,8 @@ class OneHeadStateTest(TestCase):
         # The pretend match has finished, enter a result
         OneHeadAsyncTest._run(core.result(self.ctx, "t2"))
 
-        self.assertEqual(core.t1, [])
-        self.assertEqual(core.t2, [])
+        self.assertEqual(core.radiant, [])
+        self.assertEqual(core.dire, [])
         self.assertEqual(pregame.signups, [])
 
         # Let's pretend 10 different players have signed up

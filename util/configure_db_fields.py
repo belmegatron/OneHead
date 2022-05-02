@@ -15,7 +15,7 @@ if __name__ == "__main__":
     for player in players:
         database.db.update_item(
             Key={"name": player},
-            UpdateExpression="set steam_id = :zero",
+            UpdateExpression="set rbucks = :zero",
             ExpressionAttributeValues={":zero": decimal.Decimal(0)},
             ReturnValues="UPDATED_NEW",
         )

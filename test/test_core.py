@@ -66,8 +66,8 @@ class OneHeadCoreTest(TestCase):
         self.core.channels.create_discord_channels.mock.is_called_once()
         mock_set_teams.is_called_once()
         self.core.channels.move_discord_channels.mock.is_called_once()
-        self.assertEqual(self.core.t1._id, mock_balanced_teams[0]._id)
-        self.assertEqual(self.core.t2._id, mock_balanced_teams[1]._id)
+        self.assertEqual(self.core.radiant._id, mock_balanced_teams[0]._id)
+        self.assertEqual(self.core.dire._id, mock_balanced_teams[1]._id)
 
     def test_stop_game_not_in_progress(self):
         self.core.game_in_progress = False
@@ -84,13 +84,13 @@ class OneHeadCoreTest(TestCase):
 
     def test_reset_state(self):
         self.core.game_in_progress = True
-        self.core.t1 = ["foo" for x in range(5)]
-        self.core.t2 = ["bar" for x in range(5)]
+        self.core.radiant = ["foo" for x in range(5)]
+        self.core.dire = ["bar" for x in range(5)]
 
         self.core._reset_state()
         self.assertFalse(self.core.game_in_progress)
-        self.assertEqual(self.core.t1, [])
-        self.assertEqual(self.core.t2, [])
+        self.assertEqual(self.core.radiant, [])
+        self.assertEqual(self.core.dire, [])
 
     def test_result_game_not_in_progress(self):
         self.core.game_in_progress = False
@@ -131,8 +131,8 @@ class OneHeadCoreTest(TestCase):
 
         self.assertEqual(self.core.channels.move_back_to_lobby.mock.call_count, 1)
         self.assertFalse(self.core.game_in_progress)
-        self.assertEqual(self.core.t1, [])
-        self.assertEqual(self.core.t2, [])
+        self.assertEqual(self.core.radiant, [])
+        self.assertEqual(self.core.dire, [])
 
     @patch(
         "discord.ext.commands.core.Command.invoke", new=OneHeadAsyncTest.async_mock()
@@ -151,8 +151,8 @@ class OneHeadCoreTest(TestCase):
         self.assertEqual(self.core.database.update_player.call_count, 0)
         self.assertEqual(self.core.channels.move_back_to_lobby.mock.call_count, 1)
         self.assertFalse(self.core.game_in_progress)
-        self.assertEqual(self.core.t1, [])
-        self.assertEqual(self.core.t2, [])
+        self.assertEqual(self.core.radiant, [])
+        self.assertEqual(self.core.dire, [])
 
     def test_status_game_not_in_progress(self):
         self.core.game_in_progress = False

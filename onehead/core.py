@@ -7,11 +7,13 @@ from version import __changelog__, __version__
 import onehead.common
 
 from onehead.balance import OneHeadBalance, OneHeadCaptainsMode
+from onehead.betting import OneHeadBetting
 from onehead.channels import OneHeadChannels
-from onehead.common import OneHeadCommon, OneHeadException
+from onehead.common import OneHeadCommon, OneHeadException, RADIANT, DIRE
 from onehead.db import OneHeadDB
 from onehead.mental_health import OneHeadMentalHealth
 from onehead.scoreboard import OneHeadScoreBoard
+
 from onehead.user import (
     OneHeadPreGame,
     OneHeadRegistration,
@@ -42,6 +44,7 @@ def bot_factory() -> commands.Bot:
     channels = OneHeadChannels(config)
     registration = OneHeadRegistration(database)
     mental_health = OneHeadMentalHealth()
+    betting = OneHeadBetting(database)
 
     bot.add_cog(database)
     bot.add_cog(pre_game)
@@ -51,6 +54,7 @@ def bot_factory() -> commands.Bot:
     bot.add_cog(team_balance)
     bot.add_cog(channels)
     bot.add_cog(mental_health)
+    bot.add_cog(betting)
 
     # Add cogs first, then instantiate OneHeadCore as we reference them as instance variables
     token = config["discord"]["token"]
@@ -84,15 +88,17 @@ class OneHeadCore(commands.Cog):
         self.captains_mode = bot.get_cog("OneHeadCaptainsMode")
         self.channels = bot.get_cog("OneHeadChannels")
         self.registration = bot.get_cog("OneHeadRegistration")
+        self.betting = bot.get_cog("OneHeadBetting")
 
         if None in (
-            self.database,
-            self.scoreboard,
-            self.pre_game,
-            self.team_balance,
-            self.captains_mode,
-            self.channels,
-            self.registration,
+                self.database,
+                self.scoreboard,
+                self.pre_game,
+                self.team_balance,
+                self.captains_mode,
+                self.channels,
+                self.registration,
+                self.betting
         ):
             raise OneHeadException("Unable to find cog(s)")
 
@@ -117,18 +123,18 @@ class OneHeadCore(commands.Cog):
 
         if captains_mode is False:
             balanced_teams = await self.team_balance.balance(ctx)
-            self.t1, self.t2 = balanced_teams
+            self.radiant, self.dire = balanced_teams
         else:
             await self.captains_mode.nomination_phase(ctx)
-            t1, t2 = await self.captains_mode.picking_phase(ctx)
-            self.t1, self.t2 = t1, t2
+            radiant, dire = await self.captains_mode.picking_phase(ctx)
+            self.radiant, self.dire = radiant, dire
 
         self.game_in_progress = True
         self.pre_game.disable_signups()
         status = self.bot.get_command("status")
         await commands.Command.invoke(status, ctx)
         await self.channels.create_discord_channels(ctx)
-        self.channels.set_teams(self.t1, self.t2)
+        self.channels.set_teams(self.radiant, self.dire)
         await self.channels.move_discord_channels(ctx)
         await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
 
@@ -159,26 +165,27 @@ class OneHeadCore(commands.Cog):
             await ctx.send("No currently active game.")
             return
 
-        accepted_results = ["t1", "t2", "void"]
+        accepted_results = [RADIANT, DIRE]
 
         if result not in accepted_results:
             await ctx.send("Invalid Value - Must be either 't1' or 't2' or 'void'.")
+
             return
 
         await ctx.send("Updating Scores...")
-        t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)
+        radiant_names, dire_names = OneHeadCommon.get_player_names(self.radiant, self.dire)
 
-        if result == "t1":
-            await ctx.send("Team 1 Victory!")
-            for player in t1_names:
+        if result == RADIANT:
+            await ctx.send("Radiant Victory!")
+            for player in radiant_names:
                 self.database.update_player(player, True)
-            for player in t2_names:
+            for player in dire_names:
                 self.database.update_player(player, False)
-        elif result == "t2":
-            await ctx.send("Team 2 Victory!")
-            for player in t1_names:
+        elif result == DIRE:
+            await ctx.send("Dire Victory!")
+            for player in radiant_names:
                 self.database.update_player(player, False)
-            for player in t2_names:
+            for player in dire_names:
                 self.database.update_player(player, True)
 
         scoreboard = self.bot.get_command("scoreboard")
@@ -194,8 +201,8 @@ class OneHeadCore(commands.Cog):
         """
 
         if self.game_in_progress:
-            t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)
-            players = {"Team 1": t1_names, "Team 2": t2_names}
+            t1_names, t2_names = OneHeadCommon.get_player_names(self.radiant, self.dire)
+            players = {RADIANT: t1_names, DIRE: t2_names}
             in_game_players = tabulate(players, headers="keys", tablefmt="simple")
             await ctx.send(f"**Current Game** ```\n" f"{in_game_players}```")
         else:
@@ -237,8 +244,8 @@ class OneHeadCore(commands.Cog):
         """
 
         self.game_in_progress = False
-        self.t1 = []
-        self.t2 = []
+        self.radiant = []
+        self.dire = []
 
         self.pre_game.reset_state()
         self.captains_mode.reset_state()

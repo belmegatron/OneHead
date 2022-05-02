@@ -54,6 +54,7 @@ class OneHeadDB(commands.Cog):
                     "mmr": mmr,
                     "win_streak": 0,
                     "loss_streak": 0,
+                    "rbucks": 0
                 }
             )
 

@@ -1,4 +1,4 @@
-class OneHeadStats(object):
+class OneHeadStats:
 
     BASELINE_RATING = 1500
     MMR_DELTA = 50

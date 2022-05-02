@@ -11,6 +11,9 @@ if TYPE_CHECKING:
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
 bot = None  # type: Optional[Bot]
 
+RADIANT = "radiant"
+DIRE = "dire"
+
 
 class OneHeadException(BaseException):
     pass
