@@ -39,7 +39,9 @@ class OneHeadBalance(commands.Cog):
         return profiles
 
     @staticmethod
-    def _calculate_unique_team_combinations(all_matchups: list["TeamCombination"]) -> list["TeamCombination"]:
+    def _calculate_unique_team_combinations(
+        all_matchups: list["TeamCombination"],
+    ) -> list["TeamCombination"]:
         """
         Calculates all 5v5 combinations, where the players on each team are unique to that particular team.
 
@@ -62,7 +64,9 @@ class OneHeadBalance(commands.Cog):
         return unique_combinations
 
     @staticmethod
-    def _calculate_rating_differences(all_unique_combinations: list, rating_field: str) -> list[int]:
+    def _calculate_rating_differences(
+        all_unique_combinations: list, rating_field: str
+    ) -> list[int]:
         """
         Calculates the net rating difference for each unique combination of teams based on a particular rating field.
 
@@ -138,8 +142,8 @@ class OneHeadBalance(commands.Cog):
         }  # Sort by ascending net rating difference.
 
         indices = list(rating_differences_mapping.keys())[
-                  :10
-                  ]  # Obtain the indices for the top 10 closest net rating matchups.
+            :10
+        ]  # Obtain the indices for the top 10 closest net rating matchups.
         balanced_teams = unique_combinations[
             random.choice(indices)
         ]  # Pick a random matchup from the top 10 closest net rating matchups.
@@ -401,9 +405,7 @@ class OneHeadCaptainsMode(commands.Cog):
                 if record is not None:
                     self.votes[nomination] += 1
                     self.has_voted[name] = True
-                    await ctx.send(
-                        f"{name} has nominated {nomination} to be captain."
-                    )
+                    await ctx.send(f"{name} has nominated {nomination} to be captain.")
                 else:
                     await ctx.send(
                         f"{nomination} is not currently signed up and therefore cannot be nominated."
@@ -442,27 +444,17 @@ class OneHeadCaptainsMode(commands.Cog):
         if name == self.captain_1:
             if self.captain_1_turn:
                 if await self.add_pick(ctx, pick, self.team_1):
-                    await ctx.send(
-                        f"{name} has selected {pick} to join Team 1."
-                    )
+                    await ctx.send(f"{name} has selected {pick} to join Team 1.")
             else:
-                await ctx.send(
-                    f"It is currently {self.captain_2}'s turn to pick."
-                )
+                await ctx.send(f"It is currently {self.captain_2}'s turn to pick.")
         elif name == self.captain_2:
             if self.captain_2_turn:
                 if await self.add_pick(ctx, pick, self.team_2):
-                    await ctx.send(
-                        f"{name} has selected {pick} to join Team 2."
-                    )
+                    await ctx.send(f"{name} has selected {pick} to join Team 2.")
             else:
-                await ctx.send(
-                    f"It is currently {self.captain_1}'s turn to pick."
-                )
+                await ctx.send(f"It is currently {self.captain_1}'s turn to pick.")
         else:
-            await ctx.send(
-                f"{name} is not a captain and therefore cannot pick."
-            )
+            await ctx.send(f"{name} is not a captain and therefore cannot pick.")
 
     def reset_state(self):
 

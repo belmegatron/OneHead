@@ -129,9 +129,7 @@ class OneHeadPreGame(commands.Cog):
         Shows all players currently signed up to play in the IHL.
         """
 
-        await ctx.send(
-            f"There are currently {len(self.signups)} players signed up."
-        )
+        await ctx.send(f"There are currently {len(self.signups)} players signed up.")
         signups_dict = [
             {"#": i + 1, "name": name} for i, name in enumerate(self.signups)
         ]
@@ -168,9 +166,7 @@ class OneHeadPreGame(commands.Cog):
         Remove yourself from the current pool of signed up players.
         """
         if ctx.author.display_name not in self.signups:
-            await ctx.send(
-                f"{ctx.author.display_name} is not currently signed up."
-            )
+            await ctx.send(f"{ctx.author.display_name} is not currently signed up.")
         else:
             self.signups.remove(ctx.author.display_name)
 
@@ -236,7 +232,9 @@ class OneHeadPreGame(commands.Cog):
         self.players_ready = []
 
 
-async def on_voice_state_update(member: "Member", before: "VoiceState", after: "VoiceState") -> None:
+async def on_voice_state_update(
+    member: "Member", before: "VoiceState", after: "VoiceState"
+) -> None:
     pre_game = onehead.common.bot.get_cog("OneHeadPreGame")
 
     name = member.display_name

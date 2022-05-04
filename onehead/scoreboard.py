@@ -28,7 +28,9 @@ class OneHeadScoreBoard(commands.Cog):
             if remaining_size <= self.DISCORD_MAX_MESSAGE_LENGTH:
                 chunk = scoreboard[offset:]
             else:
-                max_chunk = scoreboard[offset: offset + self.DISCORD_MAX_MESSAGE_LENGTH]
+                max_chunk = scoreboard[
+                    offset : offset + self.DISCORD_MAX_MESSAGE_LENGTH
+                ]
                 eol = max_chunk.rfind("\n")
                 chunk = max_chunk[:eol]
 
@@ -59,7 +61,16 @@ class OneHeadScoreBoard(commands.Cog):
         :return: Sorted scoreboard
         """
 
-        key_order = ["#", "name", "win", "loss", "%", "rating", "win_streak", "loss_streak"]
+        key_order = [
+            "#",
+            "name",
+            "win",
+            "loss",
+            "%",
+            "rating",
+            "win_streak",
+            "loss_streak",
+        ]
         sorted_scoreboard = []
 
         for record in scoreboard:
@@ -113,7 +124,9 @@ class OneHeadScoreBoard(commands.Cog):
         OneHeadStats.calculate_rating(scoreboard)
 
         scoreboard_sorted_rows = self._calculate_positions(scoreboard, "rating")
-        scoreboard_sorted_rows_and_columns = self._sort_scoreboard_key_order(scoreboard_sorted_rows)
+        scoreboard_sorted_rows_and_columns = self._sort_scoreboard_key_order(
+            scoreboard_sorted_rows
+        )
         sorted_scoreboard = tabulate(
             scoreboard_sorted_rows_and_columns, headers="keys", tablefmt="simple"
         )

@@ -7,7 +7,6 @@ from onehead.common import OneHeadException
 
 
 class OneHeadAsyncTest(object):
-
     @staticmethod
     def _run(coro):
         return asyncio.get_event_loop().run_until_complete(coro)
@@ -24,27 +23,16 @@ class OneHeadAsyncTest(object):
 
 
 class OneHeadChannelsTest(TestCase):
-
     def setUp(self):
         self.config = {
             "aws": {
-                "dynamodb": {
-                    "region": "eu-west-2",
-                    "tables": {
-                        "dota": "example-table"
-                    }
-                }
+                "dynamodb": {"region": "eu-west-2", "tables": {"dota": "example-table"}}
             },
             "discord": {
                 "token": "",
-                "channels": {
-                    "lobby": "DOTA 2",
-                    "match": "IGC IHL"
-                }
+                "channels": {"lobby": "DOTA 2", "match": "IGC IHL"},
             },
-            "rating": {
-                "is_adjusted": True
-            }
+            "rating": {"is_adjusted": True},
         }
         self.oh_channels = OneHeadChannels(self.config)
         self.ctx = MagicMock()
@@ -93,11 +81,20 @@ class OneHeadChannelsTest(TestCase):
 
     def test_move_discord_channels_exception(self):
         self.oh_channels.ihl_discord_channels = []
-        self.assertRaises(OneHeadException, OneHeadAsyncTest._run, self.oh_channels.move_discord_channels(self.ctx))
+        self.assertRaises(
+            OneHeadException,
+            OneHeadAsyncTest._run,
+            self.oh_channels.move_discord_channels(self.ctx),
+        )
 
     @patch("onehead.channels.OneHeadChannels._get_discord_members")
-    @patch("onehead.common.OneHeadCommon.get_player_names", return_value=(MagicMock(), MagicMock()))
-    def test_move_discord_channels_success(self, mock_get_player_names, mock_get_discord_members):
+    @patch(
+        "onehead.common.OneHeadCommon.get_player_names",
+        return_value=(MagicMock(), MagicMock()),
+    )
+    def test_move_discord_channels_success(
+        self, mock_get_player_names, mock_get_discord_members
+    ):
         ihl_1 = MagicMock()
         ihl_1.name = "IGC IHL #1"
         ihl_2 = MagicMock()
@@ -114,4 +111,6 @@ class OneHeadChannelsTest(TestCase):
         mock_get_player_names.is_called_once()
         mock_get_discord_members.is_called_once()
         self.ctx.send.mock.is_called_once()
-        member.move_to.mock.assert_has_calls([call(ihl_1) for x in range(5)] + [call(ihl_2) for x in range(5)])
+        member.move_to.mock.assert_has_calls(
+            [call(ihl_1) for x in range(5)] + [call(ihl_2) for x in range(5)]
+        )

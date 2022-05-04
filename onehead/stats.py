@@ -46,4 +46,3 @@ class OneHeadStats(object):
             mmr = record["mmr"]
             difference = rating - cls.BASELINE_RATING
             record["adjusted_mmr"] = mmr + difference
-

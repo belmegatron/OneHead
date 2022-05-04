@@ -6,7 +6,6 @@ from onehead.user import OneHeadPreGame
 
 
 class OneHeadAsyncTest(object):
-
     @staticmethod
     def _run(coro):
         return asyncio.get_event_loop().run_until_complete(coro)
@@ -23,7 +22,6 @@ class OneHeadAsyncTest(object):
 
 
 class OneHeadPreGameTest(TestCase):
-
     def setUp(self):
         self.db = MagicMock()
         self.pregame = OneHeadPreGame(self.db)
@@ -49,17 +47,23 @@ class OneHeadPreGameTest(TestCase):
     def test_signup_check_zero_signups(self):
         self.pregame.signups = []
         result = OneHeadAsyncTest._run(self.pregame.signup_check(self.ctx))
-        self.assertEqual(self.ctx.method_calls[0], call.send('There are currently no signups.'))
+        self.assertEqual(
+            self.ctx.method_calls[0], call.send("There are currently no signups.")
+        )
         self.assertFalse(result)
 
     def test_signup_check_single_signup(self):
         self.pregame.signups = [1]
         result = OneHeadAsyncTest._run(self.pregame.signup_check(self.ctx))
-        self.assertEqual(self.ctx.method_calls[0], call.send('Only 1 Signup(s), require 9 more.'))
+        self.assertEqual(
+            self.ctx.method_calls[0], call.send("Only 1 Signup(s), require 9 more.")
+        )
         self.assertFalse(result)
 
     def test_signup_check_less_than_10_signups(self):
         self.pregame.signups = [x for x in range(8)]
         result = OneHeadAsyncTest._run(self.pregame.signup_check(self.ctx))
-        self.assertEqual(self.ctx.method_calls[0], call.send('Only 8 Signup(s), require 2 more.'))
+        self.assertEqual(
+            self.ctx.method_calls[0], call.send("Only 8 Signup(s), require 2 more.")
+        )
         self.assertFalse(result)

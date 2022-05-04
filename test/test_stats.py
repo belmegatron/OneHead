@@ -4,7 +4,6 @@ from onehead.stats import OneHeadStats
 
 
 class OneHeadStatsTest(TestCase):
-
     def setUp(self):
         self.stats = OneHeadStats()
 
@@ -39,6 +38,8 @@ class OneHeadStatsTest(TestCase):
         self.assertEqual(scoreboard[0]["rating"], 1250)
 
     def test_calculate_adjusted_mmr(self):
-        scoreboard = [{"name": "RBEEZAY", "win": 5, "loss": 10, "rating": 1375, "mmr": 2000}]
+        scoreboard = [
+            {"name": "RBEEZAY", "win": 5, "loss": 10, "rating": 1375, "mmr": 2000}
+        ]
         self.stats.calculate_adjusted_mmr(scoreboard)
         self.assertEqual(scoreboard[0]["adjusted_mmr"], 1875)

@@ -47,7 +47,14 @@ class OneHeadDB(commands.Cog):
 
         if self.player_exists(player_name) is False:
             self.db.put_item(
-                Item={"name": player_name, "win": 0, "loss": 0, "mmr": mmr, "win_streak": 0, "loss_streak": 0}
+                Item={
+                    "name": player_name,
+                    "win": 0,
+                    "loss": 0,
+                    "mmr": mmr,
+                    "win_streak": 0,
+                    "loss_streak": 0,
+                }
             )
 
     def remove_player(self, player_name: str):
@@ -76,14 +83,20 @@ class OneHeadDB(commands.Cog):
             self.db.update_item(
                 Key={"name": player_name},
                 UpdateExpression="set win = win + :val, win_streak = win_streak + :val, loss_streak = :zero",
-                ExpressionAttributeValues={":val": decimal.Decimal(1), ":zero": decimal.Decimal(0)},
+                ExpressionAttributeValues={
+                    ":val": decimal.Decimal(1),
+                    ":zero": decimal.Decimal(0),
+                },
                 ReturnValues="UPDATED_NEW",
             )
         else:
             self.db.update_item(
                 Key={"name": player_name},
                 UpdateExpression="set loss = loss + :val, win_streak = :zero, loss_streak = loss_streak + :val",
-                ExpressionAttributeValues={":val": decimal.Decimal(1), ":zero": decimal.Decimal(0)},
+                ExpressionAttributeValues={
+                    ":val": decimal.Decimal(1),
+                    ":zero": decimal.Decimal(0),
+                },
                 ReturnValues="UPDATED_NEW",
             )
 
