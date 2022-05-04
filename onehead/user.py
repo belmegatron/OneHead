@@ -149,7 +149,7 @@ class OneHeadPreGame(commands.Cog):
         """
 
         if self._signups_disabled:
-            await ctx.send("Game in Progress - Signups disabled.")
+            await ctx.send("Game in Progress - Signup command unavailable.")
             return
 
         name = ctx.author.display_name
@@ -176,7 +176,7 @@ class OneHeadPreGame(commands.Cog):
         """
 
         if self._signups_disabled:
-            await ctx.send("Game in Progress - Signups disabled.")
+            await ctx.send("Game in Progress - Signout command unavailable.")
             return
 
         if ctx.author.display_name not in self.signups:
