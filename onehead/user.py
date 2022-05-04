@@ -1,13 +1,15 @@
 import random
 from asyncio import sleep
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import OneHeadException
+from onehead.common import OneHeadException, bot
 
 if TYPE_CHECKING:
+    from discord.member import Member
+    from discord import VoiceState
     from onehead.db import OneHeadDB
 
 
@@ -61,6 +63,7 @@ class OneHeadPreGame(commands.Cog):
         self.signups = []  # type: list[str]
         self.players_ready = []  # type: list[str]
         self.ready_check_in_progress = False
+        self.context = None  # type: Optional[commands.Context]
 
     @commands.has_role("IHL Admin")
     @commands.command()
@@ -151,6 +154,9 @@ class OneHeadPreGame(commands.Cog):
         else:
             self.signups.append(name)
 
+        if self.context is None:
+            self.context = ctx
+
         await commands.Command.invoke(self.who, ctx)
 
     @commands.has_role("IHL")
@@ -226,3 +232,14 @@ class OneHeadPreGame(commands.Cog):
 
         self.ready_check_in_progress = False
         self.players_ready = []
+
+
+@bot.event
+async def on_voice_state_update(member: "Member", before: "VoiceState", after: "VoiceState") -> None:
+    pre_game = bot.get_cog("OneHeadPreGame")
+
+    name = member.display_name
+
+    if after.afk and member.display_name in pre_game.signups:
+        pre_game.signups.remove(name)
+        await pre_game.context.send(f"{name} has been signed out due to being AFK.")

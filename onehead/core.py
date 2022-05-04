@@ -4,7 +4,7 @@ from version import __changelog__, __version__
 
 from onehead.balance import OneHeadBalance, OneHeadCaptainsMode
 from onehead.channels import OneHeadChannels
-from onehead.common import OneHeadCommon, OneHeadException
+from onehead.common import OneHeadCommon, OneHeadException, bot
 from onehead.db import OneHeadDB
 from onehead.mental_health import OneHeadMentalHealth
 from onehead.scoreboard import OneHeadScoreBoard
@@ -18,7 +18,6 @@ def bot_factory() -> commands.Bot:
     :return: OneHead Bot
     """
 
-    bot = commands.Bot(command_prefix="!")
     config = OneHeadCommon.load_config()
 
     database = OneHeadDB(config)

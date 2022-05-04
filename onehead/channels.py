@@ -13,7 +13,7 @@ class OneHeadChannels(commands.Cog):
         ]
         self.lobby_name = channel_config_settings["lobby"]
 
-        self.ihl_discord_channels = []  # type: list[discord.channel.VoiceChannel]
+        self.ihl_discord_channels = []  # type: list[discord.VoiceChannel]
         self.t1 = []    # type: list[dict]
         self.t2 = []    # type: list[dict]
         self.t1_discord_members = []    # type: list[discord.member]
