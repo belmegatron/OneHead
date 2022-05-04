@@ -64,6 +64,10 @@ class OneHeadPreGame(commands.Cog):
         self.players_ready = []  # type: list[str]
         self.ready_check_in_progress = False
         self.context = None  # type: Optional[commands.Context]
+        self._signups_disabled = False
+
+    def disable_signups(self):
+        self._signups_disabled = True
 
     @commands.has_role("IHL Admin")
     @commands.command()
@@ -80,6 +84,7 @@ class OneHeadPreGame(commands.Cog):
 
     def reset_state(self):
         self.signups = []
+        self._signups_disabled = False
 
     async def signup_check(self, ctx: commands.Context) -> bool:
 
@@ -135,12 +140,17 @@ class OneHeadPreGame(commands.Cog):
 
         await ctx.send(f"**Current Signups** ```\n{signups}```")
 
+    @commands.cooldown(1, 30, commands.BucketType.user)
     @commands.has_role("IHL")
     @commands.command(aliases=["su"])
     async def signup(self, ctx: commands.Context):
         """
         Signup to join a game in the IHL.
         """
+
+        if self._signups_disabled:
+            await ctx.send("Game in Progress - Signups disabled.")
+            return
 
         name = ctx.author.display_name
         if self.database.player_exists(name) is False:
@@ -157,12 +167,18 @@ class OneHeadPreGame(commands.Cog):
 
         await commands.Command.invoke(self.who, ctx)
 
+    @commands.cooldown(1, 30, commands.BucketType.user)
     @commands.has_role("IHL")
     @commands.command(aliases=["so"])
     async def signout(self, ctx: commands.Context):
         """
         Remove yourself from the current pool of signed up players.
         """
+
+        if self._signups_disabled:
+            await ctx.send("Game in Progress - Signups disabled.")
+            return
+
         if ctx.author.display_name not in self.signups:
             await ctx.send(f"{ctx.author.display_name} is not currently signed up.")
         else:
@@ -231,7 +247,7 @@ class OneHeadPreGame(commands.Cog):
 
 
 async def on_voice_state_update(
-    member: "Member", before: "VoiceState", after: "VoiceState"
+        member: "Member", before: "VoiceState", after: "VoiceState"
 ) -> None:
     pre_game = onehead.common.bot.get_cog("OneHeadPreGame")
 

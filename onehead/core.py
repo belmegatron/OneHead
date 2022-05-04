@@ -115,6 +115,7 @@ class OneHeadCore(commands.Cog):
             self.t1, self.t2 = t1, t2
 
         self.game_in_progress = True
+        self.pre_game.disable_signups()
         status = self.bot.get_command("status")
         await commands.Command.invoke(status, ctx)
         await self.channels.create_discord_channels(ctx)
