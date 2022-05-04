@@ -24,6 +24,7 @@ def bot_factory() -> commands.Bot:
 
     intents = Intents.default()
     intents.members = True
+    intents.presences = True
     bot = commands.Bot(command_prefix="!", intents=intents)
 
     config = OneHeadCommon.load_config()

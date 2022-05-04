@@ -3,6 +3,7 @@ from asyncio import sleep
 from typing import TYPE_CHECKING, Optional
 
 from discord.ext import commands
+from discord import Status
 from tabulate import tabulate
 
 import onehead.common
@@ -253,6 +254,8 @@ async def on_voice_state_update(
 
     name = member.display_name
 
-    if after.afk and member.display_name in pre_game.signups:
-        pre_game.signups.remove(name)
-        await pre_game.context.send(f"{name} has been signed out due to being AFK.")
+    if after.afk or member.status == Status.offline:
+        if name in pre_game.signups:
+            pre_game.signups.remove(name)
+            reason = "AFK" if after.afk else "Offline"
+            await pre_game.context.send(f"{name} has been signed out due to being {reason}.")
