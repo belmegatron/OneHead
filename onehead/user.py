@@ -12,8 +12,6 @@ if TYPE_CHECKING:
     from discord import VoiceState
     from onehead.db import OneHeadDB
 
-bot_reference = None
-
 
 class OneHeadRegistration(commands.Cog):
     def __init__(self, database: "OneHeadDB"):
