@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, bot
+from onehead.common import OneHeadException
 
 if TYPE_CHECKING:
     from discord.member import Member
@@ -234,7 +234,6 @@ class OneHeadPreGame(commands.Cog):
         self.players_ready = []
 
 
-@bot.event
 async def on_voice_state_update(member: "Member", before: "VoiceState", after: "VoiceState") -> None:
     pre_game = bot.get_cog("OneHeadPreGame")
 

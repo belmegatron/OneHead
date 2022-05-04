@@ -1,15 +1,6 @@
 import json
 import os
 
-from discord import Intents
-from discord.ext import commands
-
-# This is our global bot instance. It's not ideal, but we need to be able to access it globally if we want
-# triggered events.
-intents = Intents.default()
-intents.members = True
-bot = commands.Bot(command_prefix="!", intents=intents)
-
 
 class OneHeadException(BaseException):
     pass

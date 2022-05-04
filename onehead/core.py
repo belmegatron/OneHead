@@ -1,14 +1,16 @@
+from discord import Intents
 from discord.ext import commands
+
 from tabulate import tabulate
 from version import __changelog__, __version__
 
 from onehead.balance import OneHeadBalance, OneHeadCaptainsMode
 from onehead.channels import OneHeadChannels
-from onehead.common import OneHeadCommon, OneHeadException, bot
+from onehead.common import OneHeadCommon, OneHeadException
 from onehead.db import OneHeadDB
 from onehead.mental_health import OneHeadMentalHealth
 from onehead.scoreboard import OneHeadScoreBoard
-from onehead.user import OneHeadPreGame, OneHeadRegistration
+from onehead.user import OneHeadPreGame, OneHeadRegistration, on_voice_state_update
 
 
 def bot_factory() -> commands.Bot:
@@ -17,6 +19,10 @@ def bot_factory() -> commands.Bot:
 
     :return: OneHead Bot
     """
+
+    intents = Intents.default()
+    intents.members = True
+    bot = commands.Bot(command_prefix="!", intents=intents)
 
     config = OneHeadCommon.load_config()
 
@@ -43,6 +49,9 @@ def bot_factory() -> commands.Bot:
     core = OneHeadCore(bot, token)
     bot.add_cog(core)
 
+    # Register events
+    bot.event(on_voice_state_update)
+
     return bot
 
 
@@ -50,8 +59,8 @@ class OneHeadCore(commands.Cog):
     def __init__(self, bot: commands.Bot, token: str):
 
         self.game_in_progress = False
-        self.t1 = []    # type: list[dict]
-        self.t2 = []    # type: list[dict]
+        self.t1 = []  # type: list[dict]
+        self.t2 = []  # type: list[dict]
 
         self.bot = bot
         self.token = token
@@ -66,13 +75,13 @@ class OneHeadCore(commands.Cog):
         self.registration = bot.get_cog("OneHeadRegistration")
 
         if None in (
-            self.database,
-            self.scoreboard,
-            self.pre_game,
-            self.team_balance,
-            self.captains_mode,
-            self.channels,
-            self.registration,
+                self.database,
+                self.scoreboard,
+                self.pre_game,
+                self.team_balance,
+                self.captains_mode,
+                self.channels,
+                self.registration,
         ):
             raise OneHeadException("Unable to find cog(s)")
 
