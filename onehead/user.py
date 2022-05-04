@@ -247,7 +247,7 @@ class OneHeadPreGame(commands.Cog):
 
 
 async def on_voice_state_update(
-        member: "Member", before: "VoiceState", after: "VoiceState"
+    member: "Member", before: "VoiceState", after: "VoiceState"
 ) -> None:
     pre_game = onehead.common.bot.get_cog("OneHeadPreGame")
 
