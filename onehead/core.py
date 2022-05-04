@@ -12,7 +12,12 @@ from onehead.common import OneHeadCommon, OneHeadException
 from onehead.db import OneHeadDB
 from onehead.mental_health import OneHeadMentalHealth
 from onehead.scoreboard import OneHeadScoreBoard
-from onehead.user import OneHeadPreGame, OneHeadRegistration, on_voice_state_update
+from onehead.user import (
+    OneHeadPreGame,
+    OneHeadRegistration,
+    on_voice_state_update,
+    on_member_update,
+)
 
 
 def bot_factory() -> commands.Bot:
@@ -22,7 +27,7 @@ def bot_factory() -> commands.Bot:
     :return: OneHead Bot
     """
 
-    intents = Intents.default()
+    intents = Intents.all()
     intents.members = True
     intents.presences = True
     bot = commands.Bot(command_prefix="!", intents=intents)
@@ -54,6 +59,8 @@ def bot_factory() -> commands.Bot:
 
     # Register events
     bot.event(on_voice_state_update)
+    bot.event(on_member_update)
+
     onehead.common.bot = bot
 
     return bot

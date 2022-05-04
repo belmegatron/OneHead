@@ -254,8 +254,19 @@ async def on_voice_state_update(
 
     name = member.display_name
 
-    if after.afk or member.status == Status.offline:
-        if name in pre_game.signups:
-            pre_game.signups.remove(name)
-            reason = "AFK" if after.afk else "Offline"
-            await pre_game.context.send(f"{name} has been signed out due to being {reason}.")
+    if after.afk and name in pre_game.signups:
+        pre_game.signups.remove(name)
+        await pre_game.context.send(f"{name} has been signed out due to being AFK.")
+
+
+async def on_member_update(before: "Member", after: "Member") -> None:
+    pre_game = onehead.common.bot.get_cog("OneHeadPreGame")
+
+    name = after.display_name
+
+    if after.status in (Status.offline, Status.idle) and name in pre_game.signups:
+        pre_game.signups.remove(name)
+        reason = "Offline" if after.status == Status.offline else "Idle"
+        await pre_game.context.send(
+            f"{name} has been signed out due to being {reason}."
+        )
