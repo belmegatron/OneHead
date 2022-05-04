@@ -17,12 +17,8 @@ class OneHeadBetting(commands.Cog):
         self.in_play = False
 
     @commands.has_role("IHL")
-    @commands.command(aliases=["derp"])
     async def _update_post_match_result(self, ctx: commands.Context, radiant_won: bool):
-        retStr = str("""```css\nThis is some colored Text```""")
-        embed = Embed(title="Random test", colour=colour.Colour.teal())
-        embed.add_field(name="Name field can't be colored as it seems", value=retStr)
-        await ctx.send(embed=embed)
+        pass
 
     @commands.has_role("IHL")
     @commands.command(aliases=["bet"])
@@ -41,14 +37,22 @@ class OneHeadBetting(commands.Cog):
             await ctx.send(f"Cannot bet on {side} - Must be either Radiant/Dire.")
             return
 
-        try:
-            stake = int(amount)
-        except ValueError:
-            await ctx.send(f"{amount} is not a valid number of rbucks to place a bet with.")
-            return
-
         profile = self.database.lookup_player(name)
         balance = profile.get("rbucks", 0)
+
+        if balance == 0:
+            await ctx.send(f"{name} cannot bet as they have no available rbucks.")
+            return
+
+        if amount == "all":
+            stake = balance
+        else:
+            try:
+                stake = int(amount)
+            except ValueError:
+                await ctx.send(f"{amount} is not a valid number of rbucks to place a bet with.")
+                return
+
         if stake > balance:
             await ctx.send(f"Unable to place bet - tried to stake {stake} rbucks but only {balance} rbucks available.")
             return
@@ -76,7 +80,7 @@ class OneHeadBetting(commands.Cog):
         pass
 
     @commands.has_role("IHL")
-    @commands.command()
+    @commands.command(aliases=["rbucks"])
     async def bucks(self, ctx: commands.Context):
         """
         Lists the number of rbucks each member of the IHL has.
