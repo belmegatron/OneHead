@@ -4,6 +4,8 @@ from discord.ext import commands
 from tabulate import tabulate
 from version import __changelog__, __version__
 
+import onehead.common
+
 from onehead.balance import OneHeadBalance, OneHeadCaptainsMode
 from onehead.channels import OneHeadChannels
 from onehead.common import OneHeadCommon, OneHeadException
@@ -51,6 +53,7 @@ def bot_factory() -> commands.Bot:
 
     # Register events
     bot.event(on_voice_state_update)
+    onehead.common.bot = bot
 
     return bot
 

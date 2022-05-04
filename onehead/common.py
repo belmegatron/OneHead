@@ -1,5 +1,11 @@
 import json
 import os
+from typing import Optional
+
+from discord.ext.commands import Bot
+
+# We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
+bot = None  # type: Optional[Bot]
 
 
 class OneHeadException(BaseException):

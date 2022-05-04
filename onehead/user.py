@@ -5,12 +5,14 @@ from typing import TYPE_CHECKING, Optional
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import OneHeadException
+import onehead.common
 
 if TYPE_CHECKING:
     from discord.member import Member
     from discord import VoiceState
     from onehead.db import OneHeadDB
+
+bot_reference = None
 
 
 class OneHeadRegistration(commands.Cog):
@@ -30,7 +32,7 @@ class OneHeadRegistration(commands.Cog):
         try:
             mmr = int(mmr)
         except ValueError:
-            raise OneHeadException(f"{mmr} is not a valid integer.")
+            raise onehead.common.OneHeadException(f"{mmr} is not a valid integer.")
 
         if mmr < 1000:
             await ctx.send(f"{mmr} MMR is too low, must be greater or equal to 1000.")
@@ -235,7 +237,7 @@ class OneHeadPreGame(commands.Cog):
 
 
 async def on_voice_state_update(member: "Member", before: "VoiceState", after: "VoiceState") -> None:
-    pre_game = bot.get_cog("OneHeadPreGame")
+    pre_game = onehead.common.bot.get_cog("OneHeadPreGame")
 
     name = member.display_name
 
