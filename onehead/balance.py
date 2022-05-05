@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import OneHeadException
+from onehead.common import OneHeadCommon, OneHeadException
 from onehead.stats import OneHeadStats
 
 if TYPE_CHECKING:
@@ -17,6 +17,10 @@ if TYPE_CHECKING:
 
 
 class OneHeadBalance(commands.Cog):
+
+    GOD_GAMER = "RBEEZAY"
+    BOTTOM_FEEDER = "ERIC"
+
     def __init__(self, database: "OneHeadDB", pre_game: "OneHeadPreGame", config: dict):
 
         self.database = database
@@ -40,7 +44,7 @@ class OneHeadBalance(commands.Cog):
 
     @staticmethod
     def _calculate_unique_team_combinations(
-        all_matchups: list["TeamCombination"],
+            all_matchups: list["TeamCombination"],
     ) -> list["TeamCombination"]:
         """
         Calculates all 5v5 combinations, where the players on each team are unique to that particular team.
@@ -65,7 +69,7 @@ class OneHeadBalance(commands.Cog):
 
     @staticmethod
     def _calculate_rating_differences(
-        all_unique_combinations: list, rating_field: str
+            all_unique_combinations: list, rating_field: str
     ) -> list[int]:
         """
         Calculates the net rating difference for each unique combination of teams based on a particular rating field.
@@ -90,8 +94,6 @@ class OneHeadBalance(commands.Cog):
 
     def _calculate_balance(self, adjusted=False):
         """
-
-
         :param adjusted: Specifies whether to use the 'adjusted_mmr' field to balance or just the 'mmr' field.
         :return: Returns a matchup of two, five-man teams that are evenly (or as close to evenly) matched based on
         a rating value associated with each player.
@@ -127,6 +129,9 @@ class OneHeadBalance(commands.Cog):
                 "No valid matchups could be calculated. Possible Duplicate Player Name."
             )
 
+        # Doing it for the Mental Health.
+        unique_combinations = self.preserve_sanity(unique_combinations)
+
         rating_differences = self._calculate_rating_differences(
             unique_combinations, mmr_field_name
         )  # Calculate the net rating difference between each 5v5 matchup.
@@ -142,8 +147,8 @@ class OneHeadBalance(commands.Cog):
         }  # Sort by ascending net rating difference.
 
         indices = list(rating_differences_mapping.keys())[
-            :10
-        ]  # Obtain the indices for the top 10 closest net rating matchups.
+                  :10
+                  ]  # Obtain the indices for the top 10 closest net rating matchups.
         balanced_teams = unique_combinations[
             random.choice(indices)
         ]  # Pick a random matchup from the top 10 closest net rating matchups.
@@ -167,6 +172,29 @@ class OneHeadBalance(commands.Cog):
         balanced_teams = self._calculate_balance(adjusted=self.is_adjusted)
 
         return balanced_teams
+
+    def preserve_sanity(self, unique_combinations: list["TeamCombination"]) -> list["TeamCombination"]:
+
+        if self.GOD_GAMER not in self.pre_game.signups or self.BOTTOM_FEEDER not in self.pre_game.signups:
+            return unique_combinations
+
+        clean_combinations = []
+
+        for combination in unique_combinations:
+            team_1, team_2 = combination
+            team_1_names, team_2_names = OneHeadCommon.get_player_names(team_1, team_2)
+
+            ignore = False
+
+            for names in (team_1_names, team_2_names):
+                if self.GOD_GAMER and self.BOTTOM_FEEDER in names:
+                    ignore = True
+                    break
+
+            if ignore is False:
+                clean_combinations.append(combination)
+
+        return clean_combinations
 
     @commands.has_role("IHL")
     @commands.command(aliases=["mmr"])
