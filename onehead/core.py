@@ -74,8 +74,8 @@ class OneHeadCore(commands.Cog):
     def __init__(self, bot: commands.Bot, token: str):
 
         self.game_in_progress = False
-        self.t1 = []  # type: list[dict]
-        self.t2 = []  # type: list[dict]
+        self.radiant = []  # type: list[dict]
+        self.dire = []  # type: list[dict]
 
         self.bot = bot
         self.token = token
@@ -168,7 +168,7 @@ class OneHeadCore(commands.Cog):
         accepted_results = [RADIANT, DIRE]
 
         if result not in accepted_results:
-            await ctx.send("Invalid Value - Must be either 't1' or 't2' or 'void'.")
+            await ctx.send(f"Invalid Value - Must be either {RADIANT} or {DIRE}.")
 
             return
 

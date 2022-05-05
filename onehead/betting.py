@@ -4,7 +4,7 @@ from discord import Embed, colour
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import RADIANT, DIRE
+from onehead.common import TEAM_1, TEAM_2
 
 if TYPE_CHECKING:
     from onehead.db import OneHeadDB

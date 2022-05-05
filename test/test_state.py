@@ -121,7 +121,7 @@ class OneHeadStateTest(TestCase):
         OneHeadAsyncTest._run(core.start(self.ctx))
 
         self.assertEqual(
-            core.t1,
+            core.radiant,
             [
                 {"name": "RBEEZAY"},
                 {"name": "GEE"},
@@ -131,7 +131,7 @@ class OneHeadStateTest(TestCase):
             ],
         )
         self.assertEqual(
-            core.t2,
+            core.dire,
             [
                 {"name": "ERIC"},
                 {"name": "JAQ"},
