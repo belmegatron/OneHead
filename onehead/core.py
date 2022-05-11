@@ -6,7 +6,7 @@ from version import __changelog__, __version__
 
 import onehead.common
 
-from onehead.balance import OneHeadBalance, OneHeadCaptainsMode
+from onehead.balance import OneHeadBalance
 from onehead.betting import OneHeadBetting
 from onehead.channels import OneHeadChannels
 from onehead.common import OneHeadCommon, OneHeadException, RADIANT, DIRE
@@ -40,7 +40,6 @@ def bot_factory() -> commands.Bot:
     scoreboard = OneHeadScoreBoard(database)
     pre_game = OneHeadPreGame(database)
     team_balance = OneHeadBalance(database, pre_game, config)
-    captains_mode = OneHeadCaptainsMode(database, pre_game)
     channels = OneHeadChannels(config)
     registration = OneHeadRegistration(database)
     mental_health = OneHeadMentalHealth()
@@ -50,7 +49,6 @@ def bot_factory() -> commands.Bot:
     bot.add_cog(pre_game)
     bot.add_cog(scoreboard)
     bot.add_cog(registration)
-    bot.add_cog(captains_mode)
     bot.add_cog(team_balance)
     bot.add_cog(channels)
     bot.add_cog(mental_health)
@@ -85,7 +83,6 @@ class OneHeadCore(commands.Cog):
         self.scoreboard = bot.get_cog("OneHeadScoreBoard")
         self.pre_game = bot.get_cog("OneHeadPreGame")
         self.team_balance = bot.get_cog("OneHeadBalance")
-        self.captains_mode = bot.get_cog("OneHeadCaptainsMode")
         self.channels = bot.get_cog("OneHeadChannels")
         self.registration = bot.get_cog("OneHeadRegistration")
         self.betting = bot.get_cog("OneHeadBetting")
@@ -95,7 +92,6 @@ class OneHeadCore(commands.Cog):
                 self.scoreboard,
                 self.pre_game,
                 self.team_balance,
-                self.captains_mode,
                 self.channels,
                 self.registration,
                 self.betting
@@ -105,7 +101,7 @@ class OneHeadCore(commands.Cog):
     @commands.has_role("IHL Admin")
     @commands.command()
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
-    async def start(self, ctx: commands.Context, captains_mode=False):
+    async def start(self, ctx: commands.Context):
         """
         Starts an IHL game. Can optionally select 'cm' mode to start a Captain's mode game. This can be done by passing
         the game type after the start command e.g. !start cm.
@@ -121,13 +117,8 @@ class OneHeadCore(commands.Cog):
 
         await self.pre_game.handle_signups(ctx)
 
-        if captains_mode is False:
-            balanced_teams = await self.team_balance.balance(ctx)
-            self.radiant, self.dire = balanced_teams
-        else:
-            await self.captains_mode.nomination_phase(ctx)
-            radiant, dire = await self.captains_mode.picking_phase(ctx)
-            self.radiant, self.dire = radiant, dire
+        balanced_teams = await self.team_balance.balance(ctx)
+        self.radiant, self.dire = balanced_teams
 
         self.game_in_progress = True
         self.pre_game.disable_signups()
@@ -248,4 +239,3 @@ class OneHeadCore(commands.Cog):
         self.dire = []
 
         self.pre_game.reset_state()
-        self.captains_mode.reset_state()

@@ -44,7 +44,7 @@ class OneHeadCoreTest(TestCase):
         self.core.pre_game.signup_check = OneHeadAsyncTest.async_mock(
             return_value=False
         )
-        OneHeadAsyncTest._run(self.core.start(self.core, self.ctx))
+        OneHeadAsyncTest._run(self.core.start(self.ctx))
         self.assertFalse(mock_balance.called)
 
     @patch("onehead.channels.OneHeadChannels.set_teams")
@@ -106,7 +106,7 @@ class OneHeadCoreTest(TestCase):
         self.assertEqual(self.ctx.send.mock.call_count, 1)
         self.assertEqual(
             self.ctx.send.mock.call_args_list[0][0][0],
-            "Invalid Value - Must be either 't1' or 't2' or 'void'.",
+            "Invalid Value - Must be either radiant or dire.",
         )
 
     @patch(
@@ -122,33 +122,13 @@ class OneHeadCoreTest(TestCase):
             [x for x in "abcde"],
             [x for x in "fghij"],
         )
-        OneHeadAsyncTest._run(self.core.result(self.ctx, "t1"))
+        OneHeadAsyncTest._run(self.core.result(self.ctx, "radiant"))
 
         expected_args = [(x, True) for x in "abcde"] + [(x, False) for x in "fghij"]
 
         for i, args in enumerate(self.core.database.update_player.call_args_list):
             self.assertEqual(args[0], expected_args[i])
 
-        self.assertEqual(self.core.channels.move_back_to_lobby.mock.call_count, 1)
-        self.assertFalse(self.core.game_in_progress)
-        self.assertEqual(self.core.radiant, [])
-        self.assertEqual(self.core.dire, [])
-
-    @patch(
-        "discord.ext.commands.core.Command.invoke", new=OneHeadAsyncTest.async_mock()
-    )
-    def test_result_void(self):
-        self.core.game_in_progress = True
-        self.core._get_player_names = MagicMock()
-        self.core.database.update_player = MagicMock()
-        self.core.channels.move_back_to_lobby = OneHeadAsyncTest.async_mock()
-        self.core.channels.teardown_discord_channels = OneHeadAsyncTest.async_mock()
-        self.core._get_player_names.return_value = (
-            [x for x in "abcde"],
-            [x for x in "fghij"],
-        )
-        OneHeadAsyncTest._run(self.core.result(self.ctx, "void"))
-        self.assertEqual(self.core.database.update_player.call_count, 0)
         self.assertEqual(self.core.channels.move_back_to_lobby.mock.call_count, 1)
         self.assertFalse(self.core.game_in_progress)
         self.assertEqual(self.core.radiant, [])

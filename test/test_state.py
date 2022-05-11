@@ -75,7 +75,7 @@ class OneHeadStateTest(TestCase):
         core.channels.move_back_to_lobby = OneHeadAsyncTest.async_mock()
 
         # The pretend match has finished, enter a result
-        OneHeadAsyncTest._run(core.result(self.ctx, "t2"))
+        OneHeadAsyncTest._run(core.result(self.ctx, "dire"))
 
         self.assertEqual(core.radiant, [])
         self.assertEqual(core.dire, [])
