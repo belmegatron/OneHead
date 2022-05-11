@@ -98,6 +98,7 @@ class OneHeadCore(commands.Cog):
 
     @commands.has_role("IHL Admin")
     @commands.command()
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def start(self, ctx: commands.Context, captains_mode=False):
         """
         Starts an IHL game. Can optionally select 'cm' mode to start a Captain's mode game. This can be done by passing
@@ -133,6 +134,7 @@ class OneHeadCore(commands.Cog):
 
     @commands.has_role("IHL Admin")
     @commands.command()
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def stop(self, ctx: commands.Context):
         """
         Cancels an IHL game. Can alternatively void a result using the !result command.
@@ -147,6 +149,7 @@ class OneHeadCore(commands.Cog):
 
     @commands.has_role("IHL Admin")
     @commands.command()
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def result(self, ctx: commands.Context, result: str):
         """
         Provide the result of game that has finished. Can pass 'void' if the match did not correctly terminate.
@@ -210,6 +213,7 @@ class OneHeadCore(commands.Cog):
 
     @commands.has_role("IHL Admin")
     @commands.command()
+    @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def reset(self, ctx: commands.Context):
         """
         Resets the current bot state.
