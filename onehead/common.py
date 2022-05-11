@@ -1,8 +1,12 @@
 import json
 import os
-from typing import Optional
+from typing import Optional, TYPE_CHECKING, Union
 
 from discord.ext.commands import Bot
+
+if TYPE_CHECKING:
+    Team = tuple[dict, dict, dict, dict, dict]
+    TeamCombination = tuple[Team, Team]
 
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
 bot = None  # type: Optional[Bot]
@@ -16,7 +20,7 @@ class OneHeadCommon(object):
     ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     @staticmethod
-    def get_player_names(t1: list[dict], t2: list[dict]) -> tuple[list, list]:
+    def get_player_names(t1: "Team", t2: "Team") -> tuple[tuple[str], tuple[str]]:
         """
         Obtain player names from player profiles.
 

@@ -10,22 +10,23 @@ from onehead.common import OneHeadCommon, OneHeadException
 from onehead.stats import OneHeadStats
 
 if TYPE_CHECKING:
-    Team = tuple[dict, dict, dict, dict, dict]
-    TeamCombination = tuple[Team, Team]
     from onehead.db import OneHeadDB
     from onehead.user import OneHeadPreGame
+    from onehead.common import Team, TeamCombination
+
+
+class Insanity(Exception):
+    pass
 
 
 class OneHeadBalance(commands.Cog):
-
-    GOD_GAMER = "RBEEZAY"
-    BOTTOM_FEEDER = "ERIC"
 
     def __init__(self, database: "OneHeadDB", pre_game: "OneHeadPreGame", config: dict):
 
         self.database = database
         self.pre_game = pre_game
-        self.is_adjusted = config["rating"]["is_adjusted"]
+        self.save = config.get("rating", {}).get("save", [])
+        self.avoid = config.get("rating", {}).get("avoid", [])
 
     def _get_profiles(self) -> list[dict]:
         """
@@ -44,7 +45,7 @@ class OneHeadBalance(commands.Cog):
 
     @staticmethod
     def _calculate_unique_team_combinations(
-            all_matchups: list["TeamCombination"],
+        all_matchups: list["TeamCombination"],
     ) -> list["TeamCombination"]:
         """
         Calculates all 5v5 combinations, where the players on each team are unique to that particular team.
@@ -68,33 +69,25 @@ class OneHeadBalance(commands.Cog):
         return unique_combinations
 
     @staticmethod
-    def _calculate_rating_differences(
-            all_unique_combinations: list, rating_field: str
-    ) -> list[int]:
+    def _calculate_rating_differences(all_unique_combinations: list) -> None:
         """
-        Calculates the net rating difference for each unique combination of teams based on a particular rating field.
+        Calculates the net rating difference for each unique combination of teams based on their adjusted mmr.
 
         :param all_unique_combinations: All 5v5 unique combinations.
-        :param rating_field: Specifies which field in the player profile to use for calculating net rating difference.
-        :return: Rating differences.
         """
-
-        rating_differences = []
 
         for unique_combination in all_unique_combinations:
-            t1, t2 = unique_combination
+            t1_rating = sum(
+                [player["adjusted_mmr"] for player in unique_combination["t1"]]
+            )
+            t2_rating = sum(
+                [player["adjusted_mmr"] for player in unique_combination["t2"]]
+            )
 
-            t1_rating = sum([player[rating_field] for player in t1])
-            t2_rating = sum([player[rating_field] for player in t2])
+            unique_combination["rating_difference"] = abs(t1_rating - t2_rating)
 
-            rating_difference = abs(t1_rating - t2_rating)
-            rating_differences.append(rating_difference)
-
-        return rating_differences
-
-    def _calculate_balance(self, adjusted=False):
+    def _calculate_balance(self) -> dict:
         """
-        :param adjusted: Specifies whether to use the 'adjusted_mmr' field to balance or just the 'mmr' field.
         :return: Returns a matchup of two, five-man teams that are evenly (or as close to evenly) matched based on
         a rating value associated with each player.
         """
@@ -106,23 +99,20 @@ class OneHeadBalance(commands.Cog):
                 f"Error: Only {profile_count} profiles could be found in database."
             )
 
-        if adjusted is False:
-            mmr_field_name = "mmr"
-        else:
-            mmr_field_name = "adjusted_mmr"
-            OneHeadStats.calculate_rating(profiles)
-            OneHeadStats.calculate_adjusted_mmr(profiles)
+        OneHeadStats.calculate_rating(profiles)
+        OneHeadStats.calculate_adjusted_mmr(profiles)
 
-        all_5_man_lineups = list(
+        team_combinations = list(
             itertools.combinations(profiles, 5)
-        )  # Calculate all possible 5 man lineups.
-        all_5v5_matchups = list(
-            itertools.combinations(all_5_man_lineups, 2)
-        )  # Calculate all possible 5v5 matchups.
+        )  # Calculate all possible team combinations.
+
+        matchup_combinations = list(
+            itertools.combinations(team_combinations, 2)
+        )  # Calculate all possible team matchups.
 
         unique_combinations = self._calculate_unique_team_combinations(
-            all_5v5_matchups
-        )  # Calculate all valid 5v5 matchups where players are unique to either Team 1 or Team 2.
+            matchup_combinations
+        )  # Calculate all valid team matchups where players are unique to either Team 1 or Team 2.
 
         if not unique_combinations:
             raise OneHeadException(
@@ -132,26 +122,20 @@ class OneHeadBalance(commands.Cog):
         # Doing it for the Mental Health.
         unique_combinations = self.preserve_sanity(unique_combinations)
 
-        rating_differences = self._calculate_rating_differences(
-            unique_combinations, mmr_field_name
-        )  # Calculate the net rating difference between each 5v5 matchup.
+        unique_combinations = [
+            {"t1": combination[0], "t2": combination[1]}
+            for combination in unique_combinations
+        ]
 
-        rating_differences_mapping = dict(
-            enumerate(rating_differences, start=0)
-        )  # Map the net rating differences to a key.
-        rating_differences_mapping = {
-            k: v
-            for k, v in sorted(
-                rating_differences_mapping.items(), key=lambda item: item[1]
-            )
-        }  # Sort by ascending net rating difference.
+        self._calculate_rating_differences(unique_combinations)
 
-        indices = list(rating_differences_mapping.keys())[
-                  :10
-                  ]  # Obtain the indices for the top 10 closest net rating matchups.
-        balanced_teams = unique_combinations[
-            random.choice(indices)
-        ]  # Pick a random matchup from the top 10 closest net rating matchups.
+        # Sort by ascending rating difference
+        unique_combinations = sorted(
+            unique_combinations, key=lambda d: d["rating_difference"]
+        )
+
+        # Take the top 5 that are closest in terms of rating and pick one at random.
+        balanced_teams = random.choice(unique_combinations[:5])
 
         return balanced_teams
 
@@ -169,32 +153,41 @@ class OneHeadBalance(commands.Cog):
             err = f"Only {signup_count} Signups, require {10 - signup_count} more."
             await ctx.send(err)
 
-        balanced_teams = self._calculate_balance(adjusted=self.is_adjusted)
+        balanced_teams = self._calculate_balance()
 
-        return balanced_teams
+        return balanced_teams["t1"], balanced_teams["t2"]
 
-    def preserve_sanity(self, unique_combinations: list["TeamCombination"]) -> list["TeamCombination"]:
+    def preserve_sanity(
+        self, unique_combinations: list["TeamCombination"]
+    ) -> list["TeamCombination"]:
 
-        if self.GOD_GAMER not in self.pre_game.signups or self.BOTTOM_FEEDER not in self.pre_game.signups:
+        to_save = [x for x in self.save if x in self.pre_game.signups]
+        to_avoid = [x for x in self.avoid if x in self.pre_game.signups]
+
+        if len(to_save) == 0 or len(to_avoid) == 0:
             return unique_combinations
 
-        clean_combinations = []
+        sane_combinations = []
 
         for combination in unique_combinations:
             team_1, team_2 = combination
             team_1_names, team_2_names = OneHeadCommon.get_player_names(team_1, team_2)
 
-            ignore = False
+            try:
+                for names in (team_1_names, team_2_names):
+                    for saved_player in to_save:
+                        if saved_player not in names:
+                            continue
 
-            for names in (team_1_names, team_2_names):
-                if self.GOD_GAMER and self.BOTTOM_FEEDER in names:
-                    ignore = True
-                    break
+                        for player_to_avoid in to_avoid:
+                            if player_to_avoid in names:
+                                raise Insanity()
+            except Insanity:
+                pass
+            else:
+                sane_combinations.append(combination)
 
-            if ignore is False:
-                clean_combinations.append(combination)
-
-        return clean_combinations
+        return sane_combinations
 
     @commands.has_role("IHL")
     @commands.command(aliases=["mmr"])
