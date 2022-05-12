@@ -69,7 +69,7 @@ class OneHeadDB(commands.Cog):
             except ClientError as e:
                 raise OneHeadException(e)
 
-    def update_bet_result(self, bettor_name: str, rbucks: int):
+    def update_rbucks(self, bettor_name: str, rbucks: int):
         self.db.update_item(
             Key={"name": bettor_name},
             UpdateExpression="set rbucks = rbucks + :val",

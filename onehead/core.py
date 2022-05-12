@@ -43,7 +43,7 @@ def bot_factory() -> commands.Bot:
     channels = OneHeadChannels(config)
     registration = OneHeadRegistration(database)
     mental_health = OneHeadMentalHealth()
-    betting = OneHeadBetting(database)
+    betting = OneHeadBetting(database, pre_game)
 
     bot.add_cog(database)
     bot.add_cog(pre_game)
@@ -166,10 +166,13 @@ class OneHeadCore(commands.Cog):
             return
 
         bet_results = self.betting.get_bet_results(result == RADIANT)
-        for name, delta in bet_results.items():
-            won_or_lost = "won" if delta >= 0 else "lost"
-            await ctx.send(f"{name} {won_or_lost} {abs(delta)} RBUCKS!")
-            self.database.update_bet_result(name, delta)
+
+        for name, rbucks_won in bet_results.items():
+            if rbucks_won > 0:
+                self.database.update_rbucks(name, rbucks_won)
+
+        report = self.betting.create_bet_report(bet_results)
+        await ctx.send(embed=report)
 
         await ctx.send("Updating Scores...")
         radiant_names, dire_names = OneHeadCommon.get_player_names(self.radiant, self.dire)
@@ -240,16 +243,14 @@ class OneHeadCore(commands.Cog):
     @commands.has_role("IHL Admin")
     @commands.command(aliases=["sim"])
     async def simulate_signups(self, ctx: commands.Context):
-        self.pre_game.signups = ["RBEEZAY", "GEE", "JEFFERIES", "EMMA", "PECRO", "LAURENCE", "THANOS", "JAMES", "LUKE", "EDD"]
-
+        self.pre_game.signups = ["ERIC", "GEE", "JEFFERIES", "EMMA", "PECRO", "LAURENCE", "THANOS", "JAMES", "LUKE",
+                                 "EDD"]
 
     def _reset_state(self):
-        """
-        Resets state local to self and creates new instances of OneHeadPreGame and OneHeadCaptainsMode classes.
-        """
 
         self.game_in_progress = False
         self.radiant = []
         self.dire = []
 
         self.pre_game.reset_state()
+        self.betting.reset_state()
