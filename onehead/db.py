@@ -69,13 +69,17 @@ class OneHeadDB(commands.Cog):
             except ClientError as e:
                 raise OneHeadException(e)
 
+    def update_bet_result(self, bettor_name: str, rbucks: int):
+        self.db.update_item(
+            Key={"name": bettor_name},
+            UpdateExpression="set rbucks = rbucks + :val",
+            ExpressionAttributeValues={
+                ":val": decimal.Decimal(rbucks),
+            },
+            ReturnValues="UPDATED_NEW",
+        )
+
     def update_player(self, player_name: str, win: bool):
-
-        if not isinstance(win, bool):
-            raise OneHeadException("Win parameter must be a valid bool.")
-
-        if not isinstance(player_name, str):
-            raise OneHeadException("Player Name not a valid string.")
 
         if self.player_exists(player_name) is False:
             raise OneHeadException(f"{player_name} cannot be found.")
@@ -83,20 +87,22 @@ class OneHeadDB(commands.Cog):
         if win:
             self.db.update_item(
                 Key={"name": player_name},
-                UpdateExpression="set win = win + :val, win_streak = win_streak + :val, loss_streak = :zero",
+                UpdateExpression="set win = win + :val, win_streak = win_streak + :val, loss_streak = :zero, rbucks = rbucks + :rbucks",
                 ExpressionAttributeValues={
                     ":val": decimal.Decimal(1),
                     ":zero": decimal.Decimal(0),
+                    ":rbucks": decimal.Decimal(100),
                 },
                 ReturnValues="UPDATED_NEW",
             )
         else:
             self.db.update_item(
                 Key={"name": player_name},
-                UpdateExpression="set loss = loss + :val, win_streak = :zero, loss_streak = loss_streak + :val",
+                UpdateExpression="set loss = loss + :val, win_streak = :zero, loss_streak = loss_streak + :val, rbucks = rbucks + :rbucks",
                 ExpressionAttributeValues={
                     ":val": decimal.Decimal(1),
                     ":zero": decimal.Decimal(0),
+                    ":rbucks": decimal.Decimal(50),
                 },
                 ReturnValues="UPDATED_NEW",
             )

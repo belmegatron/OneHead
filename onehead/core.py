@@ -129,6 +129,9 @@ class OneHeadCore(commands.Cog):
         await self.channels.move_discord_channels(ctx)
         await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
 
+        # Allow bets!
+        await self.betting.open_betting_window(ctx)
+
     @commands.has_role("IHL Admin")
     @commands.command()
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
@@ -160,8 +163,13 @@ class OneHeadCore(commands.Cog):
 
         if result not in accepted_results:
             await ctx.send(f"Invalid Value - Must be either {RADIANT} or {DIRE}.")
-
             return
+
+        bet_results = self.betting.get_bet_results(result == RADIANT)
+        for name, delta in bet_results.items():
+            won_or_lost = "won" if delta >= 0 else "lost"
+            await ctx.send(f"{name} {won_or_lost} {abs(delta)} RBUCKS!")
+            self.database.update_bet_result(name, delta)
 
         await ctx.send("Updating Scores...")
         radiant_names, dire_names = OneHeadCommon.get_player_names(self.radiant, self.dire)
@@ -182,6 +190,7 @@ class OneHeadCore(commands.Cog):
         scoreboard = self.bot.get_command("scoreboard")
         await commands.Command.invoke(scoreboard, ctx)
         await self.channels.move_back_to_lobby(ctx)
+
         self._reset_state()
 
     @commands.has_role("IHL")
@@ -218,7 +227,6 @@ class OneHeadCore(commands.Cog):
         """
 
         self._reset_state()
-        await ctx.send("Reset.")
 
     @commands.command()
     async def matches(self, ctx: commands.Context):
@@ -228,6 +236,12 @@ class OneHeadCore(commands.Cog):
         await ctx.send(
             "https://www.dotabuff.com/esports/leagues/13630-igc-inhouse-league"
         )
+
+    @commands.has_role("IHL Admin")
+    @commands.command(aliases=["sim"])
+    async def simulate_signups(self, ctx: commands.Context):
+        self.pre_game.signups = ["RBEEZAY", "GEE", "JEFFERIES", "EMMA", "PECRO", "LAURENCE", "THANOS", "JAMES", "LUKE", "EDD"]
+
 
     def _reset_state(self):
         """
