@@ -31,7 +31,7 @@ class OneHeadBetting(commands.Cog):
                 bet_results[name] = 0
 
             if (radiant_won and bet["side"] == "radiant") or (radiant_won is False and bet["side"] == "dire"):
-                bet_results[name] += bet["stake"]
+                bet_results[name] += (bet["stake"] * 2.0)
             else:
                 bet_results[name] -= bet["stake"]
 

@@ -167,9 +167,9 @@ class OneHeadCore(commands.Cog):
 
         bet_results = self.betting.get_bet_results(result == RADIANT)
 
-        for name, rbucks_won in bet_results.items():
-            if rbucks_won > 0:
-                self.database.update_rbucks(name, rbucks_won)
+        for name, delta in bet_results.items():
+            if delta > 0:
+                self.database.update_rbucks(name, delta)
 
         report = self.betting.create_bet_report(bet_results)
         await ctx.send(embed=report)
