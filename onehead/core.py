@@ -103,8 +103,7 @@ class OneHeadCore(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def start(self, ctx: commands.Context):
         """
-        Starts an IHL game. Can optionally select 'cm' mode to start a Captain's mode game. This can be done by passing
-        the game type after the start command e.g. !start cm.
+        Starts an IHL game.
         """
 
         if self.game_in_progress:
@@ -137,7 +136,7 @@ class OneHeadCore(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def stop(self, ctx: commands.Context):
         """
-        Cancels an IHL game. Can alternatively void a result using the !result command.
+        Cancels an IHL game.
         """
 
         if self.game_in_progress:
@@ -152,7 +151,7 @@ class OneHeadCore(commands.Cog):
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
     async def result(self, ctx: commands.Context, result: str):
         """
-        Provide the result of game that has finished. Can pass 'void' if the match did not correctly terminate.
+        Provide the result of game that has finished.
         """
 
         if self.game_in_progress is False:

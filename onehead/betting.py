@@ -146,6 +146,10 @@ class OneHeadBetting(commands.Cog):
 
         for name, delta in bet_results.items():
             won_or_lost = "won" if delta >= 0 else "lost"
+
+            # All bets are at an assumed price of 2.0, therefore need to divide by 2 to ignore the stake.
+            delta = delta if delta <= 0 else int(delta/2)
+
             line = f"{name} {won_or_lost} {abs(delta)} RBUCKS!\n"
             contents += line
 
