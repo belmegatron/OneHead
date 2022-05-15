@@ -6,7 +6,6 @@ from onehead.stats import OneHeadStats
 
 
 class OneHeadScoreBoard(commands.Cog):
-
     # It's actually 2000, but we prepend a small number of characters before our scoreboard so need to take
     # this into account.
     DISCORD_MAX_MESSAGE_LENGTH = 1950
@@ -15,7 +14,7 @@ class OneHeadScoreBoard(commands.Cog):
 
         self.db = database
 
-    def _chunk_scoreboard(self, scoreboard: str) -> tuple[str]:
+    def _chunk_scoreboard(self, scoreboard: str) -> tuple[str, ...]:
 
         if len(scoreboard) < self.DISCORD_MAX_MESSAGE_LENGTH:
             return tuple(scoreboard)
@@ -29,8 +28,8 @@ class OneHeadScoreBoard(commands.Cog):
                 chunk = scoreboard[offset:]
             else:
                 max_chunk = scoreboard[
-                    offset : offset + self.DISCORD_MAX_MESSAGE_LENGTH
-                ]
+                            offset: offset + self.DISCORD_MAX_MESSAGE_LENGTH
+                            ]
                 eol = max_chunk.rfind("\n")
                 chunk = max_chunk[:eol]
 
@@ -89,15 +88,15 @@ class OneHeadScoreBoard(commands.Cog):
         :return: Scoreboard sorted in descending order with additional '#' field.
         """
 
-        scoreboard = sorted(scoreboard, key=lambda k: k[sort_key], reverse=True)
+        sorted_scoreboard = sorted(scoreboard, key=lambda k: k[sort_key], reverse=True)  # type: ignore
         scoreboard_positions = []
 
         pos = 1
         modifier = 1
 
-        for i, record in enumerate(scoreboard):
+        for i, record in enumerate(sorted_scoreboard):
             if i != 0:
-                if scoreboard[i - 1][sort_key] > scoreboard[i][sort_key]:
+                if sorted_scoreboard[i - 1][sort_key] > sorted_scoreboard[i][sort_key]:
                     pos += modifier
                     modifier = 1
                 else:

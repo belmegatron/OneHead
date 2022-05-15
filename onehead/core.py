@@ -1,6 +1,7 @@
 from discord import Intents
 from discord.ext import commands
 from tabulate import tabulate
+from typing import TYPE_CHECKING, Optional
 
 import onehead.common
 from onehead.balance import OneHeadBalance
@@ -13,6 +14,9 @@ from onehead.scoreboard import OneHeadScoreBoard
 from onehead.user import (OneHeadPreGame, OneHeadRegistration,
                           on_member_update, on_voice_state_update)
 from version import __changelog__, __version__
+
+if TYPE_CHECKING:
+    from onehead.common import Team
 
 
 def bot_factory() -> commands.Bot:
@@ -65,8 +69,8 @@ class OneHeadCore(commands.Cog):
     def __init__(self, bot: commands.Bot, token: str):
 
         self.game_in_progress = False
-        self.radiant = []  # type: list[dict]
-        self.dire = []  # type: list[dict]
+        self.radiant = None  # type: Optional[Team]
+        self.dire = None  # type: Optional[Team]
 
         self.bot = bot
         self.token = token
@@ -151,6 +155,9 @@ class OneHeadCore(commands.Cog):
             await ctx.send("No currently active game.")
             return
 
+        if self.radiant is None or self.dire is None:
+            return
+
         accepted_results = [RADIANT, DIRE]
 
         if result not in accepted_results:
@@ -195,7 +202,7 @@ class OneHeadCore(commands.Cog):
         If a game is active, displays the teams and their respective players.
         """
 
-        if self.game_in_progress:
+        if self.game_in_progress and self.radiant and self.dire:
             t1_names, t2_names = OneHeadCommon.get_player_names(self.radiant, self.dire)
             players = {RADIANT: t1_names, DIRE: t2_names}
             in_game_players = tabulate(players, headers="keys", tablefmt="simple")

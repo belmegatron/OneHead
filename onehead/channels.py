@@ -1,7 +1,12 @@
+from typing import TYPE_CHECKING, Optional
+
 import discord
 from discord.ext import commands
 
 from onehead.common import OneHeadCommon, OneHeadException
+
+if TYPE_CHECKING:
+    from onehead.common import Team
 
 
 class OneHeadChannels(commands.Cog):
@@ -14,26 +19,24 @@ class OneHeadChannels(commands.Cog):
         self.lobby_name = channel_config_settings["lobby"]
 
         self.ihl_discord_channels = []  # type: list[discord.VoiceChannel]
-        self.t1 = []  # type: list[dict]
-        self.t2 = []  # type: list[dict]
+        self.t1 = None  # type: Optional[Team]
+        self.t2 = None  # type: Optional[Team]
         self.t1_discord_members = []  # type: list[discord.member]
         self.t2_discord_members = []  # type: list[discord.member]
 
-    def set_teams(self, t1: list, t2: list):
+    def set_teams(self, t1: "Team", t2: "Team"):
         """
         To be called by an object that has instantiated a OneHeadChannels object.
 
         :param t1: Players in Team 1
-        :type t1: List of Player Objects.
         :param t2: Players in Team 2
-        :type t2: List of Player Objects.
         """
 
         self.t1 = t1
         self.t2 = t2
 
     def _get_discord_members(
-        self, ctx: commands.Context, t1_names: list[str], t2_names: list[str]
+            self, ctx: commands.Context, t1_names: tuple[str, ...], t2_names: tuple[str, ...]
     ):
         """
         Obtains Discord Member objects for corresponding list of names.
@@ -77,7 +80,7 @@ class OneHeadChannels(commands.Cog):
         :param ctx: Discord Context
         """
 
-        (lobby,) = [x for x in ctx.guild.voice_channels if x.name == self.lobby_name]
+        lobby = [x for x in ctx.guild.voice_channels if x.name == self.lobby_name][0]
 
         for member in self.t1_discord_members:
             try:
@@ -91,8 +94,8 @@ class OneHeadChannels(commands.Cog):
             except discord.errors.HTTPException:
                 pass
 
-        self.t1 = []
-        self.t2 = []
+        self.t1 = None
+        self.t2 = None
         self.t1_discord_members = []
         self.t2_discord_members = []
 
@@ -107,6 +110,11 @@ class OneHeadChannels(commands.Cog):
         if channel_count != 2:
             raise OneHeadException(
                 f"Expected 2 Discord Channels, Identified {channel_count}."
+            )
+
+        if self.t1 is None or self.t2 is None:
+            raise OneHeadException(
+                "Expected to have valid references to teams prior to moving channels."
             )
 
         t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)

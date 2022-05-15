@@ -1,5 +1,10 @@
-class OneHeadStats:
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from onehead.common import Player
+
+
+class OneHeadStats:
     BASELINE_RATING = 1500
     MMR_DELTA = 50
 
@@ -20,7 +25,7 @@ class OneHeadStats:
                 )
 
     @classmethod
-    def calculate_rating(cls, profiles: list[dict]):
+    def calculate_rating(cls, profiles: list["Player"]):
         """
         Calculates the IHL rating for each profile in profiles.
 
@@ -33,7 +38,7 @@ class OneHeadStats:
             record["rating"] = cls.BASELINE_RATING + win_modifier - loss_modifier
 
     @classmethod
-    def calculate_adjusted_mmr(cls, profiles: list[dict]):
+    def calculate_adjusted_mmr(cls, profiles: list["Player"]):
         """
         Calculates an adjusted mmr to aid balancing. It adds the difference between baseline rating and your IHL
         rating to your MMR that was added when the player registered.

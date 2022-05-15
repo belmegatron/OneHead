@@ -1,5 +1,6 @@
 import decimal
 import json
+from typing import TYPE_CHECKING
 
 import boto3
 from botocore.exceptions import ClientError
@@ -7,6 +8,8 @@ from discord.ext import commands
 
 from onehead.common import OneHeadException
 
+if TYPE_CHECKING:
+    from onehead.common import Player
 
 # Helper class to convert a DynamoDB item to JSON.
 class DecimalEncoder(json.JSONEncoder):
@@ -107,7 +110,7 @@ class OneHeadDB(commands.Cog):
                 ReturnValues="UPDATED_NEW",
             )
 
-    def lookup_player(self, player_name: str) -> dict:
+    def lookup_player(self, player_name: str) -> "Player":
 
         try:
             response = self.db.get_item(Key={"name": player_name})
@@ -115,18 +118,17 @@ class OneHeadDB(commands.Cog):
             raise OneHeadException(e)
         else:
             item = response.get("Item")
-            player = json.dumps(item, indent=4, cls=DecimalEncoder)
-            player = json.loads(player)
+            player_str = json.dumps(item, indent=4, cls=DecimalEncoder)
+            player = json.loads(player_str)  # type: Player
             return player
 
-    def retrieve_table(self) -> list[dict]:
+    def retrieve_table(self) -> list[Player]:
 
         try:
             response = self.db.scan()
         except ClientError as e:
             raise OneHeadException(e)
         else:
-            table = response.get("Items")
-            table = json.dumps(table, indent=4, cls=DecimalEncoder)
-            table = json.loads(table)
+            table_str = json.dumps(response.get("Items", {}), indent=4, cls=DecimalEncoder)
+            table = json.loads(table_str)  # type: list[Player]
             return table

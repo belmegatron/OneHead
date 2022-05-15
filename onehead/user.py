@@ -30,16 +30,16 @@ class OneHeadRegistration(commands.Cog):
         name = ctx.author.display_name
 
         try:
-            mmr = int(mmr)
+            mmr_int = int(mmr)  # type: int
         except ValueError:
             raise onehead.common.OneHeadException(f"{mmr} is not a valid integer.")
 
-        if mmr < 1000:
-            await ctx.send(f"{mmr} MMR is too low, must be greater or equal to 1000.")
+        if mmr_int < 1000:
+            await ctx.send(f"{mmr_int} MMR is too low, must be greater or equal to 1000.")
             return
 
         if self.database.player_exists(name) is False:
-            self.database.add_player(ctx.author.display_name, mmr)
+            self.database.add_player(ctx.author.display_name, mmr_int)
             await ctx.send(f"{name} successfully registered.")
         else:
             await ctx.send(f"{name} is already registered.")
@@ -251,6 +251,10 @@ class OneHeadPreGame(commands.Cog):
 async def on_voice_state_update(
     member: "Member", before: "VoiceState", after: "VoiceState"
 ) -> None:
+
+    if onehead.common.bot is None:
+        return
+
     pre_game = onehead.common.bot.get_cog("OneHeadPreGame")
 
     name = member.display_name
@@ -261,6 +265,10 @@ async def on_voice_state_update(
 
 
 async def on_member_update(before: "Member", after: "Member") -> None:
+
+    if onehead.common.bot is None:
+        return
+
     pre_game = onehead.common.bot.get_cog("OneHeadPreGame")
 
     name = after.display_name

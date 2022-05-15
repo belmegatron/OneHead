@@ -17,12 +17,12 @@ class OneHeadBetting(commands.Cog):
 
         self.database = database
         self.betting_window_open = False
-        self.bets = []
+        self.bets = []  # type: list[dict]
         self.pre_game = pre_game
 
     def get_bet_results(self, radiant_won: bool) -> dict:
 
-        bet_results = {}
+        bet_results = {}    # type: dict[str, float]
 
         for bet in self.bets:
             name = bet["name"]
@@ -128,7 +128,7 @@ class OneHeadBetting(commands.Cog):
                 "RBUCKS": player["rbucks"]}
             )
 
-        subset = sorted(subset, key=lambda d: d['RBUCKS'], reverse=True)
+        subset = sorted(subset, key=lambda d: d['RBUCKS'], reverse=True)    # type: ignore
 
         bucks_board = tabulate(
             subset, headers="keys", tablefmt="simple"
