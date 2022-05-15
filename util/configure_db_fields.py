@@ -1,8 +1,8 @@
 import decimal
+from pprint import pprint
 
 from onehead.common import OneHeadCommon
 from onehead.db import OneHeadDB
-from pprint import pprint
 
 if __name__ == "__main__":
 

@@ -9,9 +9,9 @@ from onehead.common import OneHeadCommon, OneHeadException
 from onehead.stats import OneHeadStats
 
 if TYPE_CHECKING:
+    from onehead.common import Team, TeamCombination
     from onehead.db import OneHeadDB
     from onehead.user import OneHeadPreGame
-    from onehead.common import Team, TeamCombination
 
 
 class Insanity(Exception):

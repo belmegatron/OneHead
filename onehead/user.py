@@ -2,15 +2,16 @@ import random
 from asyncio import sleep
 from typing import TYPE_CHECKING, Optional
 
-from discord.ext import commands
 from discord import Status
+from discord.ext import commands
 from tabulate import tabulate
 
 import onehead.common
 
 if TYPE_CHECKING:
-    from discord.member import Member
     from discord import VoiceState
+    from discord.member import Member
+
     from onehead.db import OneHeadDB
 
 

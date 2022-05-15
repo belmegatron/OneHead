@@ -5,7 +5,7 @@ from discord import Embed, colour
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import RADIANT, DIRE, OneHeadException
+from onehead.common import DIRE, RADIANT, OneHeadException
 
 if TYPE_CHECKING:
     from onehead.db import OneHeadDB
