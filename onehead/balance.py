@@ -9,7 +9,7 @@ from onehead.common import OneHeadCommon, OneHeadException
 from onehead.stats import OneHeadStats
 
 if TYPE_CHECKING:
-    from onehead.common import Team, TeamCombination, Player
+    from onehead.common import Player, Team, TeamCombination
     from onehead.db import OneHeadDB
     from onehead.user import OneHeadPreGame
 

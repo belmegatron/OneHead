@@ -1,7 +1,8 @@
+from typing import TYPE_CHECKING, Optional
+
 from discord import Intents
 from discord.ext import commands
 from tabulate import tabulate
-from typing import TYPE_CHECKING, Optional
 
 import onehead.common
 from onehead.balance import OneHeadBalance
@@ -11,12 +12,8 @@ from onehead.common import DIRE, RADIANT, OneHeadCommon, OneHeadException
 from onehead.db import OneHeadDB
 from onehead.mental_health import OneHeadMentalHealth
 from onehead.scoreboard import OneHeadScoreBoard
-from onehead.user import (
-    OneHeadPreGame,
-    OneHeadRegistration,
-    on_member_update,
-    on_voice_state_update,
-)
+from onehead.user import (OneHeadPreGame, OneHeadRegistration,
+                          on_member_update, on_voice_state_update)
 from version import __changelog__, __version__
 
 if TYPE_CHECKING:

@@ -1,6 +1,6 @@
 import json
 import os
-from typing import TYPE_CHECKING, Optional, Any, Union, TypedDict
+from typing import TYPE_CHECKING, Any, Optional, TypedDict, Union
 
 from discord.ext.commands import Bot
 
