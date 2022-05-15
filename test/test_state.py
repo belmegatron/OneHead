@@ -32,10 +32,11 @@ class OneHeadStateTest(TestCase):
         db.db = MagicMock()
         db.dynamo = MagicMock()
 
+    @patch("onehead.betting.OneHeadBetting.open_betting_window")
     @patch(
         "discord.ext.commands.core.Command.invoke", new=OneHeadAsyncTest.async_mock()
     )
-    def test_result_reset_state(self):
+    def test_result_reset_state(self, _):
         core = self.bot.get_cog("OneHeadCore")
 
         # Let's pretend 10 players have signed up
@@ -77,8 +78,8 @@ class OneHeadStateTest(TestCase):
         # The pretend match has finished, enter a result
         OneHeadAsyncTest._run(core.result(self.ctx, "dire"))
 
-        self.assertEqual(core.radiant, [])
-        self.assertEqual(core.dire, [])
+        self.assertIsNone(core.radiant)
+        self.assertIsNone(core.dire)
         self.assertEqual(pregame.signups, [])
 
         # Let's pretend 10 different players have signed up

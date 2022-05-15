@@ -26,7 +26,7 @@ class OneHeadMentalHealth(commands.Cog):
         """'Never give up, never give in, and when the upper hand is ours, may we have the ability to handle the win with the dignity that we absorbed the loss.' - Doug Williams""",
         """'It’s not the will to win that matters—everyone has that. It’s the will to prepare to win that matters.' - Paul 'Bear' Bryant""",
         """'Persistence can change failure into extraordinary achievement.' - Marv Levy""",
-        """'*unintelligble brummie mutterings*' - Sponge""",
+        """'*unintelligible brummie mutterings*' - Sponge""",
         """'I’ve learned that something constructive comes from every defeat.' - Tom Landry""",
         """'Make sure your worst enemy doesn’t live between your own two ears.' - Laird Hamilton""",
         """'Set your goals high, and don’t stop till you get there.' - Bo Jackson""",
@@ -112,6 +112,8 @@ class OneHeadMentalHealth(commands.Cog):
         """'I’ve missed more than 9,000 shots in my career. I’ve lost almost 300 games. 26 times, I’ve been trusted to take the game winning shot and missed. I’ve failed over and over and over again in my life. And that is why I succeed.' - Michael Jordan""",
         """'It’s not whether you get knocked down; it’s whether you get up.' - Vince Lombardi""",
         """'Push mid and end.' - James Peckham""",
+        """'gotta ban the io' - THANOS""",
+        """'ZUG ZUG' - Rugor"""
     ]
 
     @commands.has_role("IHL")

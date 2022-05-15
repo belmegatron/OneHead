@@ -261,8 +261,8 @@ class OneHeadCore(commands.Cog):
     def _reset_state(self):
 
         self.game_in_progress = False
-        self.radiant = []
-        self.dire = []
+        self.radiant = None
+        self.dire = None
 
         self.pre_game.reset_state()
         self.betting.reset_state()

@@ -101,11 +101,14 @@ class OneHeadChannelsTest(TestCase):
         ihl_2.name = "IGC IHL #2"
 
         self.oh_channels.ihl_discord_channels = [ihl_1, ihl_2]
+        self.t1, self.t2 = MagicMock(), MagicMock()
 
         member = MagicMock()
         member.move_to = OneHeadAsyncTest.async_mock()
         self.oh_channels.t1_discord_members = [member for x in range(5)]
         self.oh_channels.t2_discord_members = [member for x in range(5)]
+        self.oh_channels.t1 = MagicMock()
+        self.oh_channels.t2 = MagicMock()
 
         OneHeadAsyncTest._run(self.oh_channels.move_discord_channels(self.ctx))
         mock_get_player_names.is_called_once()

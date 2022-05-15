@@ -212,7 +212,7 @@ class OneHeadDBTest(TestCase):
         self.database.db.scan = MagicMock()
         self.database.db.scan.return_value = {}
         table = self.database.retrieve_table()
-        self.assertIsNone(table)
+        self.assertEqual(table, {})
 
     def test_lookup_player_success(self):
         self.database.db.get_item = MagicMock()

@@ -25,6 +25,8 @@ class OneHeadCoreTest(TestCase):
     def setUp(self):
         self.bot = bot_factory()
         self.core = self.bot.get_cog("OneHeadCore")
+        self.core.radiant = MagicMock()
+        self.core.dire = MagicMock()
         self.ctx = MagicMock()
         self.ctx.send = OneHeadAsyncTest.async_mock(return_value=None)
 
@@ -47,11 +49,12 @@ class OneHeadCoreTest(TestCase):
         OneHeadAsyncTest._run(self.core.start(self.ctx))
         self.assertFalse(mock_balance.called)
 
+    @patch("onehead.betting.OneHeadBetting.open_betting_window")
     @patch("onehead.channels.OneHeadChannels.set_teams")
     @patch(
         "onehead.core.commands.core.Command.invoke", new=OneHeadAsyncTest.async_mock()
     )
-    def test_start_game_success(self, mock_set_teams):
+    def test_start_game_success(self, mock_set_teams, _):
         self.core.pre_game.signup_check = OneHeadAsyncTest.async_mock(return_value=True)
         self.core.status = OneHeadAsyncTest.async_mock()
         self.core.pre_game.handle_signups = OneHeadAsyncTest.async_mock()
@@ -89,8 +92,8 @@ class OneHeadCoreTest(TestCase):
 
         self.core._reset_state()
         self.assertFalse(self.core.game_in_progress)
-        self.assertEqual(self.core.radiant, [])
-        self.assertEqual(self.core.dire, [])
+        self.assertIsNone(self.core.radiant)
+        self.assertIsNone(self.core.dire)
 
     def test_result_game_not_in_progress(self):
         self.core.game_in_progress = False
@@ -131,8 +134,8 @@ class OneHeadCoreTest(TestCase):
 
         self.assertEqual(self.core.channels.move_back_to_lobby.mock.call_count, 1)
         self.assertFalse(self.core.game_in_progress)
-        self.assertEqual(self.core.radiant, [])
-        self.assertEqual(self.core.dire, [])
+        self.assertEqual(self.core.radiant, None)
+        self.assertEqual(self.core.dire, None)
 
     def test_status_game_not_in_progress(self):
         self.core.game_in_progress = False
