@@ -11,8 +11,12 @@ from onehead.common import DIRE, RADIANT, OneHeadCommon, OneHeadException
 from onehead.db import OneHeadDB
 from onehead.mental_health import OneHeadMentalHealth
 from onehead.scoreboard import OneHeadScoreBoard
-from onehead.user import (OneHeadPreGame, OneHeadRegistration,
-                          on_member_update, on_voice_state_update)
+from onehead.user import (
+    OneHeadPreGame,
+    OneHeadRegistration,
+    on_member_update,
+    on_voice_state_update,
+)
 from version import __changelog__, __version__
 
 if TYPE_CHECKING:
@@ -85,13 +89,13 @@ class OneHeadCore(commands.Cog):
         self.betting = bot.get_cog("OneHeadBetting")
 
         if None in (
-                self.database,
-                self.scoreboard,
-                self.pre_game,
-                self.team_balance,
-                self.channels,
-                self.registration,
-                self.betting
+            self.database,
+            self.scoreboard,
+            self.pre_game,
+            self.team_balance,
+            self.channels,
+            self.registration,
+            self.betting,
         ):
             raise OneHeadException("Unable to find cog(s)")
 
@@ -174,7 +178,9 @@ class OneHeadCore(commands.Cog):
         await ctx.send(embed=report)
 
         await ctx.send("Updating Scores...")
-        radiant_names, dire_names = OneHeadCommon.get_player_names(self.radiant, self.dire)
+        radiant_names, dire_names = OneHeadCommon.get_player_names(
+            self.radiant, self.dire
+        )
 
         if result == RADIANT:
             await ctx.send("Radiant Victory!")
@@ -242,8 +248,18 @@ class OneHeadCore(commands.Cog):
     @commands.has_role("IHL Admin")
     @commands.command(aliases=["sim"])
     async def simulate_signups(self, ctx: commands.Context):
-        self.pre_game.signups = ["ERIC", "GEE", "JEFFERIES", "EMMA", "PECRO", "LAURENCE", "THANOS", "JAMES", "LUKE",
-                                 "EDD"]
+        self.pre_game.signups = [
+            "ERIC",
+            "GEE",
+            "JEFFERIES",
+            "EMMA",
+            "PECRO",
+            "LAURENCE",
+            "THANOS",
+            "JAMES",
+            "LUKE",
+            "EDD",
+        ]
 
     def _reset_state(self):
 

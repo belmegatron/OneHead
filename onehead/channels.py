@@ -36,7 +36,10 @@ class OneHeadChannels(commands.Cog):
         self.t2 = t2
 
     def _get_discord_members(
-            self, ctx: commands.Context, t1_names: tuple[str, ...], t2_names: tuple[str, ...]
+        self,
+        ctx: commands.Context,
+        t1_names: tuple[str, ...],
+        t2_names: tuple[str, ...],
     ):
         """
         Obtains Discord Member objects for corresponding list of names.

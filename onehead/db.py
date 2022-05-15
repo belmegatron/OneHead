@@ -57,7 +57,7 @@ class OneHeadDB(commands.Cog):
                     "mmr": mmr,
                     "win_streak": 0,
                     "loss_streak": 0,
-                    "rbucks": 100
+                    "rbucks": 100,
                 }
             )
 
@@ -129,6 +129,8 @@ class OneHeadDB(commands.Cog):
         except ClientError as e:
             raise OneHeadException(e)
         else:
-            table_str = json.dumps(response.get("Items", {}), indent=4, cls=DecimalEncoder)
+            table_str = json.dumps(
+                response.get("Items", {}), indent=4, cls=DecimalEncoder
+            )
             table = json.loads(table_str)  # type: list[Player]
             return table

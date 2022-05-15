@@ -205,7 +205,12 @@ class OneHeadBalanceTest(TestCase):
 
     def test_calculate_rating_difference(self):
         mock_unique_combinations = [
-            ({"t1": self.mock_profiles_adjusted_mmr[5:], "t2": self.mock_profiles_adjusted_mmr[:5]})
+            (
+                {
+                    "t1": self.mock_profiles_adjusted_mmr[5:],
+                    "t2": self.mock_profiles_adjusted_mmr[:5],
+                }
+            )
         ]
         self.team_balance._calculate_rating_differences(mock_unique_combinations)
 

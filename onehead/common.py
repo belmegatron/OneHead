@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Optional, Any, Union, TypedDict
 from discord.ext.commands import Bot
 
 if TYPE_CHECKING:
+
     class Player(TypedDict):
         name: str
         mmr: int
@@ -32,10 +33,9 @@ class OneHeadCommon(object):
     ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     @staticmethod
-    def get_player_names(t1: "Team", t2: "Team") -> tuple[
-        tuple[str, ...],
-        tuple[str, ...]
-    ]:
+    def get_player_names(
+        t1: "Team", t2: "Team"
+    ) -> tuple[tuple[str, ...], tuple[str, ...]]:
         """
         Obtain player names from player profiles.
 

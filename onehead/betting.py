@@ -22,7 +22,7 @@ class OneHeadBetting(commands.Cog):
 
     def get_bet_results(self, radiant_won: bool) -> dict:
 
-        bet_results = {}    # type: dict[str, float]
+        bet_results = {}  # type: dict[str, float]
 
         for bet in self.bets:
             name = bet["name"]
@@ -30,8 +30,10 @@ class OneHeadBetting(commands.Cog):
             if bet_results.get(name) is None:
                 bet_results[name] = 0
 
-            if (radiant_won and bet["side"] == "radiant") or (radiant_won is False and bet["side"] == "dire"):
-                bet_results[name] += (bet["stake"] * 2.0)
+            if (radiant_won and bet["side"] == "radiant") or (
+                radiant_won is False and bet["side"] == "dire"
+            ):
+                bet_results[name] += bet["stake"] * 2.0
             else:
                 bet_results[name] -= bet["stake"]
 
@@ -71,7 +73,9 @@ class OneHeadBetting(commands.Cog):
             return
 
         if name in self.pre_game.signups:
-            await ctx.send(f"{name} is unable to bet as they are about to play a match!")
+            await ctx.send(
+                f"{name} is unable to bet as they are about to play a match!"
+            )
             return
 
         available_balance = record["rbucks"]
@@ -81,7 +85,9 @@ class OneHeadBetting(commands.Cog):
             return
 
         if side.lower() not in (RADIANT, DIRE):
-            await ctx.send(f"{name} - Cannot bet on {side} - Must be either Radiant/Dire.")
+            await ctx.send(
+                f"{name} - Cannot bet on {side} - Must be either Radiant/Dire."
+            )
             return
 
         if available_balance == 0:
@@ -94,7 +100,9 @@ class OneHeadBetting(commands.Cog):
             try:
                 stake = int(amount)
             except ValueError:
-                await ctx.send(f"{name} - {amount} is not a valid number of RBUCKS to place a bet with.")
+                await ctx.send(
+                    f"{name} - {amount} is not a valid number of RBUCKS to place a bet with."
+                )
                 return
 
         if stake <= 0:
@@ -103,7 +111,8 @@ class OneHeadBetting(commands.Cog):
 
         if stake > available_balance:
             await ctx.send(
-                f"Unable to place bet - {name} tried to stake {stake} RBUCKS but only has {available_balance} RBUCKS available.")
+                f"Unable to place bet - {name} tried to stake {stake} RBUCKS but only has {available_balance} RBUCKS available."
+            )
             return
 
         self.bets.append({"name": name, "side": side, "stake": stake})
@@ -123,16 +132,11 @@ class OneHeadBetting(commands.Cog):
         table = self.database.retrieve_table()
 
         for player in table:
-            subset.append({
-                "name": player["name"],
-                "RBUCKS": player["rbucks"]}
-            )
+            subset.append({"name": player["name"], "RBUCKS": player["rbucks"]})
 
-        subset = sorted(subset, key=lambda d: d['RBUCKS'], reverse=True)    # type: ignore
+        subset = sorted(subset, key=lambda d: d["RBUCKS"], reverse=True)  # type: ignore
 
-        bucks_board = tabulate(
-            subset, headers="keys", tablefmt="simple"
-        )
+        bucks_board = tabulate(subset, headers="keys", tablefmt="simple")
 
         embed = Embed(title="**RBUCKS**", colour=colour.Colour.green())
         embed.add_field(name="Leaderboard", value=f"```{bucks_board}```")
@@ -148,7 +152,7 @@ class OneHeadBetting(commands.Cog):
             won_or_lost = "won" if delta >= 0 else "lost"
 
             # All bets are at an assumed price of 2.0, therefore need to divide by 2 to ignore the stake.
-            delta = delta if delta <= 0 else int(delta/2)
+            delta = delta if delta <= 0 else int(delta / 2)
 
             line = f"{name} {won_or_lost} {abs(delta)} RBUCKS!\n"
             contents += line

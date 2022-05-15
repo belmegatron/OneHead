@@ -19,7 +19,6 @@ class Insanity(Exception):
 
 
 class OneHeadBalance(commands.Cog):
-
     def __init__(self, database: "OneHeadDB", pre_game: "OneHeadPreGame", config: dict):
 
         self.database = database
@@ -44,7 +43,7 @@ class OneHeadBalance(commands.Cog):
 
     @staticmethod
     def _calculate_unique_team_combinations(
-            all_matchups: list["TeamCombination"],
+        all_matchups: list["TeamCombination"],
     ) -> list["TeamCombination"]:
         """
         Calculates all 5v5 combinations, where the players on each team are unique to that particular team.
@@ -133,7 +132,7 @@ class OneHeadBalance(commands.Cog):
         # Sort by ascending rating difference
         unique_combinations_dict = sorted(
             unique_combinations_dict, key=lambda d: d["rating_difference"]
-        )   # type: ignore
+        )  # type: ignore
 
         # Take the top 5 that are closest in terms of rating and pick one at random.
         balanced_teams = random.choice(unique_combinations_dict[:5])
@@ -159,7 +158,7 @@ class OneHeadBalance(commands.Cog):
         return balanced_teams["t1"], balanced_teams["t2"]
 
     def preserve_sanity(
-            self, unique_combinations: list["TeamCombination"]
+        self, unique_combinations: list["TeamCombination"]
     ) -> list["TeamCombination"]:
 
         to_save = [x for x in self.save if x in self.pre_game.signups]
@@ -209,6 +208,6 @@ class OneHeadBalance(commands.Cog):
             }
             for profile in scoreboard
         ]
-        sorted_ratings = sorted(ratings, key=lambda k: k["adjusted"], reverse=True) # type: ignore
+        sorted_ratings = sorted(ratings, key=lambda k: k["adjusted"], reverse=True)  # type: ignore
         tabulated_ratings = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
         await ctx.send(f"**Internal MMR** ```\n{tabulated_ratings}```")

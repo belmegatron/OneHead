@@ -35,7 +35,9 @@ class OneHeadRegistration(commands.Cog):
             raise onehead.common.OneHeadException(f"{mmr} is not a valid integer.")
 
         if mmr_int < 1000:
-            await ctx.send(f"{mmr_int} MMR is too low, must be greater or equal to 1000.")
+            await ctx.send(
+                f"{mmr_int} MMR is too low, must be greater or equal to 1000."
+            )
             return
 
         if self.database.player_exists(name) is False:
