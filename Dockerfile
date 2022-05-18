@@ -2,7 +2,9 @@ FROM python
 
 WORKDIR /usr/local/
 
-COPY onehead/ config.json requirements.txt run.py setup.py version.py onehead/
+COPY onehead onehead/onehead
+
+COPY config.json requirements.txt run.py setup.py version.py ./onehead/
 
 RUN pip install virtualenv
 
