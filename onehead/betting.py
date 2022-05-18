@@ -42,8 +42,8 @@ class OneHeadBetting(commands.Cog):
     async def open_betting_window(self, ctx: commands.Context):
         self.betting_window_open = True
 
-        await ctx.send(f"Bets are now open for 2 minutes!")
-        await sleep(60)
+        await ctx.send(f"Bets are now open for 5 minutes!")
+        await sleep(240)
 
         await ctx.send("1 minute remaining for bets!")
         await sleep(60)
@@ -70,12 +70,6 @@ class OneHeadBetting(commands.Cog):
             record = self.database.lookup_player(name)
         except OneHeadException:
             await ctx.send(f"Unable to find player in database")
-            return
-
-        if name in self.pre_game.signups:
-            await ctx.send(
-                f"{name} is unable to bet as they are about to play a match!"
-            )
             return
 
         available_balance = record["rbucks"]
