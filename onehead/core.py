@@ -69,13 +69,12 @@ def bot_factory() -> commands.Bot:
 
 class OneHeadCore(commands.Cog):
     def __init__(self, bot: commands.Bot, token: str):
-
         self.game_in_progress = False
         self.player_transfer_window_open = False
         self.radiant = None  # type: Optional[Team]
         self.dire = None  # type: Optional[Team]
 
-        self.player_transactions = []
+        self.player_transactions = []   # type: list[dict]
 
         self.bot = bot
         self.token = token
@@ -253,6 +252,7 @@ class OneHeadCore(commands.Cog):
         """
         Display the top 10 most recent matches in the IHL.
         """
+
         await ctx.send(
             "https://www.dotabuff.com/esports/leagues/13630-igc-inhouse-league"
         )
@@ -315,7 +315,6 @@ class OneHeadCore(commands.Cog):
         await ctx.send(f"Player transfer window has now closed!")
 
     async def _refund_player_transactions(self, ctx: commands.Context):
-
         if len(self.player_transactions) == 0:
             return
 
@@ -325,7 +324,6 @@ class OneHeadCore(commands.Cog):
         await ctx.send("All player transactions have been refunded.")
 
     def _reset_state(self):
-
         self.game_in_progress = False
         self.radiant = None
         self.dire = None
