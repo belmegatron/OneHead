@@ -50,11 +50,12 @@ class OneHeadCoreTest(TestCase):
         self.assertFalse(mock_balance.called)
 
     @patch("onehead.betting.OneHeadBetting.open_betting_window")
-    @patch("onehead.channels.OneHeadChannels.set_teams")
+    @patch("onehead.core.OneHeadCore._open_player_transfer_window")
+    @patch("onehead.core.OneHeadCore._setup_teams")
     @patch(
         "onehead.core.commands.core.Command.invoke", new=OneHeadAsyncTest.async_mock()
     )
-    def test_start_game_success(self, mock_set_teams, _):
+    def test_start_game_success(self, _, __, ___):
         self.core.pre_game.signup_check = OneHeadAsyncTest.async_mock(return_value=True)
         self.core.status = OneHeadAsyncTest.async_mock()
         self.core.pre_game.handle_signups = OneHeadAsyncTest.async_mock()
@@ -62,13 +63,8 @@ class OneHeadCoreTest(TestCase):
         self.core.team_balance.balance = OneHeadAsyncTest.async_mock(
             return_value=mock_balanced_teams
         )
-        self.core.channels.create_discord_channels = OneHeadAsyncTest.async_mock()
-        self.core.channels.move_discord_channels = OneHeadAsyncTest.async_mock()
-
         OneHeadAsyncTest._run(self.core.start(self.ctx))
-        self.core.channels.create_discord_channels.mock.is_called_once()
-        mock_set_teams.is_called_once()
-        self.core.channels.move_discord_channels.mock.is_called_once()
+
         self.assertEqual(self.core.radiant._id, mock_balanced_teams[0]._id)
         self.assertEqual(self.core.dire._id, mock_balanced_teams[1]._id)
 
