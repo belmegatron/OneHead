@@ -156,6 +156,16 @@ class OneHeadBetting(commands.Cog):
 
         return embed
 
+    async def refund_all_bets(self, ctx: commands.Context):
+
+        if len(self.bets) == 0:
+            return
+
+        for bet in self.bets:
+            self.database.update_rbucks(bet["name"], bet["stake"])
+
+        await ctx.send("All bets have been refunded.")
+
     def reset_state(self):
         self.bets = []
         self.betting_window_open = False

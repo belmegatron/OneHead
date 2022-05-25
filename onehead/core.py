@@ -1,3 +1,4 @@
+from asyncio import sleep
 from typing import TYPE_CHECKING, Optional
 
 from discord import Intents
@@ -70,8 +71,11 @@ class OneHeadCore(commands.Cog):
     def __init__(self, bot: commands.Bot, token: str):
 
         self.game_in_progress = False
+        self.player_transfer_window_open = False
         self.radiant = None  # type: Optional[Team]
         self.dire = None  # type: Optional[Team]
+
+        self.player_transactions = []
 
         self.bot = bot
         self.token = token
@@ -86,15 +90,24 @@ class OneHeadCore(commands.Cog):
         self.betting = bot.get_cog("OneHeadBetting")
 
         if None in (
-            self.database,
-            self.scoreboard,
-            self.pre_game,
-            self.team_balance,
-            self.channels,
-            self.registration,
-            self.betting,
+                self.database,
+                self.scoreboard,
+                self.pre_game,
+                self.team_balance,
+                self.channels,
+                self.registration,
+                self.betting,
         ):
             raise OneHeadException("Unable to find cog(s)")
+
+    async def _setup_teams(self, ctx: commands.Context):
+
+        status = self.bot.get_command("status")
+        await commands.Command.invoke(status, ctx)
+        await self.channels.create_discord_channels(ctx)
+        self.channels.set_teams(self.radiant, self.dire)
+        await self.channels.move_discord_channels(ctx)
+        await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
 
     @commands.has_role("IHL Admin")
     @commands.command()
@@ -114,17 +127,13 @@ class OneHeadCore(commands.Cog):
 
         await self.pre_game.handle_signups(ctx)
 
-        balanced_teams = await self.team_balance.balance(ctx)
-        self.radiant, self.dire = balanced_teams
-
         self.game_in_progress = True
         self.pre_game.disable_signups()
-        status = self.bot.get_command("status")
-        await commands.Command.invoke(status, ctx)
-        await self.channels.create_discord_channels(ctx)
-        self.channels.set_teams(self.radiant, self.dire)
-        await self.channels.move_discord_channels(ctx)
-        await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
+
+        self.radiant, self.dire = await self.team_balance.balance(ctx)
+        await self._setup_teams(ctx)
+
+        await self._open_player_transfer_window(ctx)
 
         # Allow bets!
         await self.betting.open_betting_window(ctx)
@@ -140,6 +149,8 @@ class OneHeadCore(commands.Cog):
         if self.game_in_progress:
             await ctx.send("Game stopped.")
             await self.channels.move_back_to_lobby(ctx)
+            await self._refund_player_transactions(ctx)
+            await self.betting.refund_all_bets(ctx)
             self._reset_state()
         else:
             await ctx.send("No currently active game.")
@@ -231,6 +242,10 @@ class OneHeadCore(commands.Cog):
         Resets the current bot state.
         """
 
+        if self.game_in_progress:
+            await ctx.send("Cannot reset state while a game is in progress.")
+            return
+
         self._reset_state()
 
     @commands.command()
@@ -258,11 +273,64 @@ class OneHeadCore(commands.Cog):
             "EDD",
         ]
 
+    @commands.has_role("IHL")
+    @commands.command()
+    async def shuffle(self, ctx: commands.Context):
+        """
+        Shuffles teams (costs 500 RBUCKS)
+        """
+
+        if self.player_transfer_window_open is False:
+            await ctx.send("Unable to shuffle as player transfer window is closed.")
+            return
+
+        name = ctx.author.display_name
+        profile = self.database.lookup_player(name)
+        current_balance = profile["rbucks"]
+
+        cost = 500
+        if current_balance < cost:
+            await ctx.send(f"{name} cannot shuffle as they only have {current_balance} "
+                           f"RBUCKS. A shuffle costs {cost} RBUCKS")
+            return
+
+        await ctx.send(f"{name} has spent **{cost}** RBUCKS to **shuffle** the teams!")
+
+        self.database.update_rbucks(name, -1 * cost)
+        self.player_transactions.append({"name": name, "cost": cost})
+
+        while True:
+            balanced_teams = await self.team_balance.balance(ctx)
+            if balanced_teams != (self.radiant, self.dire):
+                self.radiant, self.dire = balanced_teams
+                break
+
+        await self._setup_teams(ctx)
+
+    async def _open_player_transfer_window(self, ctx: commands.Context):
+        self.player_transfer_window_open = True
+        await ctx.send(f"Player transfer window is now open for 2 minutes!")
+        await sleep(120)
+        self.player_transfer_window_open = False
+        await ctx.send(f"Player transfer window has now closed!")
+
+    async def _refund_player_transactions(self, ctx: commands.Context):
+
+        if len(self.player_transactions) == 0:
+            return
+
+        for transaction in self.player_transactions:
+            self.database.update_rbucks(transaction["name"], transaction["cost"])
+
+        await ctx.send("All player transactions have been refunded.")
+
     def _reset_state(self):
 
         self.game_in_progress = False
         self.radiant = None
         self.dire = None
+        self.player_transactions = []
+        self.player_transfer_window_open = False
 
         self.pre_game.reset_state()
         self.betting.reset_state()

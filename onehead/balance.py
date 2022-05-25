@@ -212,22 +212,5 @@ class OneHeadBalance(commands.Cog):
         tabulated_ratings = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
         await ctx.send(f"**Internal MMR** ```\n{tabulated_ratings}```")
 
-    @commands.has_role("IHL")
-    @commands.command()
-    async def shuffle(self, ctx: commands.Context):
-        """
-        Shuffles teams (costs 500 RBUCKS)
-        """
 
-        name = ctx.author.display_name
-        profile = self.database.lookup_player(name)
-        current_balance = profile["rbucks"]
-
-        cost = 500
-        if current_balance < cost:
-            await ctx.send(f"{name} cannot shuffle as they only have {current_balance} "
-                           f"RBUCKS. A shuffle costs {cost} RBUCKS")
-            return
-
-        await self.balance(ctx)
 
