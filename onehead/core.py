@@ -285,6 +285,11 @@ class OneHeadCore(commands.Cog):
             return
 
         name = ctx.author.display_name
+
+        if name not in self.pre_game.signups:
+            await ctx.send(f"{name} is unable to shuffle as they did not sign up.")
+            return
+
         profile = self.database.lookup_player(name)
         current_balance = profile["rbucks"]
 
