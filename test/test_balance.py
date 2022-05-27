@@ -161,7 +161,7 @@ class OneHeadBalanceTest(TestCase):
             },
             "rating": {"save": ["RBEEZAY"], "avoid": ["GEE", "LOZZA"]},
         }
-        self.team_balance = OneHeadBalance(self.database, self.pre_game, self.config)
+        self.team_balance = OneHeadBalance(self.database, self.pre_game)
 
     def test_calculate_balance_success(self):
         self.team_balance.signups = self.signups

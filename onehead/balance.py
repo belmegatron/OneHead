@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import OneHeadCommon, OneHeadException
+from onehead.common import OneHeadException
 from onehead.stats import OneHeadStats
 
 if TYPE_CHECKING:
@@ -14,17 +14,11 @@ if TYPE_CHECKING:
     from onehead.user import OneHeadPreGame
 
 
-class Insanity(Exception):
-    pass
-
-
 class OneHeadBalance(commands.Cog):
-    def __init__(self, database: "OneHeadDB", pre_game: "OneHeadPreGame", config: dict):
+    def __init__(self, database: "OneHeadDB", pre_game: "OneHeadPreGame"):
 
         self.database = database
         self.pre_game = pre_game
-        self.save = config.get("rating", {}).get("save", [])
-        self.avoid = config.get("rating", {}).get("avoid", [])
 
     def _get_profiles(self) -> list["Player"]:
         """
@@ -119,9 +113,6 @@ class OneHeadBalance(commands.Cog):
                 "No valid matchups could be calculated. Possible Duplicate Player Name."
             )
 
-        # Doing it for the Mental Health.
-        unique_combinations = self.preserve_sanity(unique_combinations)
-
         unique_combinations_dict = [
             {"t1": combination[0], "t2": combination[1]}
             for combination in unique_combinations
@@ -157,38 +148,6 @@ class OneHeadBalance(commands.Cog):
 
         return balanced_teams["t1"], balanced_teams["t2"]
 
-    def preserve_sanity(
-        self, unique_combinations: list["TeamCombination"]
-    ) -> list["TeamCombination"]:
-
-        to_save = [x for x in self.save if x in self.pre_game.signups]
-        to_avoid = [x for x in self.avoid if x in self.pre_game.signups]
-
-        if len(to_save) == 0 or len(to_avoid) == 0:
-            return unique_combinations
-
-        sane_combinations = []
-
-        for combination in unique_combinations:
-            team_1, team_2 = combination
-            team_1_names, team_2_names = OneHeadCommon.get_player_names(team_1, team_2)
-
-            try:
-                for names in (team_1_names, team_2_names):
-                    for saved_player in to_save:
-                        if saved_player not in names:
-                            continue
-
-                        for player_to_avoid in to_avoid:
-                            if player_to_avoid in names:
-                                raise Insanity()
-            except Insanity:
-                pass
-            else:
-                sane_combinations.append(combination)
-
-        return sane_combinations
-
     @commands.has_role("IHL")
     @commands.command(aliases=["mmr"])
     async def show_internal_mmr(self, ctx: commands.Context):
@@ -211,6 +170,3 @@ class OneHeadBalance(commands.Cog):
         sorted_ratings = sorted(ratings, key=lambda k: k["adjusted"], reverse=True)  # type: ignore
         tabulated_ratings = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
         await ctx.send(f"**Internal MMR** ```\n{tabulated_ratings}```")
-
-
-

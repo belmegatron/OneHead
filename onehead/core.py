@@ -38,7 +38,7 @@ def bot_factory() -> commands.Bot:
     database = OneHeadDB(config)
     scoreboard = OneHeadScoreBoard(database)
     pre_game = OneHeadPreGame(database)
-    team_balance = OneHeadBalance(database, pre_game, config)
+    team_balance = OneHeadBalance(database, pre_game)
     channels = OneHeadChannels(config)
     registration = OneHeadRegistration(database)
     mental_health = OneHeadMentalHealth()
@@ -74,7 +74,7 @@ class OneHeadCore(commands.Cog):
         self.radiant = None  # type: Optional[Team]
         self.dire = None  # type: Optional[Team]
 
-        self.player_transactions = []   # type: list[dict]
+        self.player_transactions = []  # type: list[dict]
 
         self.bot = bot
         self.token = token
@@ -89,13 +89,13 @@ class OneHeadCore(commands.Cog):
         self.betting = bot.get_cog("OneHeadBetting")
 
         if None in (
-                self.database,
-                self.scoreboard,
-                self.pre_game,
-                self.team_balance,
-                self.channels,
-                self.registration,
-                self.betting,
+            self.database,
+            self.scoreboard,
+            self.pre_game,
+            self.team_balance,
+            self.channels,
+            self.registration,
+            self.betting,
         ):
             raise OneHeadException("Unable to find cog(s)")
 
@@ -295,8 +295,10 @@ class OneHeadCore(commands.Cog):
 
         cost = 500
         if current_balance < cost:
-            await ctx.send(f"{name} cannot shuffle as they only have {current_balance} "
-                           f"RBUCKS. A shuffle costs {cost} RBUCKS")
+            await ctx.send(
+                f"{name} cannot shuffle as they only have {current_balance} "
+                f"RBUCKS. A shuffle costs {cost} RBUCKS"
+            )
             return
 
         await ctx.send(f"{name} has spent **{cost}** RBUCKS to **shuffle** the teams!")

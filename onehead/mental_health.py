@@ -113,7 +113,7 @@ class OneHeadMentalHealth(commands.Cog):
         """'It’s not whether you get knocked down; it’s whether you get up.' - Vince Lombardi""",
         """'Push mid and end.' - James Peckham""",
         """'gotta ban the io' - THANOS""",
-        """'ZUG ZUG' - Rugor"""
+        """'ZUG ZUG' - Rugor""",
     ]
 
     @commands.has_role("IHL")
