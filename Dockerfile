@@ -4,7 +4,7 @@ WORKDIR /usr/local/
 
 COPY onehead onehead/onehead
 
-COPY config.json requirements.txt run.py setup.py version.py ./onehead/
+COPY requirements.txt run.py setup.py version.py ./onehead/
 
 RUN pip install virtualenv
 
