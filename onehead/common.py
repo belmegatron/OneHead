@@ -1,6 +1,6 @@
 import json
 import os
-from typing import TYPE_CHECKING, Any, Optional, TypedDict, Union
+from typing import TYPE_CHECKING, Optional, TypedDict
 
 from discord.ext.commands import Bot
 
@@ -53,7 +53,7 @@ class OneHeadCommon(object):
     def load_config(cls) -> dict:
 
         try:
-            with open(os.path.join(cls.ROOT_DIR, "config.json"), "r") as f:
+            with open(os.path.join(cls.ROOT_DIR, "secrets/config.json"), "r") as f:
                 config = json.load(f)  # type: dict
         except IOError as e:
             raise OneHeadException(e)
