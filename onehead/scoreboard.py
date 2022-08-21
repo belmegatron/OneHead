@@ -17,7 +17,7 @@ class OneHeadScoreBoard(commands.Cog):
     def _chunk_scoreboard(self, scoreboard: str) -> tuple[str, ...]:
 
         if len(scoreboard) < self.DISCORD_MAX_MESSAGE_LENGTH:
-            return tuple(scoreboard)
+            return tuple([scoreboard])
 
         offset = 0
         chunks = []
