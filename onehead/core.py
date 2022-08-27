@@ -1,4 +1,4 @@
-from asyncio import sleep
+import asyncio
 from typing import TYPE_CHECKING, Optional
 
 from discord import Intents
@@ -73,6 +73,7 @@ class OneHeadCore(commands.Cog):
         self.player_transfer_window_open = False
         self.radiant = None  # type: Optional[Team]
         self.dire = None  # type: Optional[Team]
+        self.game_cancelled = asyncio.Event()
 
         self.player_transactions = []  # type: list[dict]
 
@@ -133,10 +134,10 @@ class OneHeadCore(commands.Cog):
         await self._setup_teams(ctx)
 
         await self._open_player_transfer_window(ctx)
-
+        
         # Allow bets!
-        await self.betting.open_betting_window(ctx)
-
+        await self.betting.open_betting_window(ctx, self.game_cancelled)
+        
     @commands.has_role("IHL Admin")
     @commands.command()
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
@@ -146,6 +147,7 @@ class OneHeadCore(commands.Cog):
         """
 
         if self.game_in_progress:
+            self.game_cancelled.set()
             await ctx.send("Game stopped.")
             await self.channels.move_back_to_lobby(ctx)
             await self._refund_player_transactions(ctx)
@@ -264,7 +266,7 @@ class OneHeadCore(commands.Cog):
             "ERIC",
             "GEE",
             "JEFFERIES",
-            "EMMA",
+            "ZEED",
             "PECRO",
             "LAURENCE",
             "THANOS",
@@ -315,9 +317,15 @@ class OneHeadCore(commands.Cog):
         await self._setup_teams(ctx)
 
     async def _open_player_transfer_window(self, ctx: commands.Context):
+        
         self.player_transfer_window_open = True
         await ctx.send(f"Player transfer window is now open for 2 minutes!")
-        await sleep(120)
+        
+        try:
+            await asyncio.wait_for(self.game_cancelled.wait(), timeout=120)
+        except asyncio.TimeoutError:
+            pass
+
         self.player_transfer_window_open = False
         await ctx.send(f"Player transfer window has now closed!")
 
@@ -336,6 +344,7 @@ class OneHeadCore(commands.Cog):
         self.dire = None
         self.player_transactions = []
         self.player_transfer_window_open = False
+        self.game_cancelled.clear()
 
         self.pre_game.reset_state()
         self.betting.reset_state()
