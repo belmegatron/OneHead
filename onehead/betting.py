@@ -1,4 +1,4 @@
-from asyncio import sleep
+import asyncio
 from typing import TYPE_CHECKING
 
 from discord import Embed, colour
@@ -39,17 +39,22 @@ class OneHeadBetting(commands.Cog):
 
         return bet_results
 
-    async def open_betting_window(self, ctx: commands.Context):
+    async def open_betting_window(self, ctx: commands.Context, event: asyncio.Event):
         self.betting_window_open = True
 
         await ctx.send(f"Bets are now open for 5 minutes!")
-        await sleep(240)
-
-        await ctx.send("1 minute remaining for bets!")
-        await sleep(60)
-
-        self.betting_window_open = False
-        await ctx.send("Bets are now closed!")
+        
+        try:
+            await asyncio.wait_for(event.wait(), timeout=240)
+        except asyncio.TimeoutError:
+            await ctx.send("1 minute remaining for bets!")
+            try:
+                asyncio.wait_for(event.wait(), timeout=60)
+            except asyncio.TimeoutError:
+                pass
+        finally:
+            self.betting_window_open = False
+            await ctx.send("Bets are now closed!")
 
     @commands.has_role("IHL")
     @commands.command(aliases=["bet"])
