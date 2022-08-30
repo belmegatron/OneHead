@@ -40,7 +40,8 @@ class OneHeadRegistration(commands.Cog):
             )
             return
 
-        if self.database.player_exists(name) is False:
+        exists, _ = self.database.player_exists(name)
+        if exists is False:
             self.database.add_player(ctx.author.display_name, mmr_int)
             await ctx.send(f"{name} successfully registered.")
         else:
@@ -53,7 +54,8 @@ class OneHeadRegistration(commands.Cog):
         Removes a player from the internal IHL database.
         """
 
-        if self.database.player_exists(name):
+        exists, _ = self.database.player_exists(name)
+        if exists:
             self.database.remove_player(name)
             await ctx.send(f"{name} successfully removed from the database.")
         else:
@@ -157,7 +159,8 @@ class OneHeadPreGame(commands.Cog):
             return
 
         name = ctx.author.display_name
-        if self.database.player_exists(name) is False:
+        exists, _ = self.database.player_exists(name)
+        if exists is False:
             await ctx.send("Please register first using the !reg command.")
             return
 

@@ -6,3 +6,4 @@ build/
 dist/
 OneHead.egg-info/
 config.json
+.vscode/

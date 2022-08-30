@@ -1,136 +1,104 @@
-import decimal
-import json
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 
-import boto3
-from botocore.exceptions import ClientError
 from discord.ext import commands
+from tinydb import Query, TinyDB
+from tinydb.operations import add
 
 from onehead.common import OneHeadException
 
 if TYPE_CHECKING:
     from onehead.common import Player
 
-# Helper class to convert a DynamoDB item to JSON.
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, decimal.Decimal):
-            if o % 1 > 0:
-                return float(o)
-            else:
-                return int(o)
-        return super(DecimalEncoder, self).default(o)
-
 
 class OneHeadDB(commands.Cog):
     def __init__(self, config: dict):
+        self.db = TinyDB(config["tinydb"]["path"])
 
-        dynamo_config_settings = config["aws"]["dynamodb"]
-        self.dynamo = boto3.resource(
-            "dynamodb", region_name=dynamo_config_settings["region"]
-        )
-        self.db = self.dynamo.Table(dynamo_config_settings["tables"]["dota"])
+    def player_exists(self, player_name: str) -> Tuple[bool, int]:
 
-    def player_exists(self, player_name: str) -> bool:
-
-        try:
-            response = self.db.get_item(Key={"name": player_name})
-        except ClientError as e:
-            raise OneHeadException(e)
+        User = Query()
+        
+        result = self.db.get(User.name == player_name)
+        
+        if result:
+            return True, result.doc_id
         else:
-            if response.get("Item"):
-                return True
-            else:
-                return False
+            return False, -1
+        
 
     def add_player(self, player_name: str, mmr: int):
 
         if not isinstance(player_name, str):
             raise OneHeadException("Player Name not a valid string.")
 
-        if self.player_exists(player_name) is False:
-            self.db.put_item(
-                Item={
-                    "name": player_name,
-                    "win": 0,
-                    "loss": 0,
-                    "mmr": mmr,
-                    "win_streak": 0,
-                    "loss_streak": 0,
-                    "rbucks": 100,
-                }
-            )
+        exists, _ = self.player_exists(player_name)
+        
+        if exists is True:
+            raise OneHeadException(f"{player_name} is already registered.")
+
+        self.db.insert(
+            {
+                "name": player_name,
+                "win": 0,
+                "loss": 0,
+                "mmr": mmr,
+                "win_streak": 0,
+                "loss_streak": 0,
+                "rbucks": 100,
+            }
+        )
 
     def remove_player(self, player_name: str):
 
         if not isinstance(player_name, str):
             raise OneHeadException("Player name not a valid string.")
 
-        if self.player_exists(player_name):
-            try:
-                self.db.delete_item(Key={"name": player_name})
-            except ClientError as e:
-                raise OneHeadException(e)
+        exists, doc_id = self.player_exists(player_name)
+        
+        if exists is False:
+            raise OneHeadException(f"{player_name} does not exist in database.")    
+        
+        self.db.remove(doc_ids=[doc_id])
 
     def update_rbucks(self, bettor_name: str, rbucks: int):
-        self.db.update_item(
-            Key={"name": bettor_name},
-            UpdateExpression="set rbucks = rbucks + :val",
-            ExpressionAttributeValues={
-                ":val": decimal.Decimal(rbucks),
-            },
-            ReturnValues="UPDATED_NEW",
-        )
+        
+        exists, doc_id = self.player_exists(bettor_name)
+        
+        if exists is False:
+            raise OneHeadException(f"{bettor_name} cannot be found.")
+        
+        self.db.update(add("rbucks", rbucks), doc_ids=[doc_id])
 
     def update_player(self, player_name: str, win: bool):
 
-        if self.player_exists(player_name) is False:
-            raise OneHeadException(f"{player_name} cannot be found.")
+        exists, doc_id = self.player_exists(player_name)
+        
+        if exists is False:
+            raise OneHeadException(f"{player_name} does not exist in database.")    
 
         if win:
-            self.db.update_item(
-                Key={"name": player_name},
-                UpdateExpression="set win = win + :val, win_streak = win_streak + :val, loss_streak = :zero, rbucks = rbucks + :rbucks",
-                ExpressionAttributeValues={
-                    ":val": decimal.Decimal(1),
-                    ":zero": decimal.Decimal(0),
-                    ":rbucks": decimal.Decimal(100),
-                },
-                ReturnValues="UPDATED_NEW",
-            )
+            self.db.update(add("win", 1), doc_ids=[doc_id])
+            self.db.update(add("win_streak", 1), doc_ids=[doc_id])
+            self.db.update({"loss_streak", 0}, doc_ids=[doc_id])
+            self.db.update(add("rbucks", 100), doc_ids=[doc_id])
         else:
-            self.db.update_item(
-                Key={"name": player_name},
-                UpdateExpression="set loss = loss + :val, win_streak = :zero, loss_streak = loss_streak + :val, rbucks = rbucks + :rbucks",
-                ExpressionAttributeValues={
-                    ":val": decimal.Decimal(1),
-                    ":zero": decimal.Decimal(0),
-                    ":rbucks": decimal.Decimal(50),
-                },
-                ReturnValues="UPDATED_NEW",
-            )
+            self.db.update(add("loss", 1), doc_ids=[doc_id])
+            self.db.update(add("loss_streak", 1), doc_ids=[doc_id])
+            self.db.update({"win_streak", 0}, doc_ids=[doc_id])
+            self.db.update(add("rbucks", 50), doc_ids=[doc_id])
+
 
     def lookup_player(self, player_name: str) -> "Player":
+        
+        User = Query()
 
-        try:
-            response = self.db.get_item(Key={"name": player_name})
-        except ClientError as e:
-            raise OneHeadException(e)
-        else:
-            item = response.get("Item")
-            player_str = json.dumps(item, indent=4, cls=DecimalEncoder)
-            player = json.loads(player_str)  # type: Player
-            return player
+        response = self.db.get(User.name == player_name)
+        if response is False:
+            raise OneHeadException(f"Failed to find {player_name} when performing a lookup in the database.")
+            
+        return response
 
     def retrieve_table(self) -> list["Player"]:
-
-        try:
-            response = self.db.scan()
-        except ClientError as e:
-            raise OneHeadException(e)
-        else:
-            table_str = json.dumps(
-                response.get("Items", {}), indent=4, cls=DecimalEncoder
-            )
-            table = json.loads(table_str)  # type: list[Player]
-            return table
+        table = self.db.table("_default")
+        table_dict = table._read_table()
+        return table_dict.values()
