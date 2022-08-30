@@ -65,7 +65,7 @@ class OneHeadDB(commands.Cog):
         exists, doc_id = self.player_exists(bettor_name)
         
         if exists is False:
-            raise OneHeadException(f"{player_name} cannot be found.")
+            raise OneHeadException(f"{bettor_name} cannot be found.")
         
         self.db.update(add("rbucks", rbucks), doc_ids=[doc_id])
 
