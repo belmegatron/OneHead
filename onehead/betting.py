@@ -49,7 +49,7 @@ class OneHeadBetting(commands.Cog):
         except asyncio.TimeoutError:
             await ctx.send("1 minute remaining for bets!")
             try:
-                asyncio.wait_for(event.wait(), timeout=60)
+                await asyncio.wait_for(event.wait(), timeout=60)
             except asyncio.TimeoutError:
                 pass
         finally:

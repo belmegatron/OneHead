@@ -79,12 +79,12 @@ class OneHeadDB(commands.Cog):
         if win:
             self.db.update(add("win", 1), doc_ids=[doc_id])
             self.db.update(add("win_streak", 1), doc_ids=[doc_id])
-            self.db.update({"loss_streak", 0}, doc_ids=[doc_id])
+            self.db.update({"loss_streak": 0}, doc_ids=[doc_id])
             self.db.update(add("rbucks", 100), doc_ids=[doc_id])
         else:
             self.db.update(add("loss", 1), doc_ids=[doc_id])
             self.db.update(add("loss_streak", 1), doc_ids=[doc_id])
-            self.db.update({"win_streak", 0}, doc_ids=[doc_id])
+            self.db.update({"win_streak": 0}, doc_ids=[doc_id])
             self.db.update(add("rbucks", 50), doc_ids=[doc_id])
 
 
@@ -93,7 +93,7 @@ class OneHeadDB(commands.Cog):
         User = Query()
 
         response = self.db.get(User.name == player_name)
-        if response is False:
+        if response is None:
             raise OneHeadException(f"Failed to find {player_name} when performing a lookup in the database.")
             
         return response
