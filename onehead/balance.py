@@ -1,24 +1,21 @@
 import itertools
 import random
-from typing import TYPE_CHECKING
 
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import OneHeadException
+from onehead.common import (DIRE, RADIANT, OneHeadException, Player, Team,
+                            TeamCombination)
+from onehead.db import OneHeadDB
 from onehead.stats import OneHeadStats
-
-if TYPE_CHECKING:
-    from onehead.common import Player, Team, TeamCombination
-    from onehead.db import OneHeadDB
-    from onehead.user import OneHeadPreGame
+from onehead.user import OneHeadPreGame
 
 
 class OneHeadBalance(commands.Cog):
-    def __init__(self, database: "OneHeadDB", pre_game: "OneHeadPreGame"):
+    def __init__(self, database: OneHeadDB, pre_game: OneHeadPreGame) -> None:
 
-        self.database = database
-        self.pre_game = pre_game
+        self.database: OneHeadDB = database
+        self.pre_game: OneHeadPreGame = pre_game
 
     def _get_profiles(self) -> list["Player"]:
         """
@@ -50,7 +47,7 @@ class OneHeadBalance(commands.Cog):
         unique_combinations = []
 
         for matchup in all_matchups:
-            shared_players = False
+            shared_players: bool = False
             for player in matchup[0]:
                 if player in matchup[1]:
                     shared_players = True
@@ -69,11 +66,11 @@ class OneHeadBalance(commands.Cog):
         """
 
         for unique_combination in all_unique_combinations:
-            t1_rating = sum(
-                [player["adjusted_mmr"] for player in unique_combination["t1"]]
+            t1_rating: int = sum(
+                [player["adjusted_mmr"] for player in unique_combination[RADIANT]]
             )
-            t2_rating = sum(
-                [player["adjusted_mmr"] for player in unique_combination["t2"]]
+            t2_rating: int = sum(
+                [player["adjusted_mmr"] for player in unique_combination[DIRE]]
             )
 
             unique_combination["rating_difference"] = abs(t1_rating - t2_rating)
@@ -86,8 +83,8 @@ class OneHeadBalance(commands.Cog):
         a rating value associated with each player.
         """
 
-        profiles = self._get_profiles()
-        profile_count = len(profiles)
+        profiles: list[Player] = self._get_profiles()
+        profile_count: int = len(profiles)
         if profile_count != 10:
             raise OneHeadException(
                 f"Error: Only {profile_count} profiles could be found in database."
@@ -96,37 +93,37 @@ class OneHeadBalance(commands.Cog):
         OneHeadStats.calculate_rating(profiles)
         OneHeadStats.calculate_adjusted_mmr(profiles)
 
-        team_combinations = list(
+        team_combinations: list[Team] = list(
             itertools.combinations(profiles, 5)
-        )  # type: list[Team]
+        )
 
-        matchup_combinations = list(
+        matchup_combinations: list[TeamCombination] = list(
             itertools.combinations(team_combinations, 2)
-        )  # type: list[TeamCombination]
+        )
 
-        unique_combinations = self._calculate_unique_team_combinations(
+        unique_combinations: list[TeamCombination] = self._calculate_unique_team_combinations(
             matchup_combinations
-        )  # type: list[TeamCombination]
+        ) 
 
         if not unique_combinations:
             raise OneHeadException(
                 "No valid matchups could be calculated. Possible Duplicate Player Name."
             )
 
-        unique_combinations_dict = [
-            {"t1": combination[0], "t2": combination[1]}
+        unique_combinations_dict: list[dict[str, Team]] = [
+            {RADIANT: combination[0], DIRE: combination[1]}
             for combination in unique_combinations
         ]
 
         self._calculate_rating_differences(unique_combinations_dict)
 
         # Sort by ascending rating difference
-        unique_combinations_dict = sorted(
+        sorted_unique_combinations_dict: list[dict[str, Team]] = sorted(
             unique_combinations_dict, key=lambda d: d["rating_difference"]
-        )  # type: ignore
+        )
 
         # Take the top 5 that are closest in terms of rating and pick one at random.
-        balanced_teams = random.choice(unique_combinations_dict[:5])
+        balanced_teams: dict[str, Team] = random.choice(sorted_unique_combinations_dict[:5])
 
         return balanced_teams
 
@@ -138,24 +135,24 @@ class OneHeadBalance(commands.Cog):
         :return: Balanced teams.
         """
 
-        signup_count = len(self.pre_game.signups)
+        signup_count: int = len(self.pre_game.signups)
         await ctx.send("Balancing teams...")
         if signup_count != 10:
-            err = f"Only {signup_count} Signups, require {10 - signup_count} more."
+            err: str = f"Only {signup_count} Signups, require {10 - signup_count} more."
             await ctx.send(err)
 
-        balanced_teams = self._calculate_balance()
+        balanced_teams: dict = self._calculate_balance()
 
-        return balanced_teams["t1"], balanced_teams["t2"]
+        return balanced_teams[RADIANT], balanced_teams[DIRE]
 
     @commands.has_role("IHL")
     @commands.command(aliases=["mmr"])
-    async def show_internal_mmr(self, ctx: commands.Context):
+    async def show_internal_mmr(self, ctx: commands.Context) -> None:
         """
         Shows the internal MMR used for balancing teams.
         """
 
-        scoreboard = self.database.retrieve_table()
+        scoreboard: list[Player] = self.database.retrieve_table()
         OneHeadStats.calculate_rating(scoreboard)
         OneHeadStats.calculate_adjusted_mmr(scoreboard)
 

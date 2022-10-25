@@ -1,3 +1,4 @@
+import logging
 import random
 from asyncio import sleep
 from typing import TYPE_CHECKING, Optional
@@ -7,6 +8,7 @@ from discord.ext import commands
 from tabulate import tabulate
 
 import onehead.common
+from onehead.common import log
 
 if TYPE_CHECKING:
     from discord import VoiceState
@@ -266,6 +268,7 @@ async def on_voice_state_update(
 
     if after.afk and name in pre_game.signups:
         pre_game.signups.remove(name)
+        log.info(f"{name} is now AFK.")
         await pre_game.context.send(f"{name} has been signed out due to being AFK.")
 
 
@@ -281,6 +284,7 @@ async def on_member_update(before: "Member", after: "Member") -> None:
     if after.status in (Status.offline, Status.idle) and name in pre_game.signups:
         pre_game.signups.remove(name)
         reason = "Offline" if after.status == Status.offline else "Idle"
+        log.info(f"{name} is now {reason}.")
         await pre_game.context.send(
             f"{name} has been signed out due to being {reason}."
         )

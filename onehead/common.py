@@ -1,28 +1,32 @@
 import json
+import logging
 import os
-from typing import TYPE_CHECKING, Optional, TypedDict
+import sys
+from types import NoneType
+from typing import Literal, Optional, TypedDict
 
 from discord.ext.commands import Bot
 
-if TYPE_CHECKING:
 
-    class Player(TypedDict):
-        name: str
-        mmr: int
-        win: int
-        loss: int
-        rbucks: int
-        rating: int
-        adjusted_mmr: int
+class Player(TypedDict):
+    name: str
+    mmr: int
+    win: int
+    loss: int
+    rbucks: int
+    rating: int
+    adjusted_mmr: int
 
-    Team = tuple[Player, Player, Player, Player, Player]
-    TeamCombination = tuple[Team, Team]
+Team = tuple[Player, Player, Player, Player, Player]
+TeamCombination = tuple[Team, Team]
+    
+log: logging.Logger = logging.getLogger("onehead")
 
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
-bot = None  # type: Optional[Bot]
+bot: Optional[Bot] = None
 
-RADIANT = "radiant"
-DIRE = "dire"
+RADIANT: Literal["radiant"] = "radiant"
+DIRE: Literal["dire"] = "dire"
 
 
 class OneHeadException(BaseException):
@@ -30,7 +34,7 @@ class OneHeadException(BaseException):
 
 
 class OneHeadCommon(object):
-    ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     @staticmethod
     def get_player_names(
@@ -44,8 +48,8 @@ class OneHeadCommon(object):
         :return: Names of players on each team.
         """
 
-        t1_names = tuple([x["name"] for x in t1])  # type: tuple[str, ...]
-        t2_names = tuple([x["name"] for x in t2])  # type: tuple[str, ...]
+        t1_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t1]))
+        t2_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t2]))
 
         return t1_names, t2_names
 
@@ -59,3 +63,10 @@ class OneHeadCommon(object):
             raise OneHeadException(e)
 
         return config
+
+def setup_log() -> None:
+    handler = logging.StreamHandler(stream=sys.stdout)
+    formatter = logging.Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s",
+                                    datefmt="%Y-%m-%d %H:%M:%S")
+    handler.setFormatter(formatter)
+    log.addHandler(handler)

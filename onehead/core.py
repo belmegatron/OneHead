@@ -1,7 +1,7 @@
 import asyncio
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
-from discord import Intents
+from discord import Embed, Intents
 from discord.ext import commands
 from tabulate import tabulate
 
@@ -18,7 +18,7 @@ from onehead.user import (OneHeadPreGame, OneHeadRegistration,
 from version import __changelog__, __version__
 
 if TYPE_CHECKING:
-    from onehead.common import Team
+    from onehead.common import Player, Team
 
 
 def bot_factory() -> commands.Bot:
@@ -28,21 +28,21 @@ def bot_factory() -> commands.Bot:
     :return: OneHead Bot
     """
 
-    intents = Intents.all()
+    intents: Intents = Intents.all()
     intents.members = True
     intents.presences = True
-    bot = commands.Bot(command_prefix="!", intents=intents)
+    bot: commands.Bot = commands.Bot(command_prefix="!", intents=intents)
 
-    config = OneHeadCommon.load_config()
+    config: dict = OneHeadCommon.load_config()
 
-    database = OneHeadDB(config)
-    scoreboard = OneHeadScoreBoard(database)
-    pre_game = OneHeadPreGame(database)
-    team_balance = OneHeadBalance(database, pre_game)
-    channels = OneHeadChannels(config)
-    registration = OneHeadRegistration(database)
-    mental_health = OneHeadMentalHealth()
-    betting = OneHeadBetting(database, pre_game)
+    database: OneHeadDB = OneHeadDB(config)
+    scoreboard: OneHeadScoreBoard = OneHeadScoreBoard(database)
+    pre_game: OneHeadPreGame = OneHeadPreGame(database)
+    team_balance: OneHeadBalance = OneHeadBalance(database, pre_game)
+    channels: OneHeadChannels = OneHeadChannels(config)
+    registration: OneHeadRegistration = OneHeadRegistration(database)
+    mental_health: OneHeadMentalHealth = OneHeadMentalHealth()
+    betting: OneHeadBetting = OneHeadBetting(database, pre_game)
 
     bot.add_cog(database)
     bot.add_cog(pre_game)
@@ -54,8 +54,8 @@ def bot_factory() -> commands.Bot:
     bot.add_cog(betting)
 
     # Add cogs first, then instantiate OneHeadCore as we reference them as instance variables
-    token = config["discord"]["token"]
-    core = OneHeadCore(bot, token)
+    token: str = config["discord"]["token"]
+    core: OneHeadCore = OneHeadCore(bot, token)
     bot.add_cog(core)
 
     # Register events
@@ -68,26 +68,26 @@ def bot_factory() -> commands.Bot:
 
 
 class OneHeadCore(commands.Cog):
-    def __init__(self, bot: commands.Bot, token: str):
-        self.game_in_progress = False
-        self.player_transfer_window_open = False
-        self.radiant = None  # type: Optional[Team]
-        self.dire = None  # type: Optional[Team]
-        self.game_cancelled = asyncio.Event()
+    def __init__(self, bot: commands.Bot, token: str) -> None:
+        self.game_in_progress: bool = False
+        self.player_transfer_window_open: bool = False
+        self.radiant: Team
+        self.dire: Team
+        self.game_cancelled: asyncio.Event = asyncio.Event()
 
-        self.player_transactions = []  # type: list[dict]
+        self.player_transactions: list[dict] = []
 
-        self.bot = bot
-        self.token = token
+        self.bot: commands.Bot = bot
+        self.token: str = token
 
-        self.config = OneHeadCommon.load_config()
-        self.database = bot.get_cog("OneHeadDB")
-        self.scoreboard = bot.get_cog("OneHeadScoreBoard")
-        self.pre_game = bot.get_cog("OneHeadPreGame")
-        self.team_balance = bot.get_cog("OneHeadBalance")
-        self.channels = bot.get_cog("OneHeadChannels")
-        self.registration = bot.get_cog("OneHeadRegistration")
-        self.betting = bot.get_cog("OneHeadBetting")
+        self.config: dict = OneHeadCommon.load_config()
+        self.database: OneHeadDB = bot.get_cog("OneHeadDB")
+        self.scoreboard: OneHeadScoreBoard = bot.get_cog("OneHeadScoreBoard")
+        self.pre_game: OneHeadPreGame = bot.get_cog("OneHeadPreGame")
+        self.team_balance: OneHeadBalance = bot.get_cog("OneHeadBalance")
+        self.channels: OneHeadChannels = bot.get_cog("OneHeadChannels")
+        self.registration: OneHeadRegistration = bot.get_cog("OneHeadRegistration")
+        self.betting: OneHeadBetting = bot.get_cog("OneHeadBetting")
 
         if None in (
             self.database,
@@ -100,7 +100,10 @@ class OneHeadCore(commands.Cog):
         ):
             raise OneHeadException("Unable to find cog(s)")
 
-    async def _setup_teams(self, ctx: commands.Context):
+    async def _setup_teams(self, ctx: commands.Context) -> None:
+        
+        if self.radiant is None or self.dire is None:
+            return
 
         status = self.bot.get_command("status")
         await commands.Command.invoke(status, ctx)
@@ -112,7 +115,7 @@ class OneHeadCore(commands.Cog):
     @commands.has_role("IHL Admin")
     @commands.command()
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
-    async def start(self, ctx: commands.Context):
+    async def start(self, ctx: commands.Context) -> None:
         """
         Starts an IHL game.
         """
@@ -121,7 +124,7 @@ class OneHeadCore(commands.Cog):
             await ctx.send("Game already in progress...")
             return
 
-        signup_threshold_met = await self.pre_game.signup_check(ctx)
+        signup_threshold_met: bool = await self.pre_game.signup_check(ctx)
         if signup_threshold_met is False:
             return
 
@@ -141,7 +144,7 @@ class OneHeadCore(commands.Cog):
     @commands.has_role("IHL Admin")
     @commands.command()
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
-    async def stop(self, ctx: commands.Context):
+    async def stop(self, ctx: commands.Context) -> None:
         """
         Cancels an IHL game.
         """
@@ -159,7 +162,7 @@ class OneHeadCore(commands.Cog):
     @commands.has_role("IHL Admin")
     @commands.command()
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
-    async def result(self, ctx: commands.Context, result: str):
+    async def result(self, ctx: commands.Context, result: str) -> None:
         """
         Provide the result of game that has finished.
         """
@@ -171,19 +174,19 @@ class OneHeadCore(commands.Cog):
         if self.radiant is None or self.dire is None:
             return
 
-        accepted_results = [RADIANT, DIRE]
+        accepted_results: list[str] = [RADIANT, DIRE]
 
         if result not in accepted_results:
             await ctx.send(f"Invalid Value - Must be either {RADIANT} or {DIRE}.")
             return
 
-        bet_results = self.betting.get_bet_results(result == RADIANT)
+        bet_results: dict = self.betting.get_bet_results(result == RADIANT)
 
         for name, delta in bet_results.items():
             if delta > 0:
                 self.database.update_rbucks(name, delta)
 
-        report = self.betting.create_bet_report(bet_results)
+        report: Embed = self.betting.create_bet_report(bet_results)
         await ctx.send(embed=report)
 
         await ctx.send("Updating Scores...")
@@ -212,7 +215,7 @@ class OneHeadCore(commands.Cog):
 
     @commands.has_role("IHL")
     @commands.command()
-    async def status(self, ctx: commands.Context):
+    async def status(self, ctx: commands.Context) -> None:
         """
         If a game is active, displays the teams and their respective players.
         """
@@ -227,7 +230,7 @@ class OneHeadCore(commands.Cog):
 
     @commands.has_role("IHL")
     @commands.command()
-    async def version(self, ctx: commands.Context):
+    async def version(self, ctx: commands.Context) -> None:
         """
         Displays the current version of OneHead.
         """
@@ -238,7 +241,7 @@ class OneHeadCore(commands.Cog):
     @commands.has_role("IHL Admin")
     @commands.command()
     @commands.max_concurrency(1, per=commands.BucketType.default, wait=False)
-    async def reset(self, ctx: commands.Context):
+    async def reset(self, ctx: commands.Context) -> None:
         """
         Resets the current bot state.
         """
@@ -250,7 +253,7 @@ class OneHeadCore(commands.Cog):
         self._reset_state()
 
     @commands.command()
-    async def matches(self, ctx: commands.Context):
+    async def matches(self, ctx: commands.Context) -> None:
         """
         Display the top 10 most recent matches in the IHL.
         """
@@ -261,7 +264,7 @@ class OneHeadCore(commands.Cog):
 
     @commands.has_role("IHL Admin")
     @commands.command(aliases=["sim"])
-    async def simulate_signups(self, ctx: commands.Context):
+    async def simulate_signups(self, ctx: commands.Context) -> None:
         self.pre_game.signups = [
             "ERIC",
             "GEE",
@@ -272,12 +275,12 @@ class OneHeadCore(commands.Cog):
             "THANOS",
             "JAMES",
             "LUKE",
-            "EDD",
+            "RBEEZAY",
         ]
 
     @commands.has_role("IHL")
     @commands.command()
-    async def shuffle(self, ctx: commands.Context):
+    async def shuffle(self, ctx: commands.Context) -> None:
         """
         Shuffles teams (costs 500 RBUCKS)
         """
@@ -286,16 +289,16 @@ class OneHeadCore(commands.Cog):
             await ctx.send("Unable to shuffle as player transfer window is closed.")
             return
 
-        name = ctx.author.display_name
+        name: str = ctx.author.display_name
 
         if name not in self.pre_game.signups:
             await ctx.send(f"{name} is unable to shuffle as they did not sign up.")
             return
 
-        profile = self.database.lookup_player(name)
-        current_balance = profile["rbucks"]
+        profile: Player = self.database.lookup_player(name)
+        current_balance: int = profile["rbucks"]
 
-        cost = 500
+        cost: Literal[500] = 500
         if current_balance < cost:
             await ctx.send(
                 f"{name} cannot shuffle as they only have {current_balance} "
@@ -308,15 +311,19 @@ class OneHeadCore(commands.Cog):
         self.database.update_rbucks(name, -1 * cost)
         self.player_transactions.append({"name": name, "cost": cost})
 
-        while True:
-            balanced_teams = await self.team_balance.balance(ctx)
-            if balanced_teams != (self.radiant, self.dire):
-                self.radiant, self.dire = balanced_teams
-                break
+        current_teams_names_only: tuple[tuple[str, ...], tuple[str, ...]] = OneHeadCommon.get_player_names(self.radiant, self.dire)
+        shuffled_teams: tuple[Team, Team] = await self.team_balance.balance(ctx)
+        shuffled_teams_names_only: tuple[tuple[str, ...], tuple[str, ...]] = OneHeadCommon.get_player_names(shuffled_teams[0], shuffled_teams[1])
+
+        while current_teams_names_only == shuffled_teams_names_only:
+            shuffled_teams = await self.team_balance.balance(ctx)
+            shuffled_teams_names_only = OneHeadCommon.get_player_names(shuffled_teams[0], shuffled_teams[1])
+
+        self.radiant, self.dire = shuffled_teams
 
         await self._setup_teams(ctx)
 
-    async def _open_player_transfer_window(self, ctx: commands.Context):
+    async def _open_player_transfer_window(self, ctx: commands.Context) -> None:
         
         self.player_transfer_window_open = True
         await ctx.send(f"Player transfer window is now open for 2 minutes!")
@@ -329,7 +336,7 @@ class OneHeadCore(commands.Cog):
         self.player_transfer_window_open = False
         await ctx.send(f"Player transfer window has now closed!")
 
-    async def _refund_player_transactions(self, ctx: commands.Context):
+    async def _refund_player_transactions(self, ctx: commands.Context) -> None:
         if len(self.player_transactions) == 0:
             return
 

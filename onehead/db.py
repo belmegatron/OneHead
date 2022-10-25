@@ -1,22 +1,18 @@
-from typing import TYPE_CHECKING, Tuple
-
 from discord.ext import commands
 from tinydb import Query, TinyDB
 from tinydb.operations import add
+from tinydb.table import Table
 
-from onehead.common import OneHeadException
-
-if TYPE_CHECKING:
-    from onehead.common import Player
+from onehead.common import OneHeadException, Player
 
 
 class OneHeadDB(commands.Cog):
-    def __init__(self, config: dict):
-        self.db = TinyDB(config["tinydb"]["path"])
+    def __init__(self, config: dict) -> None:
+        self.db: TinyDB = TinyDB(config["tinydb"]["path"])
 
-    def player_exists(self, player_name: str) -> Tuple[bool, int]:
+    def player_exists(self, player_name: str) -> tuple[bool, int]:
 
-        User = Query()
+        User: Query = Query()
         
         result = self.db.get(User.name == player_name)
         
@@ -26,14 +22,14 @@ class OneHeadDB(commands.Cog):
             return False, -1
         
 
-    def add_player(self, player_name: str, mmr: int):
+    def add_player(self, player_name: str, mmr: int) -> None:
 
         if not isinstance(player_name, str):
             raise OneHeadException("Player Name not a valid string.")
 
         exists, _ = self.player_exists(player_name)
         
-        if exists is True:
+        if exists:
             raise OneHeadException(f"{player_name} is already registered.")
 
         self.db.insert(
@@ -48,7 +44,7 @@ class OneHeadDB(commands.Cog):
             }
         )
 
-    def remove_player(self, player_name: str):
+    def remove_player(self, player_name: str) -> None:
 
         if not isinstance(player_name, str):
             raise OneHeadException("Player name not a valid string.")
@@ -60,7 +56,7 @@ class OneHeadDB(commands.Cog):
         
         self.db.remove(doc_ids=[doc_id])
 
-    def update_rbucks(self, bettor_name: str, rbucks: int):
+    def update_rbucks(self, bettor_name: str, rbucks: int) -> None:
         
         exists, doc_id = self.player_exists(bettor_name)
         
@@ -90,15 +86,15 @@ class OneHeadDB(commands.Cog):
 
     def lookup_player(self, player_name: str) -> "Player":
         
-        User = Query()
+        User: Query = Query()
 
-        response = self.db.get(User.name == player_name)
+        response: Player = self.db.get(User.name == player_name)
         if response is None:
             raise OneHeadException(f"Failed to find {player_name} when performing a lookup in the database.")
             
         return response
 
     def retrieve_table(self) -> list["Player"]:
-        table = self.db.table("_default")
-        table_dict = table._read_table()
-        return table_dict.values()
+        table: Table = self.db.table("_default")
+        table_dict: dict[str, Player] = table._read_table() # type: ignore
+        return list(table_dict.values())

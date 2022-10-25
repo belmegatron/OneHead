@@ -3,7 +3,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 from onehead.balance import OneHeadBalance
-from onehead.common import OneHeadException
+from onehead.common import DIRE, RADIANT, OneHeadException
 from onehead.db import OneHeadDB
 from onehead.user import OneHeadPreGame
 
@@ -207,8 +207,8 @@ class OneHeadBalanceTest(TestCase):
         mock_unique_combinations = [
             (
                 {
-                    "t1": self.mock_profiles_adjusted_mmr[5:],
-                    "t2": self.mock_profiles_adjusted_mmr[:5],
+                    RADIANT: self.mock_profiles_adjusted_mmr[5:],
+                    DIRE: self.mock_profiles_adjusted_mmr[:5],
                 }
             )
         ]
