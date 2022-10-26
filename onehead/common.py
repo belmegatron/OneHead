@@ -1,12 +1,18 @@
 import json
-import logging
 import os
 import sys
-from types import NoneType
+from logging import Formatter, Logger, StreamHandler, getLogger
 from typing import Literal, Optional, TypedDict
 
 from discord.ext.commands import Bot
+from strenum import StrEnum
 
+
+class OneHeadRoles(StrEnum):
+    
+    ADMIN: Literal["IHL Admin"] = "IHL Admin"
+    MEMBER: Literal["IHL"] = "IHL"
+    
 
 class Player(TypedDict):
     name: str
@@ -16,11 +22,12 @@ class Player(TypedDict):
     rbucks: int
     rating: int
     adjusted_mmr: int
+    win_percentage: int
 
 Team = tuple[Player, Player, Player, Player, Player]
 TeamCombination = tuple[Team, Team]
     
-log: logging.Logger = logging.getLogger("onehead")
+log: Logger = getLogger("onehead")
 
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
 bot: Optional[Bot] = None
@@ -58,15 +65,15 @@ class OneHeadCommon(object):
 
         try:
             with open(os.path.join(cls.ROOT_DIR, "secrets/config.json"), "r") as f:
-                config = json.load(f)  # type: dict
+                config: dict = json.load(f)
         except IOError as e:
             raise OneHeadException(e)
 
         return config
 
 def setup_log() -> None:
-    handler = logging.StreamHandler(stream=sys.stdout)
-    formatter = logging.Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s",
+    handler: StreamHandler = StreamHandler(stream=sys.stdout)
+    formatter: Formatter = Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s",
                                     datefmt="%Y-%m-%d %H:%M:%S")
     handler.setFormatter(formatter)
     log.addHandler(handler)

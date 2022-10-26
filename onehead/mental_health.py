@@ -2,10 +2,12 @@ import random
 
 from discord.ext import commands
 
+from onehead.common import OneHeadRoles
+
 
 class OneHeadMentalHealth(commands.Cog):
 
-    quotes = [
+    quotes: list[str] = [
         """'It's not whether you get knocked down; it's whether you get up.' — Vince Lombardi""",
         """'The only way to prove that you’re a good sport is to lose.' - Ernie Banks""",
         """'When you’re riding, only the race in which you’re riding is important.' - Bill Shoemaker""",
@@ -116,12 +118,12 @@ class OneHeadMentalHealth(commands.Cog):
         """'ZUG ZUG' - Rugor""",
     ]
 
-    @commands.has_role("IHL")
+    @commands.has_role(OneHeadRoles.MEMBER)
     @commands.command(aliases=["mh"])
-    async def mental_health(self, ctx: commands.Context, name: str):
+    async def mental_health(self, ctx: commands.Context, name: str) -> None:
         """
         Provides mental health to the target player.
         """
 
-        quote = random.choice(self.quotes)
+        quote: str = random.choice(self.quotes)
         await ctx.send(f"**{name}**\n {quote}")

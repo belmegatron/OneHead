@@ -5,27 +5,28 @@ from discord import Embed, colour
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import DIRE, RADIANT, OneHeadException
+from onehead.common import DIRE, RADIANT, OneHeadException, OneHeadRoles
 
 if TYPE_CHECKING:
+    from onehead.common import Player
     from onehead.db import OneHeadDB
     from onehead.user import OneHeadPreGame
 
 
 class OneHeadBetting(commands.Cog):
-    def __init__(self, database: "OneHeadDB", pre_game: "OneHeadPreGame"):
+    def __init__(self, database: "OneHeadDB", pre_game: "OneHeadPreGame") -> None:
 
-        self.database = database
-        self.betting_window_open = False
-        self.bets = []  # type: list[dict]
-        self.pre_game = pre_game
+        self.database: OneHeadDB = database
+        self.betting_window_open: bool = False
+        self.bets: list[dict] = []
+        self.pre_game: OneHeadPreGame = pre_game
 
     def get_bet_results(self, radiant_won: bool) -> dict:
 
-        bet_results = {}  # type: dict[str, float]
+        bet_results: dict[str, float] = {}
 
         for bet in self.bets:
-            name = bet["name"]
+            name: str = bet["name"]
 
             if bet_results.get(name) is None:
                 bet_results[name] = 0
@@ -39,7 +40,7 @@ class OneHeadBetting(commands.Cog):
 
         return bet_results
 
-    async def open_betting_window(self, ctx: commands.Context, event: asyncio.Event):
+    async def open_betting_window(self, ctx: commands.Context, event: asyncio.Event) -> None:
         self.betting_window_open = True
 
         await ctx.send(f"Bets are now open for 5 minutes!")
@@ -56,9 +57,9 @@ class OneHeadBetting(commands.Cog):
             self.betting_window_open = False
             await ctx.send("Bets are now closed!")
 
-    @commands.has_role("IHL")
+    @commands.has_role(OneHeadRoles.MEMBER)
     @commands.command(aliases=["bet"])
-    async def place_bet(self, ctx: commands.Context, side: str, amount: str):
+    async def place_bet(self, ctx: commands.Context, side: str, amount: str) -> None:
         """
         Place a bet on the match that is about to happen.
 
@@ -69,15 +70,15 @@ class OneHeadBetting(commands.Cog):
             await ctx.send("Betting window closed.")
             return
 
-        name = ctx.author.display_name
+        name: str = ctx.author.display_name
 
         try:
-            record = self.database.lookup_player(name)
+            record: Player = self.database.lookup_player(name)
         except OneHeadException:
             await ctx.send(f"Unable to find player in database")
             return
 
-        available_balance = record["rbucks"]
+        available_balance: int = record["rbucks"]
 
         if available_balance is None:
             await ctx.send(f"{name} cannot be found in the database.")
@@ -94,7 +95,7 @@ class OneHeadBetting(commands.Cog):
             return
 
         if amount == "all":
-            stake = available_balance
+            stake: int = available_balance
         else:
             try:
                 stake = int(amount)
@@ -119,49 +120,49 @@ class OneHeadBetting(commands.Cog):
 
         await ctx.send(f"{name} has placed a bet of {stake} RBUCKS on {side.title()}.")
 
-    @commands.has_role("IHL")
+    @commands.has_role(OneHeadRoles.MEMBER)
     @commands.command(aliases=["rbucks"])
-    async def bucks(self, ctx: commands.Context):
+    async def bucks(self, ctx: commands.Context) -> None:
         """
         Lists the number of rbucks each member of the IHL has.
         """
 
-        subset = []
+        subset: list = []
 
-        table = self.database.retrieve_table()
+        table: list[Player] = self.database.retrieve_table()
 
         for player in table:
             subset.append({"name": player["name"], "RBUCKS": player["rbucks"]})
 
         subset = sorted(subset, key=lambda d: d["RBUCKS"], reverse=True)  # type: ignore
 
-        bucks_board = tabulate(subset, headers="keys", tablefmt="simple")
+        bucks_board: str = tabulate(subset, headers="keys", tablefmt="simple")
 
-        embed = Embed(title="**RBUCKS**", colour=colour.Colour.green())
+        embed: Embed = Embed(title="**RBUCKS**", colour=colour.Colour.green())
         embed.add_field(name="Leaderboard", value=f"```{bucks_board}```")
 
         await ctx.send(embed=embed)
 
     @staticmethod
-    def create_bet_report(bet_results: dict) -> "Embed":
+    def create_bet_report(bet_results: dict) -> Embed:
 
-        contents = ""
+        contents: str = ""
 
         for name, delta in bet_results.items():
-            won_or_lost = "won" if delta >= 0 else "lost"
+            won_or_lost: str = "won" if delta >= 0 else "lost"
 
             # All bets are at an assumed price of 2.0, therefore need to divide by 2 to ignore the stake.
-            delta = delta if delta <= 0 else int(delta / 2)
+            corrected_delta: int = delta if delta <= 0 else int(delta / 2)
 
-            line = f"{name} {won_or_lost} {abs(delta)} RBUCKS!\n"
+            line: str = f"{name} {won_or_lost} {abs(corrected_delta)} RBUCKS!\n"
             contents += line
 
-        embed = Embed(title="**RBUCKS**", colour=colour.Colour.green())
+        embed: Embed = Embed(title="**RBUCKS**", colour=colour.Colour.green())
         embed.add_field(name="Bet Report", value=f"```{contents}```")
 
         return embed
 
-    async def refund_all_bets(self, ctx: commands.Context):
+    async def refund_all_bets(self, ctx: commands.Context) -> None:
 
         if len(self.bets) == 0:
             return
@@ -170,7 +171,3 @@ class OneHeadBetting(commands.Cog):
             self.database.update_rbucks(bet["name"], bet["stake"])
 
         await ctx.send("All bets have been refunded.")
-
-    def reset_state(self):
-        self.bets = []
-        self.betting_window_open = False

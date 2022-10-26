@@ -1,7 +1,7 @@
 from discord.ext import commands
 from tinydb import Query, TinyDB
 from tinydb.operations import add
-from tinydb.table import Table
+from tinydb.table import Document, Table
 
 from onehead.common import OneHeadException, Player
 
@@ -14,7 +14,7 @@ class OneHeadDB(commands.Cog):
 
         User: Query = Query()
         
-        result = self.db.get(User.name == player_name)
+        result: Document = self.db.get(User.name == player_name)
         
         if result:
             return True, result.doc_id
@@ -65,7 +65,7 @@ class OneHeadDB(commands.Cog):
         
         self.db.update(add("rbucks", rbucks), doc_ids=[doc_id])
 
-    def update_player(self, player_name: str, win: bool):
+    def update_player(self, player_name: str, win: bool) -> None:
 
         exists, doc_id = self.player_exists(player_name)
         
@@ -84,7 +84,7 @@ class OneHeadDB(commands.Cog):
             self.db.update(add("rbucks", 50), doc_ids=[doc_id])
 
 
-    def lookup_player(self, player_name: str) -> "Player":
+    def lookup_player(self, player_name: str) -> Player:
         
         User: Query = Query()
 
@@ -94,7 +94,7 @@ class OneHeadDB(commands.Cog):
             
         return response
 
-    def retrieve_table(self) -> list["Player"]:
+    def retrieve_table(self) -> list[Player]:
         table: Table = self.db.table("_default")
         table_dict: dict[str, Player] = table._read_table() # type: ignore
         return list(table_dict.values())

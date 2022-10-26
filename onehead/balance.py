@@ -1,11 +1,12 @@
 import itertools
 import random
+from typing import Any
 
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import (DIRE, RADIANT, OneHeadException, Player, Team,
-                            TeamCombination)
+from onehead.common import (DIRE, RADIANT, OneHeadException, OneHeadRoles,
+                            Player, Team, TeamCombination)
 from onehead.db import OneHeadDB
 from onehead.stats import OneHeadStats
 from onehead.user import OneHeadPreGame
@@ -17,16 +18,16 @@ class OneHeadBalance(commands.Cog):
         self.database: OneHeadDB = database
         self.pre_game: OneHeadPreGame = pre_game
 
-    def _get_profiles(self) -> list["Player"]:
+    def _get_profiles(self) -> list[Player]:
         """
         Obtains player profiles for all players that have signed up to play.
 
         :return: Player profiles for all signed up players.
         """
 
-        profiles = []
+        profiles: list[Player] = []
         for player in self.pre_game.signups:
-            profile = self.database.lookup_player(player)
+            profile: Player = self.database.lookup_player(player)
             if profile:
                 profiles.append(profile)
 
@@ -34,8 +35,8 @@ class OneHeadBalance(commands.Cog):
 
     @staticmethod
     def _calculate_unique_team_combinations(
-        all_matchups: list["TeamCombination"],
-    ) -> list["TeamCombination"]:
+        all_matchups: list[TeamCombination],
+    ) -> list[TeamCombination]:
         """
         Calculates all 5v5 combinations, where the players on each team are unique to that particular team.
 
@@ -44,7 +45,7 @@ class OneHeadBalance(commands.Cog):
         :return: Unique team combinations.
         """
 
-        unique_combinations = []
+        unique_combinations: list[TeamCombination] = []
 
         for matchup in all_matchups:
             shared_players: bool = False
@@ -127,7 +128,7 @@ class OneHeadBalance(commands.Cog):
 
         return balanced_teams
 
-    async def balance(self, ctx: commands.Context) -> tuple["Team", "Team"]:
+    async def balance(self, ctx: commands.Context) -> tuple[Team, Team]:
         """
         Returns two balanced 5-man teams from 10 players in the signup pool.
 
@@ -145,7 +146,7 @@ class OneHeadBalance(commands.Cog):
 
         return balanced_teams[RADIANT], balanced_teams[DIRE]
 
-    @commands.has_role("IHL")
+    @commands.has_role(OneHeadRoles.MEMBER)
     @commands.command(aliases=["mmr"])
     async def show_internal_mmr(self, ctx: commands.Context) -> None:
         """
@@ -156,7 +157,7 @@ class OneHeadBalance(commands.Cog):
         OneHeadStats.calculate_rating(scoreboard)
         OneHeadStats.calculate_adjusted_mmr(scoreboard)
 
-        ratings = [
+        ratings: list[dict[str, Any]] = [
             {
                 "name": profile["name"],
                 "base": profile["mmr"],
@@ -164,6 +165,6 @@ class OneHeadBalance(commands.Cog):
             }
             for profile in scoreboard
         ]
-        sorted_ratings = sorted(ratings, key=lambda k: k["adjusted"], reverse=True)  # type: ignore
-        tabulated_ratings = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
+        sorted_ratings: list[dict[str, Any]] = sorted(ratings, key=lambda k: k["adjusted"], reverse=True) # type: ignore
+        tabulated_ratings: str = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
         await ctx.send(f"**Internal MMR** ```\n{tabulated_ratings}```")
