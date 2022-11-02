@@ -18,7 +18,7 @@ class OneHeadChannels(commands.Cog):
         self.lobby_name: str = channel_config_settings["lobby"]
 
         self.ihl_discord_channels: list[VoiceChannel]
-        self.t1: Team 
+        self.t1: Team
         self.t2: Team
         self.t1_discord_members: list[Member]
         self.t2_discord_members: list[Member]
@@ -82,7 +82,9 @@ class OneHeadChannels(commands.Cog):
         :param ctx: Discord Context
         """
 
-        lobby: VoiceChannel = [x for x in ctx.guild.voice_channels if x.name == self.lobby_name][0]
+        lobby: VoiceChannel = [
+            x for x in ctx.guild.voice_channels if x.name == self.lobby_name
+        ][0]
 
         for member in self.t1_discord_members:
             try:

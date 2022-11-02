@@ -13,14 +13,13 @@ class OneHeadDB(commands.Cog):
     def player_exists(self, player_name: str) -> tuple[bool, int]:
 
         User: Query = Query()
-        
+
         result: Document = self.db.get(User.name == player_name)
-        
+
         if result:
             return True, result.doc_id
         else:
             return False, -1
-        
 
     def add_player(self, player_name: str, mmr: int) -> None:
 
@@ -28,7 +27,7 @@ class OneHeadDB(commands.Cog):
             raise OneHeadException("Player Name not a valid string.")
 
         exists, _ = self.player_exists(player_name)
-        
+
         if exists:
             raise OneHeadException(f"{player_name} is already registered.")
 
@@ -50,27 +49,27 @@ class OneHeadDB(commands.Cog):
             raise OneHeadException("Player name not a valid string.")
 
         exists, doc_id = self.player_exists(player_name)
-        
+
         if exists is False:
-            raise OneHeadException(f"{player_name} does not exist in database.")    
-        
+            raise OneHeadException(f"{player_name} does not exist in database.")
+
         self.db.remove(doc_ids=[doc_id])
 
     def update_rbucks(self, bettor_name: str, rbucks: int) -> None:
-        
+
         exists, doc_id = self.player_exists(bettor_name)
-        
+
         if exists is False:
             raise OneHeadException(f"{bettor_name} cannot be found.")
-        
+
         self.db.update(add("rbucks", rbucks), doc_ids=[doc_id])
 
     def update_player(self, player_name: str, win: bool) -> None:
 
         exists, doc_id = self.player_exists(player_name)
-        
+
         if exists is False:
-            raise OneHeadException(f"{player_name} does not exist in database.")    
+            raise OneHeadException(f"{player_name} does not exist in database.")
 
         if win:
             self.db.update(add("win", 1), doc_ids=[doc_id])
@@ -83,18 +82,19 @@ class OneHeadDB(commands.Cog):
             self.db.update({"win_streak": 0}, doc_ids=[doc_id])
             self.db.update(add("rbucks", 50), doc_ids=[doc_id])
 
-
     def lookup_player(self, player_name: str) -> Player:
-        
+
         User: Query = Query()
 
         response: Player = self.db.get(User.name == player_name)
         if response is None:
-            raise OneHeadException(f"Failed to find {player_name} when performing a lookup in the database.")
-            
+            raise OneHeadException(
+                f"Failed to find {player_name} when performing a lookup in the database."
+            )
+
         return response
 
     def retrieve_table(self) -> list[Player]:
         table: Table = self.db.table("_default")
-        table_dict: dict[str, Player] = table._read_table() # type: ignore
+        table_dict: dict[str, Player] = table._read_table()  # type: ignore
         return list(table_dict.values())

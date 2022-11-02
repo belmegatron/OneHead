@@ -125,10 +125,12 @@ class OneHeadScoreBoard(commands.Cog):
         OneHeadStats.calculate_win_percentage(scoreboard)
         OneHeadStats.calculate_rating(scoreboard)
 
-        scoreboard_sorted_rows: list[Player] = self._calculate_positions(scoreboard, "rating")
-        scoreboard_sorted_rows_and_columns: list[Player] = self._sort_scoreboard_key_order(
-            scoreboard_sorted_rows
+        scoreboard_sorted_rows: list[Player] = self._calculate_positions(
+            scoreboard, "rating"
         )
+        scoreboard_sorted_rows_and_columns: list[
+            Player
+        ] = self._sort_scoreboard_key_order(scoreboard_sorted_rows)
         sorted_scoreboard: str = tabulate(
             scoreboard_sorted_rows_and_columns, headers="keys", tablefmt="simple"
         )

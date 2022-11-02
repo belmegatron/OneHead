@@ -2,21 +2,39 @@ import asyncio
 from typing import TYPE_CHECKING, Literal
 
 from discord import Embed, Intents
-from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
-                                  command, has_role, max_concurrency)
+from discord.ext.commands import (
+    Bot,
+    BucketType,
+    Cog,
+    Command,
+    Context,
+    command,
+    has_role,
+    max_concurrency,
+)
 from tabulate import tabulate
 
 import onehead.common
 from onehead.balance import OneHeadBalance
 from onehead.betting import OneHeadBetting
 from onehead.channels import OneHeadChannels
-from onehead.common import (DIRE, RADIANT, OneHeadCommon, OneHeadException,
-                            OneHeadRoles, log)
+from onehead.common import (
+    DIRE,
+    RADIANT,
+    OneHeadCommon,
+    OneHeadException,
+    OneHeadRoles,
+    log,
+)
 from onehead.db import OneHeadDB
 from onehead.mental_health import OneHeadMentalHealth
 from onehead.scoreboard import OneHeadScoreBoard
-from onehead.user import (OneHeadPreGame, OneHeadRegistration,
-                          on_member_update, on_voice_state_update)
+from onehead.user import (
+    OneHeadPreGame,
+    OneHeadRegistration,
+    on_member_update,
+    on_voice_state_update,
+)
 from version import __changelog__, __version__
 
 if TYPE_CHECKING:
@@ -104,7 +122,7 @@ class OneHeadCore(Cog):
             raise OneHeadException("Unable to find cog(s)")
 
     async def _setup_teams(self, ctx: Context) -> None:
-        
+
         if self.radiant is None or self.dire is None:
             return
 
@@ -114,26 +132,25 @@ class OneHeadCore(Cog):
         self.channels.set_teams(self.radiant, self.dire)
         await self.channels.move_discord_channels(ctx)
         await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
-        
-        
+
     def _reset_state(self) -> None:
-        
+
         self.game_cancelled.clear()
         self.game_in_progress = False
         self.player_transfer_window_open = False
-        
+
         self.bot.remove_cog("OneHeadPreGame")
         self.pre_game = OneHeadPreGame(self.database)
         self.bot.add_cog(self.pre_game)
-        
+
         self.bot.remove_cog("OneHeadBalance")
         self.team_balance = OneHeadBalance(self.database, self.pre_game)
         self.bot.add_cog(self.team_balance)
-        
+
         self.bot.remove_cog("OneHeadChannels")
         self.channels = OneHeadChannels(self.config)
         self.bot.add_cog(self.channels)
-        
+
         self.bot.remove_cog("OneHeadBetting")
         self.betting = OneHeadBetting(self.database, self.pre_game)
         self.bot.add_cog(self.betting)
@@ -163,10 +180,10 @@ class OneHeadCore(Cog):
         await self._setup_teams(ctx)
 
         await self._open_player_transfer_window(ctx)
-        
+
         # Allow bets!
         await self.betting.open_betting_window(ctx, self.game_cancelled)
-        
+
     @has_role(OneHeadRoles.ADMIN)
     @command()
     @max_concurrency(1, per=BucketType.default, wait=False)
@@ -182,7 +199,7 @@ class OneHeadCore(Cog):
             await self._refund_player_transactions(ctx)
             await self.betting.refund_all_bets(ctx)
             self._reset_state()
-            
+
             log.info("Game has stopped")
         else:
             await ctx.send("No currently active game.")
@@ -323,23 +340,29 @@ class OneHeadCore(Cog):
         self.database.update_rbucks(name, -1 * cost)
         self.player_transactions.append({"name": name, "cost": cost})
 
-        current_teams_names_only: tuple[tuple[str, ...], tuple[str, ...]] = OneHeadCommon.get_player_names(self.radiant, self.dire)
+        current_teams_names_only: tuple[
+            tuple[str, ...], tuple[str, ...]
+        ] = OneHeadCommon.get_player_names(self.radiant, self.dire)
         shuffled_teams: tuple[Team, Team] = await self.team_balance.balance(ctx)
-        shuffled_teams_names_only: tuple[tuple[str, ...], tuple[str, ...]] = OneHeadCommon.get_player_names(shuffled_teams[0], shuffled_teams[1])
+        shuffled_teams_names_only: tuple[
+            tuple[str, ...], tuple[str, ...]
+        ] = OneHeadCommon.get_player_names(shuffled_teams[0], shuffled_teams[1])
 
         while current_teams_names_only == shuffled_teams_names_only:
             shuffled_teams = await self.team_balance.balance(ctx)
-            shuffled_teams_names_only = OneHeadCommon.get_player_names(shuffled_teams[0], shuffled_teams[1])
+            shuffled_teams_names_only = OneHeadCommon.get_player_names(
+                shuffled_teams[0], shuffled_teams[1]
+            )
 
         self.radiant, self.dire = shuffled_teams
 
         await self._setup_teams(ctx)
 
     async def _open_player_transfer_window(self, ctx: Context) -> None:
-        
+
         self.player_transfer_window_open = True
         await ctx.send(f"Player transfer window is now open for 2 minutes!")
-        
+
         try:
             await asyncio.wait_for(self.game_cancelled.wait(), timeout=120)
         except asyncio.TimeoutError:

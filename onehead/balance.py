@@ -5,8 +5,15 @@ from typing import Any
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import (DIRE, RADIANT, OneHeadException, OneHeadRoles,
-                            Player, Team, TeamCombination)
+from onehead.common import (
+    DIRE,
+    RADIANT,
+    OneHeadException,
+    OneHeadRoles,
+    Player,
+    Team,
+    TeamCombination,
+)
 from onehead.db import OneHeadDB
 from onehead.stats import OneHeadStats
 from onehead.user import OneHeadPreGame
@@ -94,17 +101,15 @@ class OneHeadBalance(commands.Cog):
         OneHeadStats.calculate_rating(profiles)
         OneHeadStats.calculate_adjusted_mmr(profiles)
 
-        team_combinations: list[Team] = list(
-            itertools.combinations(profiles, 5)
-        )
+        team_combinations: list[Team] = list(itertools.combinations(profiles, 5))
 
         matchup_combinations: list[TeamCombination] = list(
             itertools.combinations(team_combinations, 2)
         )
 
-        unique_combinations: list[TeamCombination] = self._calculate_unique_team_combinations(
-            matchup_combinations
-        ) 
+        unique_combinations: list[
+            TeamCombination
+        ] = self._calculate_unique_team_combinations(matchup_combinations)
 
         if not unique_combinations:
             raise OneHeadException(
@@ -124,7 +129,9 @@ class OneHeadBalance(commands.Cog):
         )
 
         # Take the top 5 that are closest in terms of rating and pick one at random.
-        balanced_teams: dict[str, Team] = random.choice(sorted_unique_combinations_dict[:5])
+        balanced_teams: dict[str, Team] = random.choice(
+            sorted_unique_combinations_dict[:5]
+        )
 
         return balanced_teams
 
@@ -165,6 +172,8 @@ class OneHeadBalance(commands.Cog):
             }
             for profile in scoreboard
         ]
-        sorted_ratings: list[dict[str, Any]] = sorted(ratings, key=lambda k: k["adjusted"], reverse=True) # type: ignore
-        tabulated_ratings: str = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
+        sorted_ratings: list[dict[str, Any]] = sorted(ratings, key=lambda k: k["adjusted"], reverse=True)  # type: ignore
+        tabulated_ratings: str = tabulate(
+            sorted_ratings, headers="keys", tablefmt="simple"
+        )
         await ctx.send(f"**Internal MMR** ```\n{tabulated_ratings}```")

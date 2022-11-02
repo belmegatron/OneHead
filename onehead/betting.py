@@ -40,11 +40,13 @@ class OneHeadBetting(commands.Cog):
 
         return bet_results
 
-    async def open_betting_window(self, ctx: commands.Context, event: asyncio.Event) -> None:
+    async def open_betting_window(
+        self, ctx: commands.Context, event: asyncio.Event
+    ) -> None:
         self.betting_window_open = True
 
         await ctx.send(f"Bets are now open for 5 minutes!")
-        
+
         try:
             await asyncio.wait_for(event.wait(), timeout=240)
         except asyncio.TimeoutError:

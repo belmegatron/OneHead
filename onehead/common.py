@@ -9,10 +9,10 @@ from strenum import StrEnum
 
 
 class OneHeadRoles(StrEnum):
-    
+
     ADMIN: Literal["IHL Admin"] = "IHL Admin"
     MEMBER: Literal["IHL"] = "IHL"
-    
+
 
 class Player(TypedDict):
     name: str
@@ -24,9 +24,10 @@ class Player(TypedDict):
     adjusted_mmr: int
     win_percentage: int
 
+
 Team = tuple[Player, Player, Player, Player, Player]
 TeamCombination = tuple[Team, Team]
-    
+
 log: Logger = getLogger("onehead")
 
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
@@ -71,9 +72,11 @@ class OneHeadCommon(object):
 
         return config
 
+
 def setup_log() -> None:
     handler: StreamHandler = StreamHandler(stream=sys.stdout)
-    formatter: Formatter = Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s",
-                                    datefmt="%Y-%m-%d %H:%M:%S")
+    formatter: Formatter = Formatter(
+        fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
     handler.setFormatter(formatter)
     log.addHandler(handler)

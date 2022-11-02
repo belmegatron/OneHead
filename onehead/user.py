@@ -3,8 +3,15 @@ from asyncio import sleep
 from typing import TYPE_CHECKING
 
 from discord import Status
-from discord.ext.commands import (BucketType, Cog, Command, Context, command,
-                                  cooldown, has_role)
+from discord.ext.commands import (
+    BucketType,
+    Cog,
+    Command,
+    Context,
+    command,
+    cooldown,
+    has_role,
+)
 from tabulate import tabulate
 
 import onehead.common
@@ -15,7 +22,6 @@ from onehead.db import OneHeadDB
 if TYPE_CHECKING:
     from discord import VoiceState
     from discord.member import Member
-
 
 
 class OneHeadRegistration(Cog):
@@ -85,7 +91,9 @@ class OneHeadPreGame(Cog):
         Messages all registered players of the IHL to come and sign up.
         """
 
-        ihl_role: list[Member] = [x for x in ctx.guild.roles if x.name == OneHeadRoles.MEMBER]
+        ihl_role: list[Member] = [
+            x for x in ctx.guild.roles if x.name == OneHeadRoles.MEMBER
+        ]
         if not ihl_role:
             return
 
@@ -126,7 +134,7 @@ class OneHeadPreGame(Cog):
         await ctx.send(
             f"{number_of_signups} Players have signed up and therefore {number_of_signups - 10} players will be benched."
         )
-        
+
         while len(self.signups) > 10:
             idx: int = self.signups.index(random.choice(self.signups))
             random_selection: str = self.signups.pop(idx)
