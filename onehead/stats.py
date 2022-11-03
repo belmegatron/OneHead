@@ -17,9 +17,9 @@ class OneHeadStats:
 
         for record in profiles:
             if record["win"] == 0:
-                record["win_percentage"] = 0
+                record["%"] = 0
             else:
-                record["win_percentage"] = round(
+                record["%"] = round(
                     record["win"] / (record["win"] + record["loss"]) * 100, 1
                 )
 

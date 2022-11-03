@@ -34,19 +34,18 @@ class OneHeadStateTest(TestCase):
 
     @patch("onehead.betting.OneHeadBetting.open_betting_window")
     @patch("onehead.core.OneHeadCore._open_player_transfer_window")
+    @patch("onehead.core.OneHeadCore._setup_teams")
     @patch(
         "discord.ext.commands.core.Command.invoke", new=OneHeadAsyncTest.async_mock()
     )
-    def test_result_reset_state(self, _, __):
+    def test_result_reset_state(self, _, __, ___):
         core = self.bot.get_cog("OneHeadCore")
 
         # Let's pretend 10 players have signed up
-        pregame = self.bot.get_cog("OneHeadPreGame")
-        pregame.signups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
+        core.pre_game.signups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
 
         # Mock out how the teams were balanced
-        team_balance = self.bot.get_cog("OneHeadBalance")
-        team_balance.balance = OneHeadAsyncTest.async_mock(
+        core.team_balance.balance = OneHeadAsyncTest.async_mock(
             return_value=(
                 [
                     {"name": "A"},
@@ -66,9 +65,8 @@ class OneHeadStateTest(TestCase):
         )
 
         # Mock out any channel admin
-        channels = self.bot.get_cog("OneHeadChannels")
-        channels.create_discord_channels = OneHeadAsyncTest.async_mock()
-        channels.move_discord_channels = OneHeadAsyncTest.async_mock()
+        core.channels.create_discord_channels = OneHeadAsyncTest.async_mock()
+        core.channels.move_discord_channels = OneHeadAsyncTest.async_mock()
 
         # Start the pretend match
         OneHeadAsyncTest._run(core.start(self.ctx))
@@ -81,11 +79,10 @@ class OneHeadStateTest(TestCase):
 
         self.assertIsNone(core.radiant)
         self.assertIsNone(core.dire)
-        self.assertEqual(pregame.signups, [])
+        self.assertEqual(core.pre_game.signups, [])
 
         # Let's pretend 10 different players have signed up
-        pregame = self.bot.get_cog("OneHeadPreGame")
-        pregame.signups = [
+        core.pre_game.signups = [
             "RBEEZAY",
             "GEE",
             "LAURENCE",
@@ -99,8 +96,7 @@ class OneHeadStateTest(TestCase):
         ]
 
         # Mock out how the teams were balanced
-        team_balance = self.bot.get_cog("OneHeadBalance")
-        team_balance.balance = OneHeadAsyncTest.async_mock(
+        core.team_balance.balance = OneHeadAsyncTest.async_mock(
             return_value=(
                 [
                     {"name": "RBEEZAY"},
@@ -143,7 +139,7 @@ class OneHeadStateTest(TestCase):
             ],
         )
         self.assertEqual(
-            pregame.signups,
+            core.pre_game.signups,
             [
                 "RBEEZAY",
                 "GEE",

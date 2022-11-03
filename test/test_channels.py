@@ -87,13 +87,13 @@ class OneHeadChannelsTest(TestCase):
             self.oh_channels.move_discord_channels(self.ctx),
         )
 
-    @patch("onehead.channels.OneHeadChannels._get_discord_members")
+    @patch("onehead.channels.OneHeadChannels._set_discord_members")
     @patch(
         "onehead.common.OneHeadCommon.get_player_names",
         return_value=(MagicMock(), MagicMock()),
     )
     def test_move_discord_channels_success(
-        self, mock_get_player_names, mock_get_discord_members
+        self, mock_get_player_names, mock_set_discord_members
     ):
         ihl_1 = MagicMock()
         ihl_1.name = "IGC IHL #1"
@@ -112,7 +112,7 @@ class OneHeadChannelsTest(TestCase):
 
         OneHeadAsyncTest._run(self.oh_channels.move_discord_channels(self.ctx))
         mock_get_player_names.is_called_once()
-        mock_get_discord_members.is_called_once()
+        mock_set_discord_members.is_called_once()
         self.ctx.send.mock.is_called_once()
         member.move_to.mock.assert_has_calls(
             [call(ihl_1) for x in range(5)] + [call(ihl_2) for x in range(5)]

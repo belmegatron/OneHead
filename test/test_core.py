@@ -53,7 +53,7 @@ class OneHeadCoreTest(TestCase):
     @patch("onehead.core.OneHeadCore._open_player_transfer_window")
     @patch("onehead.core.OneHeadCore._setup_teams")
     @patch(
-        "onehead.core.commands.core.Command.invoke", new=OneHeadAsyncTest.async_mock()
+        "onehead.core.Command.invoke", new=OneHeadAsyncTest.async_mock()
     )
     def test_start_game_success(self, _, __, ___):
         self.core.pre_game.signup_check = OneHeadAsyncTest.async_mock(return_value=True)
@@ -128,7 +128,6 @@ class OneHeadCoreTest(TestCase):
         for i, args in enumerate(self.core.database.update_player.call_args_list):
             self.assertEqual(args[0], expected_args[i])
 
-        self.assertEqual(self.core.channels.move_back_to_lobby.mock.call_count, 1)
         self.assertFalse(self.core.game_in_progress)
         self.assertEqual(self.core.radiant, None)
         self.assertEqual(self.core.dire, None)

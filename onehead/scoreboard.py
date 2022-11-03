@@ -55,7 +55,7 @@ class OneHeadScoreBoard(commands.Cog):
             await ctx.send(f"**IGC Leaderboard** ```\n{chunk}```")
 
     @staticmethod
-    def _sort_scoreboard_key_order(scoreboard: list[dict]) -> list[dict]:
+    def _sort_scoreboard_key_order(scoreboard: list[Player]) -> list[dict[str, Any]]:
         """
         Sets the column order for the scoreboard by ordering the keys for each row.
 
@@ -68,16 +68,16 @@ class OneHeadScoreBoard(commands.Cog):
             "name",
             "win",
             "loss",
-            "win_percentage",
+            "%",
             "rating",
             "win_streak",
             "loss_streak",
         ]
-        sorted_scoreboard: list[dict[str, Any]] = []
+        sorted_scoreboard: list[dict] = []
 
         for record in scoreboard:
-            record = {k: record[k] for k in key_order}
-            sorted_scoreboard.append(record)
+            sorted_record: dict[str, Any] = {k: record[k] for k in key_order}  # type: ignore
+            sorted_scoreboard.append(sorted_record)
 
         return sorted_scoreboard
 
@@ -99,7 +99,7 @@ class OneHeadScoreBoard(commands.Cog):
 
         for i, record in enumerate(sorted_scoreboard):
             if i != 0:
-                if sorted_scoreboard[i - 1][sort_key] > sorted_scoreboard[i][sort_key]:
+                if sorted_scoreboard[i - 1][sort_key] > sorted_scoreboard[i][sort_key]:  # type: ignore
                     pos += modifier
                     modifier = 1
                 else:
@@ -129,10 +129,11 @@ class OneHeadScoreBoard(commands.Cog):
             scoreboard, "rating"
         )
         scoreboard_sorted_rows_and_columns: list[
-            Player
+            dict[str, Any]
         ] = self._sort_scoreboard_key_order(scoreboard_sorted_rows)
+        
         sorted_scoreboard: str = tabulate(
             scoreboard_sorted_rows_and_columns, headers="keys", tablefmt="simple"
         )
-
+        
         return sorted_scoreboard

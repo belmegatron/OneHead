@@ -3,21 +3,13 @@ from asyncio import sleep
 from typing import TYPE_CHECKING
 
 from discord import Status
-from discord.ext.commands import (
-    BucketType,
-    Cog,
-    Command,
-    Context,
-    command,
-    cooldown,
-    has_role,
-)
+from discord.ext.commands import (BucketType, Cog, Command, Context, command,
+                                  cooldown, has_role)
 from tabulate import tabulate
 
 import onehead.common
 from onehead.common import OneHeadException, OneHeadRoles, log
 from onehead.db import OneHeadDB
-
 
 if TYPE_CHECKING:
     from discord import VoiceState

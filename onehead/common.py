@@ -14,15 +14,7 @@ class OneHeadRoles(StrEnum):
     MEMBER: Literal["IHL"] = "IHL"
 
 
-class Player(TypedDict):
-    name: str
-    mmr: int
-    win: int
-    loss: int
-    rbucks: int
-    rating: int
-    adjusted_mmr: int
-    win_percentage: int
+Player = TypedDict("Player", {"#": int, "name": str, "mmr": int, "win": int, "loss": int, "rbucks": int, "rating": int, "adjusted_mmr": int, "%": float})
 
 
 Team = tuple[Player, Player, Player, Player, Player]

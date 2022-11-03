@@ -5,15 +5,8 @@ from typing import Any
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import (
-    DIRE,
-    RADIANT,
-    OneHeadException,
-    OneHeadRoles,
-    Player,
-    Team,
-    TeamCombination,
-)
+from onehead.common import (DIRE, RADIANT, OneHeadException, OneHeadRoles,
+                            Player, Team, TeamCombination)
 from onehead.db import OneHeadDB
 from onehead.stats import OneHeadStats
 from onehead.user import OneHeadPreGame

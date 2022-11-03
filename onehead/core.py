@@ -2,39 +2,21 @@ import asyncio
 from typing import TYPE_CHECKING, Literal
 
 from discord import Embed, Intents
-from discord.ext.commands import (
-    Bot,
-    BucketType,
-    Cog,
-    Command,
-    Context,
-    command,
-    has_role,
-    max_concurrency,
-)
+from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
+                                  command, has_role, max_concurrency)
 from tabulate import tabulate
 
 import onehead.common
 from onehead.balance import OneHeadBalance
 from onehead.betting import OneHeadBetting
 from onehead.channels import OneHeadChannels
-from onehead.common import (
-    DIRE,
-    RADIANT,
-    OneHeadCommon,
-    OneHeadException,
-    OneHeadRoles,
-    log,
-)
+from onehead.common import (DIRE, RADIANT, OneHeadCommon, OneHeadException,
+                            OneHeadRoles, log)
 from onehead.db import OneHeadDB
 from onehead.mental_health import OneHeadMentalHealth
 from onehead.scoreboard import OneHeadScoreBoard
-from onehead.user import (
-    OneHeadPreGame,
-    OneHeadRegistration,
-    on_member_update,
-    on_voice_state_update,
-)
+from onehead.user import (OneHeadPreGame, OneHeadRegistration,
+                          on_member_update, on_voice_state_update)
 from version import __changelog__, __version__
 
 if TYPE_CHECKING:
@@ -92,8 +74,8 @@ class OneHeadCore(Cog):
     def __init__(self, bot: Bot, token: str) -> None:
         self.game_in_progress: bool = False
         self.player_transfer_window_open: bool = False
-        self.radiant: Team
-        self.dire: Team
+        self.radiant: Team | None
+        self.dire: Team | None
         self.game_cancelled: asyncio.Event = asyncio.Event()
 
         self.player_transactions: list[dict] = []
@@ -135,6 +117,8 @@ class OneHeadCore(Cog):
 
     def _reset_state(self) -> None:
 
+        self.radiant = None
+        self.dire = None
         self.game_cancelled.clear()
         self.game_in_progress = False
         self.player_transfer_window_open = False
@@ -339,11 +323,16 @@ class OneHeadCore(Cog):
 
         self.database.update_rbucks(name, -1 * cost)
         self.player_transactions.append({"name": name, "cost": cost})
+        
+        if (self.radiant is None or self.dire is None):
+            raise OneHeadException("Attempted to shuffle with invalid teams.")
 
         current_teams_names_only: tuple[
             tuple[str, ...], tuple[str, ...]
         ] = OneHeadCommon.get_player_names(self.radiant, self.dire)
+        
         shuffled_teams: tuple[Team, Team] = await self.team_balance.balance(ctx)
+        
         shuffled_teams_names_only: tuple[
             tuple[str, ...], tuple[str, ...]
         ] = OneHeadCommon.get_player_names(shuffled_teams[0], shuffled_teams[1])
