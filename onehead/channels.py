@@ -18,10 +18,10 @@ class OneHeadChannels(commands.Cog):
         self.lobby_name: str = channel_config_settings["lobby"]
 
         self.ihl_discord_channels: list[VoiceChannel]
-        self.t1: Team
-        self.t2: Team
-        self.t1_discord_members: list[Member]
-        self.t2_discord_members: list[Member]
+        self.t1: Team | None = None
+        self.t2: Team | None = None
+        self.t1_discord_members: list[Member] = []
+        self.t2_discord_members: list[Member] = []
 
     def set_teams(self, t1: Team, t2: Team) -> None:
         """

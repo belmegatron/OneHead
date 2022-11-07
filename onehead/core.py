@@ -74,8 +74,8 @@ class OneHeadCore(Cog):
     def __init__(self, bot: Bot, token: str) -> None:
         self.game_in_progress: bool = False
         self.player_transfer_window_open: bool = False
-        self.radiant: Team | None
-        self.dire: Team | None
+        self.radiant: Team | None = None
+        self.dire: Team | None = None
         self.game_cancelled: asyncio.Event = asyncio.Event()
 
         self.player_transactions: list[dict] = []

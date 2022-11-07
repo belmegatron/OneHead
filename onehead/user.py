@@ -70,7 +70,7 @@ class OneHeadPreGame(Cog):
         self.signups: list[str] = []
         self.players_ready: list[str] = []
         self.ready_check_in_progress: bool = False
-        self.context: Context
+        self.context: Context = None
         self._signups_disabled: bool = False
 
     def disable_signups(self) -> None:
