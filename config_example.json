@@ -1,20 +1,12 @@
 {
-  "aws": {
-    "dynamodb": {
-      "region": "eu-west-3",
-      "tables": {
-        "dota": "some-table-name"
-      }
+    "tinydb": {
+        "path": "db.json"
+    },
+    "discord": {
+        "token": "<TOKEN>",
+        "channels": {
+            "lobby": "INTERNAL WAITING ROOM",
+            "match": "IGC IHL"
+        }
     }
-  },
-  "discord": {
-    "token": "discord-token",
-    "channels": {
-      "lobby": "lobby-channel-name",
-      "match": "match-channel-name prefix"
-    }
-  },
-  "rating": {
-    "is_adjusted": true
-  }
 }
