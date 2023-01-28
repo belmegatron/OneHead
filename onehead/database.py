@@ -6,7 +6,7 @@ from tinydb.table import Document, Table
 from onehead.common import OneHeadException, Player
 
 
-class OneHeadDB(commands.Cog):
+class Database(commands.Cog):
     def __init__(self, config: dict) -> None:
         self.db: TinyDB = TinyDB(config["tinydb"]["path"])
 
@@ -40,6 +40,8 @@ class OneHeadDB(commands.Cog):
                 "win_streak": 0,
                 "loss_streak": 0,
                 "rbucks": 100,
+                "commends": 0,
+                "reports": 0
             }
         )
 

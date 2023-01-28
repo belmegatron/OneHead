@@ -1,11 +1,11 @@
 from unittest import TestCase
 
-from onehead.stats import OneHeadStats
+from onehead.statistics import Statistics
 
 
 class OneHeadStatsTest(TestCase):
     def setUp(self):
-        self.stats = OneHeadStats()
+        self.stats = Statistics()
 
     def test_calculate_win_percentage_loss_0(self):
         scoreboard = [{"name": "RBEEZAY", "win": 10, "loss": 0}]

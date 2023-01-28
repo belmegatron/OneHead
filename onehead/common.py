@@ -8,13 +8,13 @@ from discord.ext.commands import Bot
 from strenum import StrEnum
 
 
-class OneHeadRoles(StrEnum):
+class Roles(StrEnum):
 
     ADMIN: Literal["IHL Admin"] = "IHL Admin"
     MEMBER: Literal["IHL"] = "IHL"
 
 
-Player = TypedDict("Player", {"#": int, "name": str, "mmr": int, "win": int, "loss": int, "rbucks": int, "rating": int, "adjusted_mmr": int, "%": float})
+Player = TypedDict("Player", {"#": int, "name": str, "mmr": int, "win": int, "loss": int, "rbucks": int, "rating": int, "adjusted_mmr": int, "%": float, "commends": int, "reports": int})
 
 
 Team = tuple[Player, Player, Player, Player, Player]
@@ -27,42 +27,38 @@ bot: Optional[Bot] = None
 
 RADIANT: Literal["radiant"] = "radiant"
 DIRE: Literal["dire"] = "dire"
+ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class OneHeadException(BaseException):
     pass
 
 
-class OneHeadCommon(object):
-    ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+def get_player_names(
+    t1: "Team", t2: "Team"
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """
+    Obtain player names from player profiles.
 
-    @staticmethod
-    def get_player_names(
-        t1: "Team", t2: "Team"
-    ) -> tuple[tuple[str, ...], tuple[str, ...]]:
-        """
-        Obtain player names from player profiles.
+    :param t1: Player Profiles for Team 1.
+    :param t2: Player Profiles for Team 2.
+    :return: Names of players on each team.
+    """
 
-        :param t1: Player Profiles for Team 1.
-        :param t2: Player Profiles for Team 2.
-        :return: Names of players on each team.
-        """
+    t1_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t1]))
+    t2_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t2]))
 
-        t1_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t1]))
-        t2_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t2]))
+    return t1_names, t2_names
 
-        return t1_names, t2_names
+def load_config() -> dict:
 
-    @classmethod
-    def load_config(cls) -> dict:
+    try:
+        with open(os.path.join(ROOT_DIR, "secrets/config.json"), "r") as f:
+            config: dict = json.load(f)
+    except IOError as e:
+        raise OneHeadException(e)
 
-        try:
-            with open(os.path.join(cls.ROOT_DIR, "secrets/config.json"), "r") as f:
-                config: dict = json.load(f)
-        except IOError as e:
-            raise OneHeadException(e)
-
-        return config
+    return config
 
 
 def setup_log() -> None:

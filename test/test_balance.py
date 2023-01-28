@@ -2,10 +2,10 @@ import asyncio
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-from onehead.balance import OneHeadBalance
+from onehead.balance import Matchmaking
 from onehead.common import DIRE, RADIANT, OneHeadException
-from onehead.db import OneHeadDB
-from onehead.user import OneHeadPreGame
+from onehead.database import Database
+from onehead.lobby import Lobby
 
 
 class OneHeadAsyncTest(object):
@@ -28,7 +28,7 @@ class OneHeadAsyncTest(object):
 
 class OneHeadBalanceTest(TestCase):
     def setUp(self):
-        self.pre_game = MagicMock(spec=OneHeadPreGame)
+        self.pre_game = MagicMock(spec=Lobby)
         self.signups = [
             "RBEEZAY",
             "GEE",
@@ -148,7 +148,7 @@ class OneHeadBalanceTest(TestCase):
             },
         )
 
-        self.database = MagicMock(spec=OneHeadDB)
+        self.database = MagicMock(spec=Database)
         self.t1 = None
         self.t2 = None
         self.config = {
@@ -161,7 +161,7 @@ class OneHeadBalanceTest(TestCase):
             },
             "rating": {"save": ["RBEEZAY"], "avoid": ["GEE", "LOZZA"]},
         }
-        self.team_balance = OneHeadBalance(self.database, self.pre_game)
+        self.team_balance = Matchmaking(self.database, self.pre_game)
 
     def test_calculate_balance_success(self):
         self.team_balance.signups = self.signups

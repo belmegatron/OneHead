@@ -2,7 +2,7 @@ import asyncio
 from unittest import TestCase
 from unittest.mock import MagicMock, call, patch
 
-from onehead.channels import OneHeadChannels
+from onehead.channels import Channels
 from onehead.common import OneHeadException
 
 
@@ -34,7 +34,7 @@ class OneHeadChannelsTest(TestCase):
             },
             "rating": {"is_adjusted": True},
         }
-        self.oh_channels = OneHeadChannels(self.config)
+        self.oh_channels = Channels(self.config)
         self.ctx = MagicMock()
         self.ctx.send = OneHeadAsyncTest.async_mock(return_value=None)
 

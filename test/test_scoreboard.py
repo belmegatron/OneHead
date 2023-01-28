@@ -2,13 +2,13 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from onehead.common import OneHeadException
-from onehead.scoreboard import OneHeadScoreBoard
+from onehead.scoreboard import ScoreBoard
 
 
 class OneHeadScoreBoardTest(TestCase):
     def setUp(self):
         self.database = MagicMock()
-        self.scoreboard = OneHeadScoreBoard(self.database)
+        self.scoreboard = ScoreBoard(self.database)
 
     def test_sort_scoreboard_key_order(self):
         scoreboard = [

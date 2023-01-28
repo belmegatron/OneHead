@@ -5,21 +5,22 @@ from discord import Embed, colour
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import DIRE, RADIANT, OneHeadException, OneHeadRoles
+from onehead.common import DIRE, RADIANT, OneHeadException, Roles
 
 if TYPE_CHECKING:
     from onehead.common import Player
-    from onehead.db import OneHeadDB
-    from onehead.user import OneHeadPreGame
+    from onehead.database import Database
+    from onehead.lobby import Lobby
 
 
-class OneHeadBetting(commands.Cog):
-    def __init__(self, database: "OneHeadDB", pre_game: "OneHeadPreGame") -> None:
+class Betting(commands.Cog):
+    
+    def __init__(self, database: "Database", pre_game: "Lobby") -> None:
 
-        self.database: OneHeadDB = database
+        self.database: Database = database
         self.betting_window_open: bool = False
         self.bets: list[dict] = []
-        self.pre_game: OneHeadPreGame = pre_game
+        self.pre_game: Lobby = pre_game
 
     def get_bet_results(self, radiant_won: bool) -> dict:
 
@@ -40,26 +41,7 @@ class OneHeadBetting(commands.Cog):
 
         return bet_results
 
-    async def open_betting_window(
-        self, ctx: commands.Context, event: asyncio.Event
-    ) -> None:
-        self.betting_window_open = True
-
-        await ctx.send(f"Bets are now open for 5 minutes!")
-
-        try:
-            await asyncio.wait_for(event.wait(), timeout=240)
-        except asyncio.TimeoutError:
-            await ctx.send("1 minute remaining for bets!")
-            try:
-                await asyncio.wait_for(event.wait(), timeout=60)
-            except asyncio.TimeoutError:
-                pass
-        finally:
-            self.betting_window_open = False
-            await ctx.send("Bets are now closed!")
-
-    @commands.has_role(OneHeadRoles.MEMBER)
+    @commands.has_role(Roles.MEMBER)
     @commands.command(aliases=["bet"])
     async def place_bet(self, ctx: commands.Context, side: str, amount: str) -> None:
         """
@@ -122,7 +104,7 @@ class OneHeadBetting(commands.Cog):
 
         await ctx.send(f"{name} has placed a bet of {stake} RBUCKS on {side.title()}.")
 
-    @commands.has_role(OneHeadRoles.MEMBER)
+    @commands.has_role(Roles.MEMBER)
     @commands.command(aliases=["rbucks"])
     async def bucks(self, ctx: commands.Context) -> None:
         """

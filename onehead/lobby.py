@@ -8,66 +8,19 @@ from discord.ext.commands import (BucketType, Cog, Command, Context, command,
 from tabulate import tabulate
 
 import onehead.common
-from onehead.common import OneHeadException, OneHeadRoles, log
-from onehead.db import OneHeadDB
+from onehead.common import Roles, log
+from onehead.database import Database
 
 if TYPE_CHECKING:
     from discord import VoiceState
     from discord.member import Member
 
 
-class OneHeadRegistration(Cog):
-    def __init__(self, database: OneHeadDB) -> None:
+class Lobby(Cog):
+    def __init__(self, database: Database) -> None:
 
-        self.database: OneHeadDB = database
-
-    @has_role(OneHeadRoles.MEMBER)
-    @command(aliases=["reg"])
-    async def register(self, ctx: Context, mmr: str) -> None:
-        """
-        Register yourself to the IHL by typing !register <your mmr>.
-        """
-
-        name: str = ctx.author.display_name
-
-        try:
-            mmr_int: int = int(mmr)
-        except ValueError:
-            raise OneHeadException(f"{mmr} is not a valid integer.")
-
-        if mmr_int < 1000:
-            await ctx.send(
-                f"{mmr_int} MMR is too low, must be greater or equal to 1000."
-            )
-            return
-
-        exists, _ = self.database.player_exists(name)
-        if exists is False:
-            self.database.add_player(ctx.author.display_name, mmr_int)
-            await ctx.send(f"{name} successfully registered.")
-        else:
-            await ctx.send(f"{name} is already registered.")
-
-    @has_role(OneHeadRoles.ADMIN)
-    @command(aliases=["dereg"])
-    async def deregister(self, ctx: Context, name: str) -> None:
-        """
-        Removes a player from the internal IHL database.
-        """
-
-        exists, _ = self.database.player_exists(name)
-        if exists:
-            self.database.remove_player(name)
-            await ctx.send(f"{name} successfully removed from the database.")
-        else:
-            await ctx.send(f"{name} could not be found in the database.")
-
-
-class OneHeadPreGame(Cog):
-    def __init__(self, database: OneHeadDB) -> None:
-
-        self.database: OneHeadDB = database
-        self.signups: list[str] = []
+        self.database: Database = database
+        self._signups: list[str] = []
         self.players_ready: list[str] = []
         self.ready_check_in_progress: bool = False
         self.context: Context = None
@@ -75,8 +28,11 @@ class OneHeadPreGame(Cog):
 
     def disable_signups(self) -> None:
         self._signups_disabled = True
+        
+    def clear_signups(self) -> None:
+        self._signups = []
 
-    @has_role(OneHeadRoles.ADMIN)
+    @has_role(Roles.ADMIN)
     @command()
     async def summon(self, ctx: Context) -> None:
         """
@@ -84,7 +40,7 @@ class OneHeadPreGame(Cog):
         """
 
         ihl_role: list[Member] = [
-            x for x in ctx.guild.roles if x.name == OneHeadRoles.MEMBER
+            x for x in ctx.guild.roles if x.name == Roles.MEMBER
         ]
         if not ihl_role:
             return
@@ -92,12 +48,12 @@ class OneHeadPreGame(Cog):
         await ctx.send(f"IHL DOTA - LET'S GO! {ihl_role[0].mention}")
 
     def reset_state(self) -> None:
-        self.signups = []
+        self._signups = []
         self._signups_disabled = False
 
     async def signup_check(self, ctx: Context) -> bool:
 
-        signup_count: int = len(self.signups)
+        signup_count: int = len(self._signups)
         if signup_count < 10:
             if signup_count == 0:
                 await ctx.send("There are currently no signups.")
@@ -118,7 +74,7 @@ class OneHeadPreGame(Cog):
         :param ctx: Discord context
         """
 
-        number_of_signups: int = len(self.signups)
+        number_of_signups: int = len(self._signups)
         if number_of_signups <= 10:
             return
 
@@ -127,31 +83,31 @@ class OneHeadPreGame(Cog):
             f"{number_of_signups} Players have signed up and therefore {number_of_signups - 10} players will be benched."
         )
 
-        while len(self.signups) > 10:
-            idx: int = self.signups.index(random.choice(self.signups))
-            random_selection: str = self.signups.pop(idx)
+        while len(self._signups) > 10:
+            idx: int = self._signups.index(random.choice(self._signups))
+            random_selection: str = self._signups.pop(idx)
             benched_players.append(random_selection)
 
         await ctx.send(f"**Benched Players:** ```\n{benched_players}```")
-        await ctx.send(f"**Selected Players:** ```\n{self.signups}```")
+        await ctx.send(f"**Selected Players:** ```\n{self._signups}```")
 
-    @has_role(OneHeadRoles.MEMBER)
+    @has_role(Roles.MEMBER)
     @command()
     async def who(self, ctx: Context) -> None:
         """
         Shows all players currently signed up to play in the IHL.
         """
 
-        await ctx.send(f"There are currently {len(self.signups)} players signed up.")
+        await ctx.send(f"There are currently {len(self._signups)} players signed up.")
         signups_dict = [
-            {"#": i + 1, "name": name} for i, name in enumerate(self.signups)
+            {"#": i + 1, "name": name} for i, name in enumerate(self._signups)
         ]
         signups: str = tabulate(signups_dict, headers="keys", tablefmt="simple")
 
         await ctx.send(f"**Current Signups** ```\n{signups}```")
 
     @cooldown(1, 30, BucketType.user)
-    @has_role(OneHeadRoles.MEMBER)
+    @has_role(Roles.MEMBER)
     @command(aliases=["su"])
     async def signup(self, ctx: Context) -> None:
         """
@@ -168,10 +124,10 @@ class OneHeadPreGame(Cog):
             await ctx.send("Please register first using the !reg command.")
             return
 
-        if name in self.signups:
+        if name in self._signups:
             await ctx.send(f"{name} is already signed up.")
         else:
-            self.signups.append(name)
+            self._signups.append(name)
 
         if self.context is None:
             self.context = ctx
@@ -179,7 +135,7 @@ class OneHeadPreGame(Cog):
         await Command.invoke(self.who, ctx)
 
     @cooldown(1, 30, BucketType.user)
-    @has_role(OneHeadRoles.MEMBER)
+    @has_role(Roles.MEMBER)
     @command(aliases=["so"])
     async def signout(self, ctx: Context) -> None:
         """
@@ -190,28 +146,28 @@ class OneHeadPreGame(Cog):
             await ctx.send("Game in Progress - Signout command unavailable.")
             return
 
-        if ctx.author.display_name not in self.signups:
+        if ctx.author.display_name not in self._signups:
             await ctx.send(f"{ctx.author.display_name} is not currently signed up.")
         else:
-            self.signups.remove(ctx.author.display_name)
+            self._signups.remove(ctx.author.display_name)
 
         await Command.invoke(self.who, ctx)
 
-    @has_role(OneHeadRoles.ADMIN)
+    @has_role(Roles.ADMIN)
     @command(aliases=["rm"])
     async def remove(self, ctx: Context, name: str) -> None:
         """
         Remove a player who is currently signed up.
         """
 
-        if name not in self.signups:
+        if name not in self._signups:
             await ctx.send(f"{name} is not currently signed up.")
             return
 
-        self.signups.remove(name)
+        self._signups.remove(name)
         await ctx.send(f"{name} has been removed from the signup pool.")
 
-    @has_role(OneHeadRoles.MEMBER)
+    @has_role(Roles.MEMBER)
     @command(aliases=["r"])
     async def ready(self, ctx: Context) -> None:
         """
@@ -219,7 +175,7 @@ class OneHeadPreGame(Cog):
         """
         name: str = ctx.author.display_name
 
-        if name not in self.signups:
+        if name not in self._signups:
             await ctx.send(f"{name} needs to sign in first.")
             return
 
@@ -230,7 +186,7 @@ class OneHeadPreGame(Cog):
         self.players_ready.append(name)
         await ctx.send(f"{name} is ready.")
 
-    @has_role(OneHeadRoles.MEMBER)
+    @has_role(Roles.MEMBER)
     @command(aliases=["rc"])
     async def ready_check(self, ctx: Context) -> None:
         """
@@ -244,7 +200,7 @@ class OneHeadPreGame(Cog):
             await sleep(30)
             players_ready_count: int = len(self.players_ready)
             players_not_ready: str = ", ".join(
-                [x for x in self.signups if x not in self.players_ready]
+                [x for x in self._signups if x not in self.players_ready]
             )
             if players_ready_count == 10:
                 await ctx.send("Ready Check Complete - All players ready.")
@@ -264,7 +220,7 @@ async def on_voice_state_update(
     if onehead.common.bot is None:
         return
 
-    pre_game: Cog = onehead.common.bot.get_cog("OneHeadPreGame")
+    pre_game: Cog = onehead.common.bot.get_cog("Lobby")
 
     name: str = member.display_name
 
@@ -279,7 +235,7 @@ async def on_member_update(before: "Member", after: "Member") -> None:
     if onehead.common.bot is None:
         return
 
-    pre_game: Cog = onehead.common.bot.get_cog("OneHeadPreGame")
+    pre_game: Cog = onehead.common.bot.get_cog("Lobby")
 
     name: str = after.display_name
 

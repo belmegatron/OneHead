@@ -5,18 +5,18 @@ from typing import Any
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import (DIRE, RADIANT, OneHeadException, OneHeadRoles,
+from onehead.common import (DIRE, RADIANT, OneHeadException, Roles,
                             Player, Team, TeamCombination)
-from onehead.db import OneHeadDB
-from onehead.stats import OneHeadStats
-from onehead.user import OneHeadPreGame
+from onehead.database import Database
+from onehead.statistics import Statistics
+from onehead.lobby import Lobby
 
 
-class OneHeadBalance(commands.Cog):
-    def __init__(self, database: OneHeadDB, pre_game: OneHeadPreGame) -> None:
+class Matchmaking(commands.Cog):
+    def __init__(self, database: Database, pre_game: Lobby) -> None:
 
-        self.database: OneHeadDB = database
-        self.pre_game: OneHeadPreGame = pre_game
+        self.database: Database = database
+        self.pre_game: Lobby = pre_game
 
     def _get_profiles(self) -> list[Player]:
         """
@@ -26,7 +26,7 @@ class OneHeadBalance(commands.Cog):
         """
 
         profiles: list[Player] = []
-        for player in self.pre_game.signups:
+        for player in self.pre_game._signups:
             profile: Player = self.database.lookup_player(player)
             if profile:
                 profiles.append(profile)
@@ -91,8 +91,8 @@ class OneHeadBalance(commands.Cog):
                 f"Error: Only {profile_count} profiles could be found in database."
             )
 
-        OneHeadStats.calculate_rating(profiles)
-        OneHeadStats.calculate_adjusted_mmr(profiles)
+        Statistics.calculate_rating(profiles)
+        Statistics.calculate_adjusted_mmr(profiles)
 
         team_combinations: list[Team] = list(itertools.combinations(profiles, 5))
 
@@ -136,7 +136,7 @@ class OneHeadBalance(commands.Cog):
         :return: Balanced teams.
         """
 
-        signup_count: int = len(self.pre_game.signups)
+        signup_count: int = len(self.pre_game._signups)
         await ctx.send("Balancing teams...")
         if signup_count != 10:
             err: str = f"Only {signup_count} Signups, require {10 - signup_count} more."
@@ -146,7 +146,7 @@ class OneHeadBalance(commands.Cog):
 
         return balanced_teams[RADIANT], balanced_teams[DIRE]
 
-    @commands.has_role(OneHeadRoles.MEMBER)
+    @commands.has_role(Roles.MEMBER)
     @commands.command(aliases=["mmr"])
     async def show_internal_mmr(self, ctx: commands.Context) -> None:
         """
@@ -154,8 +154,8 @@ class OneHeadBalance(commands.Cog):
         """
 
         scoreboard: list[Player] = self.database.retrieve_table()
-        OneHeadStats.calculate_rating(scoreboard)
-        OneHeadStats.calculate_adjusted_mmr(scoreboard)
+        Statistics.calculate_rating(scoreboard)
+        Statistics.calculate_adjusted_mmr(scoreboard)
 
         ratings: list[dict[str, Any]] = [
             {

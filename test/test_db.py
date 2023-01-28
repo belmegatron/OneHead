@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 from tinydb import Query, TinyDB
 
 from onehead.common import OneHeadException
-from onehead.db import OneHeadDB
+from onehead.database import Database
 
 
 class OneHeadAsyncTest(object):
@@ -41,7 +41,7 @@ class OneHeadDBTest(TestCase):
         }
     }
 }
-        self.database = OneHeadDB(self.config)
+        self.database = Database(self.config)
 
     def test_retrieve_table_success(self):
         table = self.database.retrieve_table()

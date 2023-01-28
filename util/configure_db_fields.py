@@ -2,12 +2,12 @@ import decimal
 from pprint import pprint
 
 from onehead.common import OneHeadCommon
-from onehead.db import OneHeadDB
+from onehead.database import Database
 
 if __name__ == "__main__":
 
     config = OneHeadCommon.load_config()
-    database = OneHeadDB(config)
+    database = Database(config)
 
     scoreboard = database.retrieve_table()
     players = [x["name"] for x in scoreboard]

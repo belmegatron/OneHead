@@ -2,10 +2,10 @@ import random
 
 from discord.ext import commands
 
-from onehead.common import OneHeadRoles
+from onehead.common import Roles
 
 
-class OneHeadMentalHealth(commands.Cog):
+class MentalHealth(commands.Cog):
 
     quotes: list[str] = [
         """'It's not whether you get knocked down; it's whether you get up.' — Vince Lombardi""",
@@ -118,7 +118,7 @@ class OneHeadMentalHealth(commands.Cog):
         """'ZUG ZUG' - Rugor""",
     ]
 
-    @commands.has_role(OneHeadRoles.MEMBER)
+    @commands.has_role(Roles.MEMBER)
     @commands.command(aliases=["mh"])
     async def mental_health(self, ctx: commands.Context, name: str) -> None:
         """
