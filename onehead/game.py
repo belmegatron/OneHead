@@ -1,11 +1,8 @@
 import asyncio
-from typing import TYPE_CHECKING
 
-from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
-                                  command, has_role, max_concurrency)
-
-if TYPE_CHECKING:
-    from common import Team
+from discord.ext.commands import Context
+                                  
+from onehead.common import Bet, PlayerTransfer, Team
 
 
 class Game:
@@ -15,8 +12,8 @@ class Game:
         self._cancel_event: asyncio.Event = asyncio.Event()
         self._transfer_window_open: bool = False
         self._betting_window_open: bool = False
-        self._bets: list[dict] = []
-        self._transactions: list[dict] = []
+        self._bets: list[Bet] = []
+        self._player_transfers: list[PlayerTransfer] = []
         
         self.radiant: Team | None = None
         self.dire: Team | None = None
@@ -63,7 +60,16 @@ class Game:
         finally:
             self._betting_window_open = False
             await ctx.send("Bets are now closed!")
+            
+    def betting_window_open(self) -> bool:
+        return self._betting_window_open
         
     def transfer_window_open(self) -> bool:
         return self._transfer_window_open
+    
+    def get_bets(self) -> list[Bet]:
+        return self._bets
+    
+    def get_player_transfers(self) -> list[PlayerTransfer]:
+        return self._player_transfers
     

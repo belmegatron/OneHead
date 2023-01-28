@@ -5,7 +5,7 @@ from discord.errors import HTTPException
 from discord.ext import commands
 from discord.member import Member
 
-from common import OneHeadException, Team, get_player_names
+from onehead.common import OneHeadException, Team, get_player_names
 
 
 class Channels(commands.Cog):

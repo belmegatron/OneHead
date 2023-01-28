@@ -31,7 +31,11 @@ class Lobby(Cog):
         
     def clear_signups(self) -> None:
         self._signups = []
-
+        self._signups_disabled = False
+        
+    def get_signups(self) -> list[str]:
+        return self._signups
+        
     @has_role(Roles.ADMIN)
     @command()
     async def summon(self, ctx: Context) -> None:
@@ -46,10 +50,6 @@ class Lobby(Cog):
             return
 
         await ctx.send(f"IHL DOTA - LET'S GO! {ihl_role[0].mention}")
-
-    def reset_state(self) -> None:
-        self._signups = []
-        self._signups_disabled = False
 
     async def signup_check(self, ctx: Context) -> bool:
 
@@ -66,7 +66,7 @@ class Lobby(Cog):
 
         return False
 
-    async def handle_signups(self, ctx: Context) -> None:
+    async def select_players(self, ctx: Context) -> None:
         """
         Handle the case where there are less than 10 signups, exactly 10 signups or more than 10 signups. If there are
         more, then players will be randomly removed until there are only 10 players in self.signups.
@@ -220,14 +220,15 @@ async def on_voice_state_update(
     if onehead.common.bot is None:
         return
 
-    pre_game: Cog = onehead.common.bot.get_cog("Lobby")
+    lobby: Lobby = onehead.common.bot.get_cog("Lobby")
+    signups: list[str] = lobby.get_signups()
 
     name: str = member.display_name
 
-    if after.afk and name in pre_game.signups:
-        pre_game.signups.remove(name)
+    if after.afk and name in signups:
+        signups.remove(name)
         log.info(f"{name} is now AFK.")
-        await pre_game.context.send(f"{name} has been signed out due to being AFK.")
+        await lobby.context.send(f"{name} has been signed out due to being AFK.")
 
 
 async def on_member_update(before: "Member", after: "Member") -> None:
@@ -235,14 +236,17 @@ async def on_member_update(before: "Member", after: "Member") -> None:
     if onehead.common.bot is None:
         return
 
-    pre_game: Cog = onehead.common.bot.get_cog("Lobby")
+    lobby: Lobby = onehead.common.bot.get_cog("Lobby")
+    signups: list[str] = lobby.get_signups()
 
     name: str = after.display_name
 
-    if after.status in (Status.offline, Status.idle) and name in pre_game.signups:
-        pre_game.signups.remove(name)
+    if after.status in (Status.offline, Status.idle) and name in signups:
         reason: str = "Offline" if after.status == Status.offline else "Idle"
         log.info(f"{name} is now {reason}.")
-        await pre_game.context.send(
+        signups.remove(name)
+        await lobby.context.send(
             f"{name} has been signed out due to being {reason}."
         )
+        
+        

@@ -44,6 +44,7 @@ def bot_factory() -> Bot:
     mental_health: MentalHealth = MentalHealth()
     betting: Betting = Betting(database, lobby)
     behaviour: Behaviour = Behaviour(database)
+    transfers: Transfers = Transfers(database, lobby)
 
     bot.add_cog(database)
     bot.add_cog(lobby)
@@ -54,6 +55,7 @@ def bot_factory() -> Bot:
     bot.add_cog(mental_health)
     bot.add_cog(betting)
     bot.add_cog(behaviour)
+    bot.add_cog(transfers)
 
     # Add cogs first, then instantiate OneHeadCore as we reference them as instance variables
     token: str = config["discord"]["token"]
@@ -84,7 +86,7 @@ class Core(Cog):
         self.database: Database = bot.get_cog("Database")
         self.scoreboard: ScoreBoard = bot.get_cog("ScoreBoard")
         self.lobby: Lobby = bot.get_cog("Lobby")
-        self.matchmaking: Matchmaking = bot.get_cog("Balance")
+        self.matchmaking: Matchmaking = bot.get_cog("Matchmaking")
         self.channels: Channels = bot.get_cog("Channels")
         self.registration: Registration = bot.get_cog("Registration")
         self.betting: Betting = bot.get_cog("Betting")
@@ -98,10 +100,28 @@ class Core(Cog):
             self.channels,
             self.registration,
             self.betting,
+            self.transfers,
+            self.behaviour
         ):
             raise OneHeadException("Unable to find cog(s)")
+        
+    @has_role(Roles.ADMIN)
+    @command()
+    @max_concurrency(1, per=BucketType.default, wait=False)
+    async def reset(self, ctx: Context, force=False) -> None:
+        """
+        Resets the current bot state.
+        """
 
-    async def _setup_teams(self, ctx: Context) -> None:
+        if self.current_game.active() and force is False:
+            await ctx.send("Cannot reset while a game is in progress.")
+            return
+
+        self.previous_game = self.current_game
+        self.current_game = Game()
+        self.lobby.clear_signups()
+
+    async def setup_teams(self, ctx: Context) -> None:
 
         status: Command = self.bot.get_command("status")
         await Command.invoke(status, ctx)
@@ -130,17 +150,17 @@ class Core(Cog):
         if signup_threshold_met is False:
             return
 
-        await self.lobby.handle_signups(ctx)
+        await self.lobby.select_players(ctx)
 
         self.current_game.start()
         self.lobby.disable_signups()
 
         self.current_game.radiant, self.current_game.dire = await self.matchmaking.balance(ctx)
-        await self._setup_teams(ctx)
+        await self.setup_teams(ctx)
 
-        await self.current_game.open_transfer_window(ctx)
+        # await self.current_game.open_transfer_window(ctx)
 
-        await self.current_game.open_betting_window(ctx)
+        # await self.current_game.open_betting_window(ctx)
 
     @has_role(Roles.ADMIN)
     @command()
@@ -155,7 +175,9 @@ class Core(Cog):
             await ctx.send("Game stopped.")
             await self.channels.move_back_to_lobby(ctx)
             await self.betting.refund_all_bets(ctx)
-            self.reset()
+            
+            reset: Command = self.bot.get_command("reset")
+            await Command.invoke(reset, ctx, force=True)
 
             log.info("Game has stopped")
         else:
@@ -214,7 +236,8 @@ class Core(Cog):
         await Command.invoke(scoreboard, ctx)
         await self.channels.move_back_to_lobby(ctx)
 
-        self.reset()
+        reset: Command = self.bot.get_command("reset")
+        await Command.invoke(reset, ctx)
 
     @has_role(Roles.MEMBER)
     @command()
@@ -241,22 +264,6 @@ class Core(Cog):
         await ctx.send(f"**Current Version** - {__version__}")
         await ctx.send(f"**Changelog** - {__changelog__}")
 
-    @has_role(Roles.ADMIN)
-    @command()
-    @max_concurrency(1, per=BucketType.default, wait=False)
-    async def reset(self, ctx: Context) -> None:
-        """
-        Resets the current bot state.
-        """
-
-        if self.current_game.active():
-            await ctx.send("Cannot reset while a game is in progress.")
-            return
-
-        self.previous_game = self.current_game
-        self.current_game = Game()
-        self.lobby.clear_signups()
-
     @command()
     async def matches(self, ctx: Context) -> None:
         """
@@ -272,7 +279,7 @@ class Core(Cog):
     async def simulate_signups(self, ctx: Context) -> None:
         self.lobby._signups = [
             "ERIC",
-            "GEE",
+            "HARRY",
             "JEFFERIES",
             "ZEED",
             "PECRO",

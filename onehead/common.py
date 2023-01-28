@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import json
 import os
 import sys
@@ -6,12 +7,6 @@ from typing import Literal, Optional, TypedDict
 
 from discord.ext.commands import Bot
 from strenum import StrEnum
-
-
-class Roles(StrEnum):
-
-    ADMIN: Literal["IHL Admin"] = "IHL Admin"
-    MEMBER: Literal["IHL"] = "IHL"
 
 
 Player = TypedDict("Player", {"#": int, "name": str, "mmr": int, "win": int, "loss": int, "rbucks": int, "rating": int, "adjusted_mmr": int, "%": float, "commends": int, "reports": int})
@@ -28,6 +23,25 @@ bot: Optional[Bot] = None
 RADIANT: Literal["radiant"] = "radiant"
 DIRE: Literal["dire"] = "dire"
 ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+class Roles(StrEnum):
+
+    ADMIN: Literal["IHL Admin"] = "IHL Admin"
+    MEMBER: Literal["IHL"] = "IHL"
+    
+    
+@dataclass
+class PlayerTransfer:
+    buyer: str
+    amount: int
+    
+    
+@dataclass
+class Bet:
+    side: str
+    stake: int
+    player: str
 
 
 class OneHeadException(BaseException):

@@ -30,12 +30,12 @@ class OneHeadPreGameTest(TestCase):
 
     def test_handle_signups_only_10(self):
         self.pregame._signups = [x for x in range(10)]
-        OneHeadAsyncTest._run(self.pregame.handle_signups(self.ctx))
+        OneHeadAsyncTest._run(self.pregame.select_players(self.ctx))
         self.assertEqual(self.ctx.send.mock.call_count, 0)
 
     def test_handle_signups_greater_than_10(self):
         self.pregame._signups = [x for x in range(15)]
-        OneHeadAsyncTest._run(self.pregame.handle_signups(self.ctx))
+        OneHeadAsyncTest._run(self.pregame.select_players(self.ctx))
         self.assertEqual(len(self.pregame._signups), 10)
         self.assertEqual(self.ctx.send.mock.call_count, 3)
 

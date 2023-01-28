@@ -1,17 +1,9 @@
-import asyncio
-from typing import TYPE_CHECKING
-
 from discord import Embed, colour
 from discord.ext.commands import (BucketType, Cog, Command, Context, command,
                                   cooldown, has_role)
-from tabulate import tabulate
 
 from onehead.common import DIRE, RADIANT, OneHeadException, Roles
-
-if TYPE_CHECKING:
-    from onehead.common import Player
-    from onehead.database import Database
-    from onehead.lobby import Lobby
+from onehead.database import Database
 
 
 class Behaviour(Cog):

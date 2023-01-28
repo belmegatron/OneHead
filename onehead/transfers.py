@@ -1,25 +1,34 @@
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 from discord.ext.commands import (Cog, command, has_role, Context)
 
-from onehead.common import (OneHeadException, Roles, get_player_names)
-
-if TYPE_CHECKING:
-    from common import Player, Team
-    from onehead.database import Database
+import onehead.common
+from onehead.common import (OneHeadException, Roles, get_player_names, PlayerTransfer, Player, Team)
+from onehead.game import Game
+from onehead.database import Database
+from onehead.lobby import Lobby
 
 
 class Transfers(Cog):
     
-    def __init__(self, database: Database) -> None:
+    def __init__(self, database: Database, lobby: Lobby) -> None:
         self.database: Database = database
+        self.lobby: Lobby = lobby
     
-    async def refund_transactions(self, ctx: Context) -> None:
-        if len(self.player_transactions) == 0:
+    async def refund_transfers(self, ctx: Context) -> None:
+        
+        if onehead.common.bot is None:
+            raise OneHeadException("Global bot instance is None")
+        
+        core: Cog = onehead.common.bot.get_cog("Core")
+        current_game: Game = core.current_game
+        transfers: list[PlayerTransfer] = current_game.get_player_transfers()
+        
+        if len(transfers) == 0:
             return
 
-        for transaction in self.player_transactions:
-            self.database.update_rbucks(transaction["name"], transaction["cost"])
+        for transfer in self.transfers:
+            self.database.update_rbucks(transfer.buyer, transfer.amount)
 
         await ctx.send("All player transactions have been refunded.")
         
@@ -30,13 +39,20 @@ class Transfers(Cog):
         Shuffles teams (costs 500 RBUCKS)
         """
 
-        if self.current_game.transfer_window_open() is False:
+        if onehead.common.bot is None:
+            raise OneHeadException("Global bot instance is None")
+        
+        core: Cog = onehead.common.bot.get_cog("Core")
+        current_game: Game = core.current_game
+        transfers: list[PlayerTransfer] = current_game.get_player_transfers()
+
+        if current_game.transfer_window_open() is False:
             await ctx.send("Unable to shuffle as player transfer window is closed.")
             return
 
         name: str = ctx.author.display_name
 
-        if name not in self.lobby.signups:
+        if name not in self.lobby.get_signups():
             await ctx.send(f"{name} is unable to shuffle as they did not sign up.")
             return
 
@@ -54,16 +70,18 @@ class Transfers(Cog):
         await ctx.send(f"{name} has spent **{cost}** RBUCKS to **shuffle** the teams!")
 
         self.database.update_rbucks(name, -1 * cost)
-        self.player_transactions.append({"name": name, "cost": cost})
+        transfers.append(PlayerTransfer(name, cost))
         
-        if self.current_game.radiant is None or self.current_game.dire is None:
-            raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
+        if current_game.radiant is None or current_game.dire is None:
+            raise OneHeadException(f"Expected valid teams: {current_game.radiant}, {current_game.dire}")
 
         current_teams_names_only: tuple[
             tuple[str, ...], tuple[str, ...]
-        ] = get_player_names(self.current_game.radiant, self.current_game.dire)
+        ] = get_player_names(current_game.radiant, current_game.dire)
         
-        shuffled_teams: tuple[Team, Team] = await self.matchmaking.balance(ctx)
+        matchmaking: Cog = onehead.common.bot.get_cog("Matchmaking")
+        
+        shuffled_teams: tuple[Team, Team] = await matchmaking.balance(ctx)
         
         shuffled_teams_names_only: tuple[
             tuple[str, ...], tuple[str, ...]
@@ -75,6 +93,6 @@ class Transfers(Cog):
                 shuffled_teams[0], shuffled_teams[1]
             )
 
-        self.radiant, self.dire = shuffled_teams
+        current_game.radiant, current_game.dire = shuffled_teams
 
-        await self._setup_teams(ctx)
+        await core.setup_teams(ctx)
