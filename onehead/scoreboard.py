@@ -3,7 +3,7 @@ from typing import Any, Literal
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, Roles, Player
+from onehead.common import OneHeadException, Player, Roles
 from onehead.database import Database
 from onehead.statistics import Statistics
 

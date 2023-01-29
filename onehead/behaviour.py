@@ -1,8 +1,9 @@
 from logging import Logger
 
-from discord.ext.commands import (Cog, Context, command, has_role, Bot)
+from discord.ext.commands import Bot, Cog, Context, command, has_role
 
-from onehead.common import Roles, get_logger, Player, get_bot_instance, get_player_names, OneHeadException
+from onehead.common import (OneHeadException, Player, Roles, get_bot_instance,
+                            get_logger, get_player_names)
 from onehead.database import Database
 from onehead.game import Game
 

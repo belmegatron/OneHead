@@ -1,14 +1,13 @@
-from dataclasses import dataclass
 import json
 import os
 import sys
-from logging import Formatter, Logger, StreamHandler, getLogger, DEBUG
-from typing import Literal, Optional, TypedDict, Any
+from dataclasses import dataclass
+from enum import EnumMeta, auto
+from logging import DEBUG, Formatter, Logger, StreamHandler, getLogger
+from typing import Any, Literal, Optional, TypedDict
 
 from discord.ext.commands import Bot
-from enum import auto, EnumMeta
-from strenum import StrEnum, LowercaseStrEnum
-
+from strenum import LowercaseStrEnum, StrEnum
 
 Player = TypedDict("Player", {"#": int, "name": str, "mmr": int, "win": int, "loss": int, "rbucks": int, "rating": int, "adjusted_mmr": int, "%": float, "commends": int, "reports": int, "behaviour": int})
 Team = tuple[Player, Player, Player, Player, Player]

@@ -1,7 +1,7 @@
 import asyncio
 
 from discord.ext.commands import Context
-                                  
+
 from onehead.common import Bet, PlayerTransfer, Team
 
 

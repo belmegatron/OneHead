@@ -2,15 +2,16 @@ from dataclasses import asdict
 from typing import TYPE_CHECKING
 
 from discord import Embed, colour
-from discord.ext.commands import Cog, Context, command, has_role, Bot
+from discord.ext.commands import Bot, Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import Side, OneHeadException, Roles, Bet, get_bot_instance, Player
+from onehead.common import (Bet, OneHeadException, Player, Roles, Side,
+                            get_bot_instance)
 
 if TYPE_CHECKING:
     from onehead.database import Database
-    from onehead.lobby import Lobby
     from onehead.game import Game
+    from onehead.lobby import Lobby
 
 
 class Betting(Cog):

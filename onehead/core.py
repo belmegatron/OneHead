@@ -6,17 +6,16 @@ from tabulate import tabulate
 from onehead.behaviour import Behaviour
 from onehead.betting import Betting
 from onehead.channels import Channels
-from onehead.common import (Side, OneHeadException,
-                            Roles, load_config, get_player_names, set_bot_instance)
+from onehead.common import (OneHeadException, Roles, Side, get_player_names,
+                            load_config, set_bot_instance)
 from onehead.database import Database
 from onehead.game import Game
+from onehead.lobby import Lobby, on_member_update, on_voice_state_update
 from onehead.matchmaking import Matchmaking
 from onehead.mental_health import MentalHealth
-from onehead.scoreboard import ScoreBoard
 from onehead.registration import Registration
+from onehead.scoreboard import ScoreBoard
 from onehead.transfers import Transfers
-from onehead.lobby import (Lobby,
-                          on_member_update, on_voice_state_update)
 from version import __changelog__, __version__
 
 

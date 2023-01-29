@@ -1,6 +1,6 @@
-from discord.ext.commands import (Cog, command, has_role, Context)
+from discord.ext.commands import Cog, Context, command, has_role
 
-from onehead.common import (OneHeadException, Roles)
+from onehead.common import OneHeadException, Roles
 from onehead.database import Database
 
 

@@ -3,11 +3,11 @@ from logging import Logger
 from typing import TYPE_CHECKING
 
 from discord import Status
-from discord.ext.commands import (BucketType, Cog, Command, Context, command,
-                                  cooldown, has_role, Bot)
+from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
+                                  command, cooldown, has_role)
 from tabulate import tabulate
 
-from onehead.common import Roles, get_bot_instance, get_logger, Player
+from onehead.common import Player, Roles, get_bot_instance, get_logger
 from onehead.database import Database
 
 if TYPE_CHECKING:
