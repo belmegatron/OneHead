@@ -3,7 +3,7 @@ from typing import Literal
 from onehead.common import Player
 
 
-class OneHeadStats:
+class Statistics:
     BASELINE_RATING: Literal[1500] = 1500
     MMR_DELTA: Literal[50] = 50
 

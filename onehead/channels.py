@@ -1,14 +1,12 @@
-from typing import TYPE_CHECKING
-
 from discord import VoiceChannel
 from discord.errors import HTTPException
 from discord.ext import commands
 from discord.member import Member
 
-from onehead.common import OneHeadCommon, OneHeadException, Team
+from onehead.common import OneHeadException, Team, get_player_names
 
 
-class OneHeadChannels(commands.Cog):
+class Channels(commands.Cog):
     def __init__(self, config: dict) -> None:
 
         channel_config_settings: dict = config["discord"]["channels"]
@@ -86,17 +84,12 @@ class OneHeadChannels(commands.Cog):
             x for x in ctx.guild.voice_channels if x.name == self.lobby_name
         ][0]
 
-        for member in self.t1_discord_members:
-            try:
-                await member.move_to(lobby)
-            except HTTPException:
-                pass
-
-        for member in self.t2_discord_members:
-            try:
-                await member.move_to(lobby)
-            except HTTPException:
-                pass
+        for team in (self.t1_discord_members, self.t2_discord_members):
+            for player in team:
+                try:
+                    await player.move_to(lobby)
+                except HTTPException:
+                    pass
 
     async def move_discord_channels(self, ctx: commands.Context) -> None:
         """
@@ -116,21 +109,19 @@ class OneHeadChannels(commands.Cog):
                 "Expected to have valid references to teams prior to moving channels."
             )
 
-        t1_names, t2_names = OneHeadCommon.get_player_names(self.t1, self.t2)
+        t1_names, t2_names = get_player_names(self.t1, self.t2)
         self._set_discord_members(ctx, t1_names, t2_names)
 
         await ctx.send("Moving Players to IHL Discord Channels...")
 
         t1_channel, t2_channel = self.ihl_discord_channels
 
-        for member in self.t1_discord_members:
-            try:
-                await member.move_to(t1_channel)
-            except HTTPException:
-                pass
-
-        for member in self.t2_discord_members:
-            try:
-                await member.move_to(t2_channel)
-            except HTTPException:
-                pass
+        for team, channel in (self.t1_discord_members, t1_channel), (
+            self.t2_discord_members,
+            t2_channel,
+        ):
+            for member in team:
+                try:
+                    await member.move_to(channel)
+                except HTTPException:
+                    pass

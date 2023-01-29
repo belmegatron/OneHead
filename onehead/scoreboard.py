@@ -3,19 +3,19 @@ from typing import Any, Literal
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, OneHeadRoles, Player
-from onehead.db import OneHeadDB
-from onehead.stats import OneHeadStats
+from onehead.common import OneHeadException, Player, Roles
+from onehead.database import Database
+from onehead.statistics import Statistics
 
 
-class OneHeadScoreBoard(commands.Cog):
+class ScoreBoard(commands.Cog):
     # It's actually 2000, but we prepend a small number of characters before our scoreboard so need to take
     # this into account.
     DISCORD_MAX_MESSAGE_LENGTH: Literal[1950] = 1950
 
-    def __init__(self, database: OneHeadDB) -> None:
+    def __init__(self, database: Database) -> None:
 
-        self.db: OneHeadDB = database
+        self.db: Database = database
 
     def _chunk_scoreboard(self, scoreboard: str) -> tuple[str, ...]:
 
@@ -41,7 +41,7 @@ class OneHeadScoreBoard(commands.Cog):
 
         return tuple(chunks)
 
-    @commands.has_role(OneHeadRoles.MEMBER)
+    @commands.has_role(Roles.MEMBER)
     @commands.command(aliases=["sb"])
     async def scoreboard(self, ctx: commands.Context) -> None:
         """
@@ -72,6 +72,7 @@ class OneHeadScoreBoard(commands.Cog):
             "rating",
             "win_streak",
             "loss_streak",
+            "behaviour",
         ]
         sorted_scoreboard: list[dict] = []
 
@@ -122,8 +123,8 @@ class OneHeadScoreBoard(commands.Cog):
         if not scoreboard:
             raise OneHeadException("No users found in database.")
 
-        OneHeadStats.calculate_win_percentage(scoreboard)
-        OneHeadStats.calculate_rating(scoreboard)
+        Statistics.calculate_win_percentage(scoreboard)
+        Statistics.calculate_rating(scoreboard)
 
         scoreboard_sorted_rows: list[Player] = self._calculate_positions(
             scoreboard, "rating"
@@ -131,9 +132,9 @@ class OneHeadScoreBoard(commands.Cog):
         scoreboard_sorted_rows_and_columns: list[
             dict[str, Any]
         ] = self._sort_scoreboard_key_order(scoreboard_sorted_rows)
-        
+
         sorted_scoreboard: str = tabulate(
             scoreboard_sorted_rows_and_columns, headers="keys", tablefmt="simple"
         )
-        
+
         return sorted_scoreboard

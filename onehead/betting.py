@@ -1,74 +1,82 @@
-import asyncio
+from dataclasses import asdict
 from typing import TYPE_CHECKING
 
 from discord import Embed, colour
-from discord.ext import commands
+from discord.ext.commands import Bot, Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import DIRE, RADIANT, OneHeadException, OneHeadRoles
+from onehead.common import Bet, OneHeadException, Player, Roles, Side, get_bot_instance
 
 if TYPE_CHECKING:
-    from onehead.common import Player
-    from onehead.db import OneHeadDB
-    from onehead.user import OneHeadPreGame
+    from onehead.database import Database
+    from onehead.game import Game
+    from onehead.lobby import Lobby
 
 
-class OneHeadBetting(commands.Cog):
-    def __init__(self, database: "OneHeadDB", pre_game: "OneHeadPreGame") -> None:
+class Betting(Cog):
+    def __init__(self, database: "Database", lobby: "Lobby") -> None:
 
-        self.database: OneHeadDB = database
-        self.betting_window_open: bool = False
-        self.bets: list[dict] = []
-        self.pre_game: OneHeadPreGame = pre_game
+        self.database: Database = database
+        self.lobby: Lobby = lobby
 
-    def get_bet_results(self, radiant_won: bool) -> dict:
+    def get_bet_results(self, radiant_won: bool) -> dict[str, float]:
+
+        bot: Bot = get_bot_instance()
+        core: Cog = bot.get_cog("Core")
+        current_game: Game = core.current_game
+
+        active_bets: list[Bet] = current_game.get_bets()
 
         bet_results: dict[str, float] = {}
 
-        for bet in self.bets:
-            name: str = bet["name"]
+        for bet in active_bets:
+            if bet_results.get(bet.player) is None:
+                bet_results[bet.player] = 0
 
-            if bet_results.get(name) is None:
-                bet_results[name] = 0
-
-            if (radiant_won and bet["side"] == "radiant") or (
-                radiant_won is False and bet["side"] == "dire"
+            if (radiant_won and bet.side == Side.RADIANT) or (
+                radiant_won is False and bet.side == Side.DIRE
             ):
-                bet_results[name] += bet["stake"] * 2.0
+                bet_results[bet.player] += bet.stake * 2.0
             else:
-                bet_results[name] -= bet["stake"]
+                bet_results[bet.player] -= bet.stake
 
         return bet_results
 
-    async def open_betting_window(
-        self, ctx: commands.Context, event: asyncio.Event
-    ) -> None:
-        self.betting_window_open = True
+    @has_role(Roles.MEMBER)
+    @command(aliases=["bets"])
+    async def get_active_bets(self, ctx: Context) -> None:
 
-        await ctx.send(f"Bets are now open for 5 minutes!")
+        bot: Bot = get_bot_instance()
+        core: Cog = bot.get_cog("Core")
+        current_game: Game = core.current_game
 
-        try:
-            await asyncio.wait_for(event.wait(), timeout=240)
-        except asyncio.TimeoutError:
-            await ctx.send("1 minute remaining for bets!")
-            try:
-                await asyncio.wait_for(event.wait(), timeout=60)
-            except asyncio.TimeoutError:
-                pass
-        finally:
-            self.betting_window_open = False
-            await ctx.send("Bets are now closed!")
+        active_bets: list[Bet] = current_game.get_bets()
+        bets = [asdict(bet) for bet in active_bets]
 
-    @commands.has_role(OneHeadRoles.MEMBER)
-    @commands.command(aliases=["bet"])
-    async def place_bet(self, ctx: commands.Context, side: str, amount: str) -> None:
+        table_of_bets: str = tabulate(bets, headers="keys", tablefmt="simple")
+
+        # TODO: Can we make Radiant bets green and Dire bets red?
+        embed: Embed = Embed(colour=colour.Colour.green())
+        embed.add_field(name="Active Bets", value=f"```{table_of_bets}```")
+
+        await ctx.send(embed=embed)
+
+    @has_role(Roles.MEMBER)
+    @command(aliases=["bet"])
+    async def place_bet(self, ctx: Context, side: str, amount: str) -> None:
         """
         Place a bet on the match that is about to happen.
 
         e.g. !bet radiant 500 or !bet dire all
         """
 
-        if self.betting_window_open is False:
+        bot: Bot = get_bot_instance()
+        core: Cog = bot.get_cog("Core")
+        current_game: Game = core.current_game
+
+        bets: list[Bet] = current_game.get_bets()
+
+        if current_game.betting_window_open() is False:
             await ctx.send("Betting window closed.")
             return
 
@@ -86,7 +94,7 @@ class OneHeadBetting(commands.Cog):
             await ctx.send(f"{name} cannot be found in the database.")
             return
 
-        if side.lower() not in (RADIANT, DIRE):
+        if side.lower() in Side is False:
             await ctx.send(
                 f"{name} - Cannot bet on {side} - Must be either Radiant/Dire."
             )
@@ -117,14 +125,14 @@ class OneHeadBetting(commands.Cog):
             )
             return
 
-        self.bets.append({"name": name, "side": side, "stake": stake})
+        bets.append(Bet(side, stake, name))
         self.database.update_rbucks(name, -stake)
 
         await ctx.send(f"{name} has placed a bet of {stake} RBUCKS on {side.title()}.")
 
-    @commands.has_role(OneHeadRoles.MEMBER)
-    @commands.command(aliases=["rbucks"])
-    async def bucks(self, ctx: commands.Context) -> None:
+    @has_role(Roles.MEMBER)
+    @command()
+    async def rbucks(self, ctx: Context) -> None:
         """
         Lists the number of rbucks each member of the IHL has.
         """
@@ -164,12 +172,18 @@ class OneHeadBetting(commands.Cog):
 
         return embed
 
-    async def refund_all_bets(self, ctx: commands.Context) -> None:
+    async def refund_all_bets(self, ctx: Context) -> None:
 
-        if len(self.bets) == 0:
+        bot: Bot = get_bot_instance()
+        core: Cog = bot.get_cog("Core")
+        current_game: Game = core.current_game
+
+        active_bets: list[Bet] = current_game.get_bets()
+
+        if len(active_bets) == 0:
             return
 
-        for bet in self.bets:
-            self.database.update_rbucks(bet["name"], bet["stake"])
+        for bet in active_bets:
+            self.database.update_rbucks(bet.player, bet.stake)
 
         await ctx.send("All bets have been refunded.")

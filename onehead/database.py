@@ -6,7 +6,7 @@ from tinydb.table import Document, Table
 from onehead.common import OneHeadException, Player
 
 
-class OneHeadDB(commands.Cog):
+class Database(commands.Cog):
     def __init__(self, config: dict) -> None:
         self.db: TinyDB = TinyDB(config["tinydb"]["path"])
 
@@ -40,6 +40,9 @@ class OneHeadDB(commands.Cog):
                 "win_streak": 0,
                 "loss_streak": 0,
                 "rbucks": 100,
+                "commends": 0,
+                "reports": 0,
+                "behaviour": 10000,
             }
         )
 
@@ -98,3 +101,19 @@ class OneHeadDB(commands.Cog):
         table: Table = self.db.table("_default")
         table_dict: dict[str, Player] = table._read_table()  # type: ignore
         return list(table_dict.values())
+
+    def modify_behaviour_score(
+        self, player_name: str, new_score: int, is_commend: bool
+    ) -> None:
+
+        exists, doc_id = self.player_exists(player_name)
+
+        if exists is False:
+            raise OneHeadException(f"{player_name} does not exist in database.")
+
+        self.db.update({"behaviour": new_score}, doc_ids=[doc_id])
+
+        if is_commend:
+            self.db.update(add("commends", 1), doc_ids=[doc_id])
+        else:
+            self.db.update(add("reports", 1), doc_ids=[doc_id])

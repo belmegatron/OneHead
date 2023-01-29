@@ -7,3 +7,4 @@ dist/
 OneHead.egg-info/
 config.json
 .vscode/
+secrets/
