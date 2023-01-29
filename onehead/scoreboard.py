@@ -72,8 +72,7 @@ class ScoreBoard(commands.Cog):
             "rating",
             "win_streak",
             "loss_streak",
-            "commends",
-            "reports"
+            "behaviour"
         ]
         sorted_scoreboard: list[dict] = []
 

@@ -10,7 +10,7 @@ from enum import auto, EnumMeta
 from strenum import StrEnum, LowercaseStrEnum
 
 
-Player = TypedDict("Player", {"#": int, "name": str, "mmr": int, "win": int, "loss": int, "rbucks": int, "rating": int, "adjusted_mmr": int, "%": float, "commends": int, "reports": int})
+Player = TypedDict("Player", {"#": int, "name": str, "mmr": int, "win": int, "loss": int, "rbucks": int, "rating": int, "adjusted_mmr": int, "%": float, "commends": int, "reports": int, "behaviour": int})
 Team = tuple[Player, Player, Player, Player, Player]
 TeamCombination = tuple[Team, Team]
 

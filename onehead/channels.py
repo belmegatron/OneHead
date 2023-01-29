@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 from discord import VoiceChannel
 from discord.errors import HTTPException
 from discord.ext import commands

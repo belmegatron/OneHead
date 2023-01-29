@@ -1,4 +1,3 @@
-import random
 from asyncio import sleep
 from logging import Logger
 from typing import TYPE_CHECKING
@@ -8,7 +7,7 @@ from discord.ext.commands import (BucketType, Cog, Command, Context, command,
                                   cooldown, has_role, Bot)
 from tabulate import tabulate
 
-from onehead.common import Roles, get_bot_instance, get_logger
+from onehead.common import Roles, get_bot_instance, get_logger, Player
 from onehead.database import Database
 
 if TYPE_CHECKING:
@@ -81,15 +80,19 @@ class Lobby(Cog):
         if number_of_signups <= 10:
             return
 
-        benched_players: list[str] = []
         await ctx.send(
             f"{number_of_signups} Players have signed up and therefore {number_of_signups - 10} players will be benched."
         )
-
-        while len(self._signups) > 10:
-            idx: int = self._signups.index(random.choice(self._signups))
-            random_selection: str = self._signups.pop(idx)
-            benched_players.append(random_selection)
+        
+        if len(self._signups) > 10:
+            
+            await ctx.send("More than 10 signups identified, selecting the top 10 players with the highest behaviour score.")
+            
+            original_signups: list[str] = self._signups
+            players: list[Player] = [self.database.lookup_player(signup) for signup in self._signups]
+            top_10_players_by_behaviour_score: list[Player] = sorted(players, key=lambda d: d["behaviour"], reverse=True)[:10]
+            self._signups = [player["name"] for player in top_10_players_by_behaviour_score]
+            benched_players: list[str] = [x for x in original_signups if x not in self._signups]
 
         await ctx.send(f"**Benched Players:** ```\n{benched_players}```")
         await ctx.send(f"**Selected Players:** ```\n{self._signups}```")

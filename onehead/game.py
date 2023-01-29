@@ -14,6 +14,8 @@ class Game:
         self._betting_window_open: bool = False
         self._bets: list[Bet] = []
         self._player_transfers: list[PlayerTransfer] = []
+        self._commends: dict[str, list[str]] = {}
+        self._reports: dict[str, list[str]] = {}
         
         self.radiant: Team | None = None
         self.dire: Team | None = None
@@ -29,7 +31,7 @@ class Game:
     
     def cancel(self) -> None:
         self._cancel_event.set()
-        
+    
     async def open_transfer_window(self, ctx) -> None:
         
         self._transfer_window_open = True
@@ -73,3 +75,36 @@ class Game:
     def get_player_transfers(self) -> list[PlayerTransfer]:
         return self._player_transfers
     
+    def has_been_previously_commended(self, commender: str, commendee: str) -> bool:
+        commends: list[str] | None = self._commends.get(commendee)
+        
+        if commends is not None and commender in commends:
+            return True
+        
+        return False
+    
+    def has_been_previously_reported(self, reporter: str, reportee: str) -> bool:
+        reports: list[str] | None = self._reports.get(reportee)
+        
+        if reports is not None and reporter in reports:
+            return True
+        
+        return False
+    
+    def add_report(self, reporter: str, reportee: str) -> None:
+        
+        updated_reports: list[str] | None = self._reports.get(reportee)
+        if updated_reports is None:
+            updated_reports = [reporter]
+            self._reports[reportee] = updated_reports
+        else:
+            updated_reports.append(reporter)
+    
+    def add_commend(self, commender: str, commendee: str) -> None:
+        
+        updated_commends: list[str] | None = self._commends.get(commendee)
+        if updated_commends is None:
+            updated_commends = [commender]
+            self._commends[commendee] = updated_commends
+        else:
+            updated_commends.append(commender)

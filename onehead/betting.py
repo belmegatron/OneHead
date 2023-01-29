@@ -56,8 +56,9 @@ class Betting(Cog):
         
         table_of_bets: str = tabulate(bets, headers="keys", tablefmt="simple")
 
-        embed: Embed = Embed(title="**Active Bets**", colour=colour.Colour.green())
-        embed.add_field(name="derp", value=f"```{table_of_bets}```")
+        # TODO: Can we make Radiant bets green and Dire bets red?
+        embed: Embed = Embed(colour=colour.Colour.green())
+        embed.add_field(name="Active Bets", value=f"```{table_of_bets}```")
 
         await ctx.send(embed=embed)
 

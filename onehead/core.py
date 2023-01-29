@@ -104,10 +104,15 @@ class Core(Cog):
         ):
             raise OneHeadException("Unable to find cog(s)")
         
-    async def reset(self, ctx: Context) -> None:
+    async def reset(self, ctx: Context, game_cancelled=False) -> None:
 
         await self.channels.move_back_to_lobby(ctx)
-        self.previous_game = self.current_game
+        
+        if game_cancelled is True:
+            self.previous_game = None
+        else:
+            self.previous_game = self.current_game
+
         self.current_game = Game()
         self.lobby.clear_signups()
 
@@ -163,7 +168,7 @@ class Core(Cog):
             await ctx.send("Game stopped.")
             await self.betting.refund_all_bets(ctx)
             await self.transfers.refund_transfers(ctx)
-            await self.reset(ctx)
+            await self.reset(ctx, game_cancelled=True)
         else:
             await ctx.send("No currently active game.")
 
@@ -175,8 +180,16 @@ class Core(Cog):
         Provide the result of game that has finished.
         """
 
-        if self.current_game._active is False:
+        if self.current_game.in_progress() is False:
             await ctx.send("No currently active game.")
+            return
+        
+        if self.current_game.transfer_window_open():
+            await ctx.send("Cannot enter result as the Transfer window for the game is currently open. Use the !stop command if you wish to abort the game.")
+            return
+        
+        if self.current_game.betting_window_open():
+            await ctx.send("Cannot enter result as the Betting window for the game is currently open. Use the !stop command if you wish to abort the game.")
             return
 
         if result in Side is False:
@@ -256,6 +269,9 @@ class Core(Cog):
     @has_role(Roles.ADMIN)
     @command(aliases=["sim"])
     async def simulate_signups(self, ctx: Context) -> None:
+        """
+        For testing purposes.
+        """
         self.lobby._signups = [
             "ERIC",
             "HARRY",
@@ -266,5 +282,5 @@ class Core(Cog):
             "THANOS",
             "JAMES",
             "LUKE",
-            "RBEEZAY",
+            "ZEE",
         ]
