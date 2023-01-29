@@ -3,8 +3,16 @@ from logging import Logger
 from typing import TYPE_CHECKING
 
 from discord import Status
-from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
-                                  command, cooldown, has_role)
+from discord.ext.commands import (
+    Bot,
+    BucketType,
+    Cog,
+    Command,
+    Context,
+    command,
+    cooldown,
+    has_role,
+)
 from tabulate import tabulate
 
 from onehead.common import Player, Roles, get_bot_instance, get_logger
@@ -13,7 +21,7 @@ from onehead.database import Database
 if TYPE_CHECKING:
     from discord import VoiceState
     from discord.member import Member
-    
+
 
 log: Logger = get_logger()
 
@@ -30,14 +38,14 @@ class Lobby(Cog):
 
     def disable_signups(self) -> None:
         self._signups_disabled = True
-        
+
     def clear_signups(self) -> None:
         self._signups = []
         self._signups_disabled = False
-        
+
     def get_signups(self) -> list[str]:
         return self._signups
-        
+
     @has_role(Roles.ADMIN)
     @command()
     async def summon(self, ctx: Context) -> None:
@@ -45,9 +53,7 @@ class Lobby(Cog):
         Messages all registered players of the IHL to come and sign up.
         """
 
-        ihl_role: list[Member] = [
-            x for x in ctx.guild.roles if x.name == Roles.MEMBER
-        ]
+        ihl_role: list[Member] = [x for x in ctx.guild.roles if x.name == Roles.MEMBER]
         if not ihl_role:
             return
 
@@ -83,16 +89,26 @@ class Lobby(Cog):
         await ctx.send(
             f"{number_of_signups} Players have signed up and therefore {number_of_signups - 10} players will be benched."
         )
-        
+
         if len(self._signups) > 10:
-            
-            await ctx.send("More than 10 signups identified, selecting the top 10 players with the highest behaviour score.")
-            
+
+            await ctx.send(
+                "More than 10 signups identified, selecting the top 10 players with the highest behaviour score."
+            )
+
             original_signups: list[str] = self._signups
-            players: list[Player] = [self.database.lookup_player(signup) for signup in self._signups]
-            top_10_players_by_behaviour_score: list[Player] = sorted(players, key=lambda d: d["behaviour"], reverse=True)[:10]
-            self._signups = [player["name"] for player in top_10_players_by_behaviour_score]
-            benched_players: list[str] = [x for x in original_signups if x not in self._signups]
+            players: list[Player] = [
+                self.database.lookup_player(signup) for signup in self._signups
+            ]
+            top_10_players_by_behaviour_score: list[Player] = sorted(
+                players, key=lambda d: d["behaviour"], reverse=True
+            )[:10]
+            self._signups = [
+                player["name"] for player in top_10_players_by_behaviour_score
+            ]
+            benched_players: list[str] = [
+                x for x in original_signups if x not in self._signups
+            ]
 
         await ctx.send(f"**Benched Players:** ```\n{benched_players}```")
         await ctx.send(f"**Selected Players:** ```\n{self._signups}```")
@@ -225,7 +241,7 @@ async def on_voice_state_update(
 
     bot: Bot = get_bot_instance()
     lobby: Lobby = bot.get_cog("Lobby")
-    
+
     signups: list[str] = lobby.get_signups()
 
     name: str = member.display_name
@@ -240,7 +256,7 @@ async def on_member_update(before: "Member", after: "Member") -> None:
 
     bot: Bot = get_bot_instance()
     lobby: Lobby = bot.get_cog("Lobby")
-    
+
     signups: list[str] = lobby.get_signups()
 
     name: str = after.display_name
@@ -249,8 +265,4 @@ async def on_member_update(before: "Member", after: "Member") -> None:
         reason: str = "Offline" if after.status == Status.offline else "Idle"
         log.info(f"{name} is now {reason}.")
         signups.remove(name)
-        await lobby.context.send(
-            f"{name} has been signed out due to being {reason}."
-        )
-        
-        
+        await lobby.context.send(f"{name} has been signed out due to being {reason}.")

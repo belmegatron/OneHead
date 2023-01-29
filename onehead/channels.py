@@ -83,7 +83,7 @@ class Channels(commands.Cog):
         lobby: VoiceChannel = [
             x for x in ctx.guild.voice_channels if x.name == self.lobby_name
         ][0]
-        
+
         for team in (self.t1_discord_members, self.t2_discord_members):
             for player in team:
                 try:
@@ -116,7 +116,10 @@ class Channels(commands.Cog):
 
         t1_channel, t2_channel = self.ihl_discord_channels
 
-        for team, channel in (self.t1_discord_members, t1_channel), (self.t2_discord_members, t2_channel):
+        for team, channel in (self.t1_discord_members, t1_channel), (
+            self.t2_discord_members,
+            t2_channel,
+        ):
             for member in team:
                 try:
                     await member.move_to(channel)

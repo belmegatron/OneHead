@@ -72,7 +72,7 @@ class ScoreBoard(commands.Cog):
             "rating",
             "win_streak",
             "loss_streak",
-            "behaviour"
+            "behaviour",
         ]
         sorted_scoreboard: list[dict] = []
 
@@ -132,9 +132,9 @@ class ScoreBoard(commands.Cog):
         scoreboard_sorted_rows_and_columns: list[
             dict[str, Any]
         ] = self._sort_scoreboard_key_order(scoreboard_sorted_rows)
-        
+
         sorted_scoreboard: str = tabulate(
             scoreboard_sorted_rows_and_columns, headers="keys", tablefmt="simple"
         )
-        
+
         return sorted_scoreboard

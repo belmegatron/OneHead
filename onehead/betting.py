@@ -5,8 +5,7 @@ from discord import Embed, colour
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import (Bet, OneHeadException, Player, Roles, Side,
-                            get_bot_instance)
+from onehead.common import Bet, OneHeadException, Player, Roles, Side, get_bot_instance
 
 if TYPE_CHECKING:
     from onehead.database import Database
@@ -15,7 +14,6 @@ if TYPE_CHECKING:
 
 
 class Betting(Cog):
-    
     def __init__(self, database: "Database", lobby: "Lobby") -> None:
 
         self.database: Database = database
@@ -26,9 +24,9 @@ class Betting(Cog):
         bot: Bot = get_bot_instance()
         core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
-        
+
         active_bets: list[Bet] = current_game.get_bets()
-                
+
         bet_results: dict[str, float] = {}
 
         for bet in active_bets:
@@ -43,18 +41,18 @@ class Betting(Cog):
                 bet_results[bet.player] -= bet.stake
 
         return bet_results
-    
+
     @has_role(Roles.MEMBER)
     @command(aliases=["bets"])
     async def get_active_bets(self, ctx: Context) -> None:
-        
+
         bot: Bot = get_bot_instance()
         core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
 
         active_bets: list[Bet] = current_game.get_bets()
         bets = [asdict(bet) for bet in active_bets]
-        
+
         table_of_bets: str = tabulate(bets, headers="keys", tablefmt="simple")
 
         # TODO: Can we make Radiant bets green and Dire bets red?
@@ -71,11 +69,11 @@ class Betting(Cog):
 
         e.g. !bet radiant 500 or !bet dire all
         """
-        
+
         bot: Bot = get_bot_instance()
         core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
-        
+
         bets: list[Bet] = current_game.get_bets()
 
         if current_game.betting_window_open() is False:
@@ -175,13 +173,13 @@ class Betting(Cog):
         return embed
 
     async def refund_all_bets(self, ctx: Context) -> None:
-        
+
         bot: Bot = get_bot_instance()
         core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
 
         active_bets: list[Bet] = current_game.get_bets()
-        
+
         if len(active_bets) == 0:
             return
 

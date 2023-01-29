@@ -1,13 +1,27 @@
 from discord import Embed, Intents
-from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
-                                  command, has_role, max_concurrency)
+from discord.ext.commands import (
+    Bot,
+    BucketType,
+    Cog,
+    Command,
+    Context,
+    command,
+    has_role,
+    max_concurrency,
+)
 from tabulate import tabulate
 
 from onehead.behaviour import Behaviour
 from onehead.betting import Betting
 from onehead.channels import Channels
-from onehead.common import (OneHeadException, Roles, Side, get_player_names,
-                            load_config, set_bot_instance)
+from onehead.common import (
+    OneHeadException,
+    Roles,
+    Side,
+    get_player_names,
+    load_config,
+    set_bot_instance,
+)
 from onehead.database import Database
 from onehead.game import Game
 from onehead.lobby import Lobby, on_member_update, on_voice_state_update
@@ -99,14 +113,14 @@ class Core(Cog):
             self.registration,
             self.betting,
             self.transfers,
-            self.behaviour
+            self.behaviour,
         ):
             raise OneHeadException("Unable to find cog(s)")
-        
+
     async def reset(self, ctx: Context, game_cancelled=False) -> None:
 
         await self.channels.move_back_to_lobby(ctx)
-        
+
         if game_cancelled is True:
             self.previous_game = None
         else:
@@ -120,10 +134,12 @@ class Core(Cog):
         status: Command = self.bot.get_command("status")
         await Command.invoke(status, ctx)
         await self.channels.create_discord_channels(ctx)
-        
+
         if self.current_game.radiant is None or self.current_game.dire is None:
-            raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
-        
+            raise OneHeadException(
+                f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}"
+            )
+
         self.channels.set_teams(self.current_game.radiant, self.current_game.dire)
         await self.channels.move_discord_channels(ctx)
         await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
@@ -149,7 +165,10 @@ class Core(Cog):
         self.current_game.start()
         self.lobby.disable_signups()
 
-        self.current_game.radiant, self.current_game.dire = await self.matchmaking.balance(ctx)
+        (
+            self.current_game.radiant,
+            self.current_game.dire,
+        ) = await self.matchmaking.balance(ctx)
         await self.setup_teams(ctx)
         await self.current_game.open_transfer_window(ctx)
         await self.current_game.open_betting_window(ctx)
@@ -182,17 +201,23 @@ class Core(Cog):
         if self.current_game.in_progress() is False:
             await ctx.send("No currently active game.")
             return
-        
+
         if self.current_game.transfer_window_open():
-            await ctx.send("Cannot enter result as the Transfer window for the game is currently open. Use the !stop command if you wish to abort the game.")
+            await ctx.send(
+                "Cannot enter result as the Transfer window for the game is currently open. Use the !stop command if you wish to abort the game."
+            )
             return
-        
+
         if self.current_game.betting_window_open():
-            await ctx.send("Cannot enter result as the Betting window for the game is currently open. Use the !stop command if you wish to abort the game.")
+            await ctx.send(
+                "Cannot enter result as the Betting window for the game is currently open. Use the !stop command if you wish to abort the game."
+            )
             return
 
         if result in Side is False:
-            await ctx.send(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
+            await ctx.send(
+                f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}."
+            )
             return
 
         bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
@@ -205,10 +230,12 @@ class Core(Cog):
         await ctx.send(embed=report)
 
         await ctx.send("Updating Scores...")
-        
+
         if self.current_game.radiant is None or self.current_game.dire is None:
-            raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
-        
+            raise OneHeadException(
+                f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}"
+            )
+
         radiant_names, dire_names = get_player_names(
             self.current_game.radiant, self.current_game.dire
         )
@@ -237,8 +264,14 @@ class Core(Cog):
         If a game is active, displays the teams and their respective players.
         """
 
-        if self.current_game.active() and self.current_game.radiant and self.current_game.dire:
-            t1_names, t2_names = get_player_names(self.current_game.radiant, self.current_game.dire)
+        if (
+            self.current_game.active()
+            and self.current_game.radiant
+            and self.current_game.dire
+        ):
+            t1_names, t2_names = get_player_names(
+                self.current_game.radiant, self.current_game.dire
+            )
             players = {Side.RADIANT: t1_names, Side.DIRE: t2_names}
             in_game_players = tabulate(players, headers="keys", tablefmt="simple")
             await ctx.send(f"**Current Game** ```\n" f"{in_game_players}```")

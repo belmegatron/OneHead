@@ -5,9 +5,9 @@ from onehead.database import Database
 
 
 class Registration(Cog):
-    
+
     MIN_MMR: int = 1000
-    
+
     def __init__(self, database: Database) -> None:
 
         self.database: Database = database
@@ -52,4 +52,3 @@ class Registration(Cog):
             await ctx.send(f"{name} successfully removed from the database.")
         else:
             await ctx.send(f"{name} could not be found in the database.")
-

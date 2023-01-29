@@ -5,8 +5,7 @@ from typing import Any
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import (OneHeadException, Player, Roles, Side, Team,
-                            TeamCombination)
+from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination
 from onehead.database import Database
 from onehead.lobby import Lobby
 from onehead.statistics import Statistics
