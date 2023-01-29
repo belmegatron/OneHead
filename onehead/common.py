@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import json
 import os
 import sys
-from logging import Formatter, Logger, StreamHandler, getLogger
+from logging import Formatter, Logger, StreamHandler, getLogger, DEBUG
 from typing import Literal, Optional, TypedDict
 
 from discord.ext.commands import Bot
@@ -14,8 +14,6 @@ Player = TypedDict("Player", {"#": int, "name": str, "mmr": int, "win": int, "lo
 
 Team = tuple[Player, Player, Player, Player, Player]
 TeamCombination = tuple[Team, Team]
-
-log: Logger = getLogger("onehead")
 
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
 bot: Optional[Bot] = None
@@ -54,6 +52,10 @@ def get_bot_instance() -> Bot:
     
     return bot
 
+def set_bot_instance(new_bot_instance: Bot) -> None:
+    global bot
+    bot = new_bot_instance
+
 def get_player_names(
     t1: "Team", t2: "Team"
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
@@ -81,10 +83,18 @@ def load_config() -> dict:
     return config
 
 
-def setup_log() -> None:
+def set_logger() -> Logger:
     handler: StreamHandler = StreamHandler(stream=sys.stdout)
     formatter: Formatter = Formatter(
         fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
     handler.setFormatter(formatter)
+    log: Logger = getLogger("onehead")
+    log.setLevel(DEBUG)
     log.addHandler(handler)
+    return log
+
+log: Logger = set_logger()
+
+def get_logger() -> Logger:
+    return log

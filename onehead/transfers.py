@@ -1,9 +1,8 @@
 from typing import Literal
 
-from discord.ext.commands import (Cog, command, has_role, Context)
+from discord.ext.commands import (Cog, command, has_role, Context, Bot)
 
-import onehead.common
-from onehead.common import (OneHeadException, Roles, get_player_names, PlayerTransfer, Player, Team)
+from onehead.common import (OneHeadException, Roles, get_player_names, PlayerTransfer, Player, Team, get_bot_instance)
 from onehead.game import Game
 from onehead.database import Database
 from onehead.lobby import Lobby
@@ -17,11 +16,10 @@ class Transfers(Cog):
     
     async def refund_transfers(self, ctx: Context) -> None:
         
-        if onehead.common.bot is None:
-            raise OneHeadException("Global bot instance is None")
-        
-        core: Cog = onehead.common.bot.get_cog("Core")
+        bot: Bot = get_bot_instance()        
+        core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
+        
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
         
         if len(transfers) == 0:
@@ -39,11 +37,10 @@ class Transfers(Cog):
         Shuffles teams (costs 500 RBUCKS)
         """
 
-        if onehead.common.bot is None:
-            raise OneHeadException("Global bot instance is None")
-        
-        core: Cog = onehead.common.bot.get_cog("Core")
+        bot: Bot = get_bot_instance()        
+        core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
+        
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
 
         if current_game.transfer_window_open() is False:
@@ -79,7 +76,7 @@ class Transfers(Cog):
             tuple[str, ...], tuple[str, ...]
         ] = get_player_names(current_game.radiant, current_game.dire)
         
-        matchmaking: Cog = onehead.common.bot.get_cog("Matchmaking")
+        matchmaking: Cog = bot.get_cog("Matchmaking")
         
         shuffled_teams: tuple[Team, Team] = await matchmaking.balance(ctx)
         
@@ -88,7 +85,7 @@ class Transfers(Cog):
         ] = get_player_names(shuffled_teams[0], shuffled_teams[1])
 
         while current_teams_names_only == shuffled_teams_names_only:
-            shuffled_teams = await self.matchmaking.balance(ctx)
+            shuffled_teams = await matchmaking.balance(ctx)
             shuffled_teams_names_only = get_player_names(
                 shuffled_teams[0], shuffled_teams[1]
             )

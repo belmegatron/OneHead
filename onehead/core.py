@@ -3,12 +3,11 @@ from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
                                   command, has_role, max_concurrency)
 from tabulate import tabulate
 
-import onehead.common
 from onehead.behaviour import Behaviour
 from onehead.betting import Betting
 from onehead.channels import Channels
 from onehead.common import (DIRE, RADIANT, OneHeadException,
-                            Roles, log, load_config, get_player_names)
+                            Roles, load_config, get_player_names, set_bot_instance)
 from onehead.database import Database
 from onehead.game import Game
 from onehead.matchmaking import Matchmaking
@@ -66,8 +65,8 @@ def bot_factory() -> Bot:
     bot.event(on_voice_state_update)
     bot.event(on_member_update)
 
-    # Make the bot instance globally accessible for callbacks.
-    onehead.common.bot = bot
+    # Make the bot instance globally accessible for callbacks etc.
+    set_bot_instance(bot)
 
     return bot
 

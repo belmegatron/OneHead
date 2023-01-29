@@ -1,5 +1,6 @@
 import random
 from asyncio import sleep
+from logging import Logger
 from typing import TYPE_CHECKING
 
 from discord import Status
@@ -7,12 +8,15 @@ from discord.ext.commands import (BucketType, Cog, Command, Context, command,
                                   cooldown, has_role, Bot)
 from tabulate import tabulate
 
-from onehead.common import Roles, log, get_bot_instance
+from onehead.common import Roles, get_bot_instance, get_logger
 from onehead.database import Database
 
 if TYPE_CHECKING:
     from discord import VoiceState
     from discord.member import Member
+    
+
+log: Logger = get_logger()
 
 
 class Lobby(Cog):

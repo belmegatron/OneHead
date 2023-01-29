@@ -5,10 +5,9 @@ from discord import Embed, colour
 from discord.ext.commands import Cog, Context, command, has_role, Bot
 from tabulate import tabulate
 
-from onehead.common import DIRE, RADIANT, OneHeadException, Roles, Bet, get_bot_instance
+from onehead.common import DIRE, RADIANT, OneHeadException, Roles, Bet, get_bot_instance, Player
 
 if TYPE_CHECKING:
-    from onehead.common import Player
     from onehead.database import Database
     from onehead.lobby import Lobby
     from onehead.game import Game
