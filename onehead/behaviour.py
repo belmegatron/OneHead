@@ -2,14 +2,8 @@ from logging import Logger
 
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 
-from onehead.common import (
-    OneHeadException,
-    Player,
-    Roles,
-    get_bot_instance,
-    get_logger,
-    get_player_names,
-)
+from onehead.common import (Player, Roles, get_bot_instance, get_logger,
+                            get_player_names)
 from onehead.database import Database
 from onehead.game import Game
 
@@ -56,7 +50,7 @@ class Behaviour(Cog):
 
         if player_name not in radiant and player_name not in dire:
             await ctx.send(
-                f"{player_name} cannot be commended as they did not participate in the previous game"
+                f"{player_name} cannot be commended as they did not participate in the previous game."
             )
             return
 
@@ -108,7 +102,7 @@ class Behaviour(Cog):
 
         if player_name not in radiant and player_name not in dire:
             await ctx.send(
-                f"{player_name} cannot be reported as they did not participate in the previous game"
+                f"{player_name} cannot be reported as they did not participate in the previous game."
             )
             return
 

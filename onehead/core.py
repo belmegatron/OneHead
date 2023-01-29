@@ -1,27 +1,13 @@
 from discord import Embed, Intents
-from discord.ext.commands import (
-    Bot,
-    BucketType,
-    Cog,
-    Command,
-    Context,
-    command,
-    has_role,
-    max_concurrency,
-)
+from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
+                                  command, has_role, max_concurrency)
 from tabulate import tabulate
 
 from onehead.behaviour import Behaviour
 from onehead.betting import Betting
 from onehead.channels import Channels
-from onehead.common import (
-    OneHeadException,
-    Roles,
-    Side,
-    get_player_names,
-    load_config,
-    set_bot_instance,
-)
+from onehead.common import (OneHeadException, Roles, Side, get_player_names,
+                            load_config, set_bot_instance)
 from onehead.database import Database
 from onehead.game import Game
 from onehead.lobby import Lobby, on_member_update, on_voice_state_update
@@ -152,7 +138,7 @@ class Core(Cog):
         Starts an IHL game.
         """
 
-        if self.current_game.active():
+        if self.current_game.in_progress():
             await ctx.send("Game already in progress...")
             return
 
@@ -265,7 +251,7 @@ class Core(Cog):
         """
 
         if (
-            self.current_game.active()
+            self.current_game.in_progress()
             and self.current_game.radiant
             and self.current_game.dire
         ):

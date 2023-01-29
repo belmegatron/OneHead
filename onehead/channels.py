@@ -1,12 +1,13 @@
 from discord import VoiceChannel
 from discord.errors import HTTPException
-from discord.ext import commands
+from discord.ext.commands import Bot, Cog, Context
 from discord.member import Member
 
-from onehead.common import OneHeadException, Team, get_player_names
+from onehead.common import OneHeadException, get_bot_instance, get_player_names
+from onehead.game import Game
 
 
-class Channels(commands.Cog):
+class Channels(Cog):
     def __init__(self, config: dict) -> None:
 
         channel_config_settings: dict = config["discord"]["channels"]
@@ -14,46 +15,25 @@ class Channels(commands.Cog):
             f"{channel_config_settings['match']} #{x}" for x in (1, 2)
         ]
         self.lobby_name: str = channel_config_settings["lobby"]
-
         self.ihl_discord_channels: list[VoiceChannel]
-        self.t1: Team | None = None
-        self.t2: Team | None = None
-        self.t1_discord_members: list[Member] = []
-        self.t2_discord_members: list[Member] = []
+        
+    def get_discord_members(self, ctx) -> tuple[list[Member], list[Member]]:
+        
+        bot: Bot = get_bot_instance()
+        core: Cog = bot.get_cog("Core")
+        current_game: Game = core.current_game
+        
+        if current_game is None or current_game.radiant is None or current_game.dire is None:
+            raise OneHeadException("Unable to get discord members due to invalid game state.")
 
-    def set_teams(self, t1: Team, t2: Team) -> None:
-        """
-        To be called by an object that has instantiated a OneHeadChannels object.
+        t1_names, t2_names = get_player_names(current_game.radiant, current_game.dire)
+        
+        t1_discord_members: list[Member] = [x for x in ctx.guild.members if x.display_name in t1_names]
+        t2_discord_members: list[Member] = [x for x in ctx.guild.members if x.display_name in t2_names] 
+        
+        return t1_discord_members, t2_discord_members
 
-        :param t1: Players in Team 1
-        :param t2: Players in Team 2
-        """
-
-        self.t1 = t1
-        self.t2 = t2
-
-    def _set_discord_members(
-        self,
-        ctx: commands.Context,
-        t1_names: tuple[str, ...],
-        t2_names: tuple[str, ...],
-    ) -> None:
-        """
-        Obtains Discord Member objects for corresponding list of names.
-
-        :param ctx: Discord Context
-        :param t1_names: Names of players in Team 1
-        :param t2_names: Names of players in Team 2
-        """
-
-        self.t1_discord_members = [
-            x for x in ctx.guild.members if x.display_name in t1_names
-        ]
-        self.t2_discord_members = [
-            x for x in ctx.guild.members if x.display_name in t2_names
-        ]
-
-    async def create_discord_channels(self, ctx: commands.Context) -> None:
+    async def create_discord_channels(self, ctx: Context) -> None:
         """
         We check if the channels already exist, if not we create them.
 
@@ -72,8 +52,8 @@ class Channels(commands.Cog):
         self.ihl_discord_channels = [
             x for x in ctx.guild.voice_channels if x.name in self.channel_names
         ]
-
-    async def move_back_to_lobby(self, ctx: commands.Context) -> None:
+        
+    async def move_back_to_lobby(self, ctx: Context) -> None:
         """
         Move players back from IHL Team Channels to a communal channel.
 
@@ -83,41 +63,36 @@ class Channels(commands.Cog):
         lobby: VoiceChannel = [
             x for x in ctx.guild.voice_channels if x.name == self.lobby_name
         ][0]
+        
+        t1_discord_members, t2_discord_members = self.get_discord_members(ctx)
 
-        for team in (self.t1_discord_members, self.t2_discord_members):
+        for team in (t1_discord_members, t2_discord_members):
             for player in team:
                 try:
                     await player.move_to(lobby)
                 except HTTPException:
                     pass
 
-    async def move_discord_channels(self, ctx: commands.Context) -> None:
+    async def move_discord_channels(self, ctx: Context) -> None:
         """
         Move players to IHL Team Channels.
 
         :param ctx: Discord Context
         """
-
+        
         channel_count: int = len(self.ihl_discord_channels)
         if channel_count != 2:
             raise OneHeadException(
                 f"Expected 2 Discord Channels, Identified {channel_count}."
             )
-
-        if self.t1 is None or self.t2 is None:
-            raise OneHeadException(
-                "Expected to have valid references to teams prior to moving channels."
-            )
-
-        t1_names, t2_names = get_player_names(self.t1, self.t2)
-        self._set_discord_members(ctx, t1_names, t2_names)
-
+            
         await ctx.send("Moving Players to IHL Discord Channels...")
 
+        t1_discord_members, t2_discord_members = self.get_discord_members(ctx)
         t1_channel, t2_channel = self.ihl_discord_channels
 
-        for team, channel in (self.t1_discord_members, t1_channel), (
-            self.t2_discord_members,
+        for team, channel in (t1_discord_members, t1_channel), (
+            t2_discord_members,
             t2_channel,
         ):
             for member in team:

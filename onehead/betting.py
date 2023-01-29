@@ -5,7 +5,8 @@ from discord import Embed, colour
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import Bet, OneHeadException, Player, Roles, Side, get_bot_instance
+from onehead.common import (Bet, OneHeadException, Player, Roles, Side,
+                            get_bot_instance)
 
 if TYPE_CHECKING:
     from onehead.database import Database

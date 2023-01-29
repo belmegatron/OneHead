@@ -8,7 +8,7 @@ from onehead.common import Bet, PlayerTransfer, Team
 class Game:
     def __init__(self) -> None:
 
-        self._active: bool = False
+        self._in_progress: bool = False
         self._cancel_event: asyncio.Event = asyncio.Event()
         self._transfer_window_open: bool = False
         self._betting_window_open: bool = False
@@ -20,14 +20,11 @@ class Game:
         self.radiant: Team | None = None
         self.dire: Team | None = None
 
-    def active(self) -> bool:
-        return self._active
-
     def in_progress(self) -> bool:
-        return self._active
+        return self._in_progress
 
     def start(self) -> None:
-        self._active = True
+        self._in_progress = True
 
     def cancel(self) -> None:
         self._cancel_event.set()

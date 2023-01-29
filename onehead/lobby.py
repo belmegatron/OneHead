@@ -3,16 +3,8 @@ from logging import Logger
 from typing import TYPE_CHECKING
 
 from discord import Status
-from discord.ext.commands import (
-    Bot,
-    BucketType,
-    Cog,
-    Command,
-    Context,
-    command,
-    cooldown,
-    has_role,
-)
+from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
+                                  command, cooldown, has_role)
 from tabulate import tabulate
 
 from onehead.common import Player, Roles, get_bot_instance, get_logger
@@ -100,6 +92,9 @@ class Lobby(Cog):
             players: list[Player] = [
                 self.database.lookup_player(signup) for signup in self._signups
             ]
+            
+            # TODO: Need to handle the case where we have > 10 with the same behaviour score.
+            
             top_10_players_by_behaviour_score: list[Player] = sorted(
                 players, key=lambda d: d["behaviour"], reverse=True
             )[:10]

@@ -1,6 +1,6 @@
 from typing import Any, Literal
 
-from discord.ext import commands
+from discord.ext.commands import Cog, Context, command, has_role
 from tabulate import tabulate
 
 from onehead.common import OneHeadException, Player, Roles
@@ -8,7 +8,7 @@ from onehead.database import Database
 from onehead.statistics import Statistics
 
 
-class ScoreBoard(commands.Cog):
+class ScoreBoard(Cog):
     # It's actually 2000, but we prepend a small number of characters before our scoreboard so need to take
     # this into account.
     DISCORD_MAX_MESSAGE_LENGTH: Literal[1950] = 1950
@@ -41,9 +41,9 @@ class ScoreBoard(commands.Cog):
 
         return tuple(chunks)
 
-    @commands.has_role(Roles.MEMBER)
-    @commands.command(aliases=["sb"])
-    async def scoreboard(self, ctx: commands.Context) -> None:
+    @has_role(Roles.MEMBER)
+    @command(aliases=["sb"])
+    async def scoreboard(self, ctx: Context) -> None:
         """
         Shows the current rankings for the IGC IHL Leaderboard.
         """

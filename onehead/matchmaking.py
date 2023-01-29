@@ -2,16 +2,17 @@ import itertools
 import random
 from typing import Any
 
-from discord.ext import commands
+from discord.ext.commands import Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination
+from onehead.common import (OneHeadException, Player, Roles, Side, Team,
+                            TeamCombination)
 from onehead.database import Database
 from onehead.lobby import Lobby
 from onehead.statistics import Statistics
 
 
-class Matchmaking(commands.Cog):
+class Matchmaking(Cog):
     def __init__(self, database: Database, pre_game: Lobby) -> None:
 
         self.database: Database = database
@@ -127,7 +128,7 @@ class Matchmaking(commands.Cog):
 
         return balanced_teams
 
-    async def balance(self, ctx: commands.Context) -> tuple[Team, Team]:
+    async def balance(self, ctx: Context) -> tuple[Team, Team]:
         """
         Returns two balanced 5-man teams from 10 players in the signup pool.
 
@@ -145,9 +146,9 @@ class Matchmaking(commands.Cog):
 
         return balanced_teams[Side.RADIANT], balanced_teams[Side.DIRE]
 
-    @commands.has_role(Roles.MEMBER)
-    @commands.command(aliases=["mmr"])
-    async def show_internal_mmr(self, ctx: commands.Context) -> None:
+    @has_role(Roles.MEMBER)
+    @command(aliases=["mmr"])
+    async def show_internal_mmr(self, ctx: Context) -> None:
         """
         Shows the internal MMR used for balancing teams.
         """
