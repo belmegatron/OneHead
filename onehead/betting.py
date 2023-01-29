@@ -2,11 +2,10 @@ from dataclasses import asdict
 from typing import TYPE_CHECKING
 
 from discord import Embed, colour
-from discord.ext.commands import Cog, Context, command, has_role
+from discord.ext.commands import Cog, Context, command, has_role, Bot
 from tabulate import tabulate
 
-import onehead.common
-from onehead.common import DIRE, RADIANT, OneHeadException, Roles, Bet
+from onehead.common import DIRE, RADIANT, OneHeadException, Roles, Bet, get_bot_instance
 
 if TYPE_CHECKING:
     from onehead.common import Player
@@ -24,11 +23,10 @@ class Betting(Cog):
 
     def get_bet_results(self, radiant_won: bool) -> dict[str, float]:
 
-        if onehead.common.bot is None:
-            raise OneHeadException("Global bot instance is None")
-        
-        core: Cog = onehead.common.bot.get_cog("Core")
+        bot: Bot = get_bot_instance()
+        core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
+        
         active_bets = current_game.get_bets()
                 
         bet_results: dict[str, float] = {}
@@ -50,10 +48,8 @@ class Betting(Cog):
     @command(aliases=["bets"])
     async def get_active_bets(self, ctx: Context) -> None:
         
-        if onehead.common.bot is None:
-            raise OneHeadException("Global bot instance is None")
-        
-        core: Cog = onehead.common.bot.get_cog("Core")
+        bot: Bot = get_bot_instance()
+        core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
 
         active_bets: list[Bet] = current_game.get_bets()
@@ -75,11 +71,10 @@ class Betting(Cog):
         e.g. !bet radiant 500 or !bet dire all
         """
         
-        if onehead.common.bot is None:
-            raise OneHeadException("Global bot instance is None")
-        
-        core: Cog = onehead.common.bot.get_cog("Core")
+        bot: Bot = get_bot_instance()
+        core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
+        
         bets = current_game.get_bets()
 
         if current_game.betting_window_open() is False:
@@ -180,10 +175,8 @@ class Betting(Cog):
 
     async def refund_all_bets(self, ctx: Context) -> None:
         
-        if onehead.common.bot is None:
-            raise OneHeadException("Global bot instance is None")
-        
-        core: Cog = onehead.common.bot.get_cog("Core")
+        bot: Bot = get_bot_instance()
+        core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
 
         active_bets: list[Bet] = current_game.get_bets()

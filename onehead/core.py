@@ -105,18 +105,9 @@ class Core(Cog):
         ):
             raise OneHeadException("Unable to find cog(s)")
         
-    @has_role(Roles.ADMIN)
-    @command()
-    @max_concurrency(1, per=BucketType.default, wait=False)
-    async def reset(self, ctx: Context, force=False) -> None:
-        """
-        Resets the current bot state.
-        """
+    async def reset(self, ctx: Context) -> None:
 
-        if self.current_game.active() and force is False:
-            await ctx.send("Cannot reset while a game is in progress.")
-            return
-
+        await self.channels.move_back_to_lobby(ctx)
         self.previous_game = self.current_game
         self.current_game = Game()
         self.lobby.clear_signups()
@@ -157,10 +148,8 @@ class Core(Cog):
 
         self.current_game.radiant, self.current_game.dire = await self.matchmaking.balance(ctx)
         await self.setup_teams(ctx)
-
-        # await self.current_game.open_transfer_window(ctx)
-
-        # await self.current_game.open_betting_window(ctx)
+        await self.current_game.open_transfer_window(ctx)
+        await self.current_game.open_betting_window(ctx)
 
     @has_role(Roles.ADMIN)
     @command()
@@ -173,11 +162,9 @@ class Core(Cog):
         if self.current_game.in_progress():
             self.current_game.cancel()
             await ctx.send("Game stopped.")
-            await self.channels.move_back_to_lobby(ctx)
             await self.betting.refund_all_bets(ctx)
-            
-            reset: Command = self.bot.get_command("reset")
-            await Command.invoke(reset, ctx, force=True)
+            await self.transfers.refund_transfers(ctx)
+            await self.reset(ctx)
 
             log.info("Game has stopped")
         else:
@@ -234,10 +221,7 @@ class Core(Cog):
 
         scoreboard: Command = self.bot.get_command("scoreboard")
         await Command.invoke(scoreboard, ctx)
-        await self.channels.move_back_to_lobby(ctx)
-
-        reset: Command = self.bot.get_command("reset")
-        await Command.invoke(reset, ctx)
+        await self.reset(ctx)
 
     @has_role(Roles.MEMBER)
     @command()

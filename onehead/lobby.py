@@ -4,11 +4,10 @@ from typing import TYPE_CHECKING
 
 from discord import Status
 from discord.ext.commands import (BucketType, Cog, Command, Context, command,
-                                  cooldown, has_role)
+                                  cooldown, has_role, Bot)
 from tabulate import tabulate
 
-import onehead.common
-from onehead.common import Roles, log
+from onehead.common import Roles, log, get_bot_instance
 from onehead.database import Database
 
 if TYPE_CHECKING:
@@ -217,10 +216,9 @@ async def on_voice_state_update(
     member: "Member", before: "VoiceState", after: "VoiceState"
 ) -> None:
 
-    if onehead.common.bot is None:
-        return
-
-    lobby: Lobby = onehead.common.bot.get_cog("Lobby")
+    bot: Bot = get_bot_instance()
+    lobby: Lobby = bot.get_cog("Lobby")
+    
     signups: list[str] = lobby.get_signups()
 
     name: str = member.display_name
@@ -233,10 +231,9 @@ async def on_voice_state_update(
 
 async def on_member_update(before: "Member", after: "Member") -> None:
 
-    if onehead.common.bot is None:
-        return
-
-    lobby: Lobby = onehead.common.bot.get_cog("Lobby")
+    bot: Bot = get_bot_instance()
+    lobby: Lobby = bot.get_cog("Lobby")
+    
     signups: list[str] = lobby.get_signups()
 
     name: str = after.display_name

@@ -48,6 +48,12 @@ class OneHeadException(BaseException):
     pass
 
 
+def get_bot_instance() -> Bot:
+    if bot is None:
+        raise OneHeadException("Global bot instance is None")
+    
+    return bot
+
 def get_player_names(
     t1: "Team", t2: "Team"
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:

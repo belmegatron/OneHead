@@ -27,7 +27,7 @@ class Transfers(Cog):
         if len(transfers) == 0:
             return
 
-        for transfer in self.transfers:
+        for transfer in transfers:
             self.database.update_rbucks(transfer.buyer, transfer.amount)
 
         await ctx.send("All player transactions have been refunded.")
