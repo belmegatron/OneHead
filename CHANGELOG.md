@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.42.0] - 2023-01-29
 
 ### Added
-- Added a commend/report system and an associated behaviour score for each player.
+- Added a commend/report system and an associated behaviour score for each player. Commend players with !commend {player_name} and report players with !report {player_name} {reason}.
 
 ### Changed
 - Refactored how we manage game state, this should make cleanup way easier and we now have less to keep track of.
@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Removed a load of awful tests, more to come at some point, maybe...
+- Removed !reset command, just use !stop if you wish to abort the game.
 
 ## [1.41.1] - 2022-11-07
 
