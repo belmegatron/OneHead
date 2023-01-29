@@ -6,7 +6,7 @@ from tabulate import tabulate
 from onehead.behaviour import Behaviour
 from onehead.betting import Betting
 from onehead.channels import Channels
-from onehead.common import (DIRE, RADIANT, OneHeadException,
+from onehead.common import (Side, OneHeadException,
                             Roles, load_config, get_player_names, set_bot_instance)
 from onehead.database import Database
 from onehead.game import Game
@@ -164,8 +164,6 @@ class Core(Cog):
             await self.betting.refund_all_bets(ctx)
             await self.transfers.refund_transfers(ctx)
             await self.reset(ctx)
-
-            log.info("Game has stopped")
         else:
             await ctx.send("No currently active game.")
 
@@ -181,13 +179,11 @@ class Core(Cog):
             await ctx.send("No currently active game.")
             return
 
-        accepted_results: list[str] = [RADIANT, DIRE]
-
-        if result not in accepted_results:
-            await ctx.send(f"Invalid Value - Must be either {RADIANT} or {DIRE}.")
+        if result in Side is False:
+            await ctx.send(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
             return
 
-        bet_results: dict = self.betting.get_bet_results(result == RADIANT)
+        bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
 
         for name, delta in bet_results.items():
             if delta > 0:
@@ -205,13 +201,13 @@ class Core(Cog):
             self.current_game.radiant, self.current_game.dire
         )
 
-        if result == RADIANT:
+        if result == Side.RADIANT:
             await ctx.send("Radiant Victory!")
             for player in radiant_names:
                 self.database.update_player(player, True)
             for player in dire_names:
                 self.database.update_player(player, False)
-        elif result == DIRE:
+        elif result == Side.DIRE:
             await ctx.send("Dire Victory!")
             for player in radiant_names:
                 self.database.update_player(player, False)
@@ -231,7 +227,7 @@ class Core(Cog):
 
         if self.current_game.active() and self.current_game.radiant and self.current_game.dire:
             t1_names, t2_names = get_player_names(self.current_game.radiant, self.current_game.dire)
-            players = {RADIANT: t1_names, DIRE: t2_names}
+            players = {Side.RADIANT: t1_names, Side.DIRE: t2_names}
             in_game_players = tabulate(players, headers="keys", tablefmt="simple")
             await ctx.send(f"**Current Game** ```\n" f"{in_game_players}```")
         else:

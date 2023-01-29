@@ -5,7 +5,7 @@ from typing import Any
 from discord.ext import commands
 from tabulate import tabulate
 
-from onehead.common import (DIRE, RADIANT, OneHeadException, Roles,
+from onehead.common import (Side, OneHeadException, Roles,
                             Player, Team, TeamCombination)
 from onehead.database import Database
 from onehead.statistics import Statistics
@@ -68,10 +68,10 @@ class Matchmaking(commands.Cog):
 
         for unique_combination in all_unique_combinations:
             t1_rating: int = sum(
-                [player["adjusted_mmr"] for player in unique_combination[RADIANT]]
+                [player["adjusted_mmr"] for player in unique_combination[Side.RADIANT]]
             )
             t2_rating: int = sum(
-                [player["adjusted_mmr"] for player in unique_combination[DIRE]]
+                [player["adjusted_mmr"] for player in unique_combination[Side.DIRE]]
             )
 
             unique_combination["rating_difference"] = abs(t1_rating - t2_rating)
@@ -110,7 +110,7 @@ class Matchmaking(commands.Cog):
             )
 
         unique_combinations_dict: list[dict[str, Team]] = [
-            {RADIANT: combination[0], DIRE: combination[1]}
+            {Side.RADIANT: combination[0], Side.DIRE: combination[1]}
             for combination in unique_combinations
         ]
 
@@ -144,7 +144,7 @@ class Matchmaking(commands.Cog):
 
         balanced_teams: dict = self._calculate_balance()
 
-        return balanced_teams[RADIANT], balanced_teams[DIRE]
+        return balanced_teams[Side.RADIANT], balanced_teams[Side.DIRE]
 
     @commands.has_role(Roles.MEMBER)
     @commands.command(aliases=["mmr"])

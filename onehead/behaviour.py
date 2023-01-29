@@ -4,7 +4,7 @@ from discord import Embed, colour
 from discord.ext.commands import (BucketType, Cog, Command, Context, command,
                                   cooldown, has_role)
 
-from onehead.common import DIRE, RADIANT, OneHeadException, Roles, get_logger
+from onehead.common import OneHeadException, Roles, get_logger
 from onehead.database import Database
 
 log: Logger = get_logger()

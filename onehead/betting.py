@@ -5,7 +5,7 @@ from discord import Embed, colour
 from discord.ext.commands import Cog, Context, command, has_role, Bot
 from tabulate import tabulate
 
-from onehead.common import DIRE, RADIANT, OneHeadException, Roles, Bet, get_bot_instance, Player
+from onehead.common import Side, OneHeadException, Roles, Bet, get_bot_instance, Player
 
 if TYPE_CHECKING:
     from onehead.database import Database
@@ -26,7 +26,7 @@ class Betting(Cog):
         core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
         
-        active_bets = current_game.get_bets()
+        active_bets: list[Bet] = current_game.get_bets()
                 
         bet_results: dict[str, float] = {}
 
@@ -34,8 +34,8 @@ class Betting(Cog):
             if bet_results.get(bet.player) is None:
                 bet_results[bet.player] = 0
 
-            if (radiant_won and bet.side == RADIANT) or (
-                radiant_won is False and bet.side == DIRE
+            if (radiant_won and bet.side == Side.RADIANT) or (
+                radiant_won is False and bet.side == Side.DIRE
             ):
                 bet_results[bet.player] += bet.stake * 2.0
             else:
@@ -74,7 +74,7 @@ class Betting(Cog):
         core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
         
-        bets = current_game.get_bets()
+        bets: list[Bet] = current_game.get_bets()
 
         if current_game.betting_window_open() is False:
             await ctx.send("Betting window closed.")
@@ -94,7 +94,7 @@ class Betting(Cog):
             await ctx.send(f"{name} cannot be found in the database.")
             return
 
-        if side.lower() not in (RADIANT, DIRE):
+        if side.lower() in Side is False:
             await ctx.send(
                 f"{name} - Cannot bet on {side} - Must be either Radiant/Dire."
             )

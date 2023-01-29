@@ -3,31 +3,45 @@ import json
 import os
 import sys
 from logging import Formatter, Logger, StreamHandler, getLogger, DEBUG
-from typing import Literal, Optional, TypedDict
+from typing import Literal, Optional, TypedDict, Any
 
 from discord.ext.commands import Bot
-from strenum import StrEnum
+from enum import auto, EnumMeta
+from strenum import StrEnum, LowercaseStrEnum
 
 
 Player = TypedDict("Player", {"#": int, "name": str, "mmr": int, "win": int, "loss": int, "rbucks": int, "rating": int, "adjusted_mmr": int, "%": float, "commends": int, "reports": int})
-
-
 Team = tuple[Player, Player, Player, Player, Player]
 TeamCombination = tuple[Team, Team]
 
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
 bot: Optional[Bot] = None
 
-RADIANT: Literal["radiant"] = "radiant"
-DIRE: Literal["dire"] = "dire"
 ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
-class Roles(StrEnum):
+class EnumeratorMeta(EnumMeta):
 
+    def __contains__(cls, member: Any) -> bool:
+        if type(member) == cls:
+            return EnumMeta.__contains__(cls, member)
+        else:
+            try:
+                cls(member)
+            except ValueError:
+                return False
+            return True
+        
+
+class Roles(StrEnum):
     ADMIN: Literal["IHL Admin"] = "IHL Admin"
     MEMBER: Literal["IHL"] = "IHL"
-    
+
+
+class Side(LowercaseStrEnum, metaclass=EnumeratorMeta):
+    RADIANT = auto()
+    DIRE = auto()
+
     
 @dataclass
 class PlayerTransfer:
