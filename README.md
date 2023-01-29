@@ -9,7 +9,7 @@ OneHead is a Discord Bot for hosting 5vs5 competitive DOTA 2 games in an In-Hous
 - ### Leaderboard
     Players can view a leaderboard which is based on an IHL Rating.
 - ### Behaviour system
-    Players can be commended or reported based on their performace in game.
+    Players can be commended or reported based on their performance in game.
 - ### Team Balancing
     Teams are balanced by an internal rating which incorporates both the player's DOTA MMR and their IHL rating.
 - ### Automated Discord Channel Admin
