@@ -1,15 +1,19 @@
 import itertools
+from logging import Logger
 import random
 from typing import Any
 
 from discord.ext.commands import Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import (OneHeadException, Player, Roles, Side, Team,
+from onehead.common import (get_logger, OneHeadException, Player, Roles, Side, Team,
                             TeamCombination)
 from onehead.database import Database
 from onehead.lobby import Lobby
 from onehead.statistics import Statistics
+
+
+log: Logger = get_logger()
 
 
 class Matchmaking(Cog):
@@ -143,7 +147,9 @@ class Matchmaking(Cog):
             await ctx.send(err)
 
         balanced_teams: dict = self._calculate_balance()
-
+        
+        log.debug(f"Teams: {balanced_teams}")
+        
         return balanced_teams[Side.RADIANT], balanced_teams[Side.DIRE]
 
     @has_role(Roles.MEMBER)
