@@ -126,7 +126,6 @@ class Core(Cog):
                 f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}"
             )
 
-        self.channels.set_teams(self.current_game.radiant, self.current_game.dire)
         await self.channels.move_discord_channels(ctx)
         await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
 
