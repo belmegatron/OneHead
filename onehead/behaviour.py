@@ -44,8 +44,12 @@ class Behaviour(Cog):
         radiant, dire = get_player_names(previous_game.radiant, previous_game.dire)
         if commender not in radiant and commender not in dire:
             await ctx.send(
-                f"{commender} is unable to commend as they did not participate in the previous game."
+                f"{commender} did not participate in the previous game and therefore cannot commend another player."
             )
+            return
+
+        if commender == player_name:
+            await ctx.send(f"{commender} you cannot commend yourself, nice try...")
             return
 
         if player_name not in radiant and player_name not in dire:
@@ -55,9 +59,7 @@ class Behaviour(Cog):
             return
 
         if previous_game.has_been_previously_commended(commender, player_name):
-            await ctx.send(
-                f"{commender} has already commended by {player_name} and therefore cannot be commended again."
-            )
+            await ctx.send(f"{commender} has already been commended by {player_name}.")
             return
 
         player: Player = self.database.lookup_player(player_name)
@@ -96,7 +98,13 @@ class Behaviour(Cog):
         radiant, dire = get_player_names(previous_game.radiant, previous_game.dire)
         if reporter not in radiant and reporter not in dire:
             await ctx.send(
-                f"{reporter} is unable to report as they did not participate in the previous game."
+                f"{reporter} did not participate in the previous game and therefore cannot report another player."
+            )
+            return
+
+        if reporter == player_name:
+            await ctx.send(
+                f"{player} has brought dishonour upon themselves and has attempted to commit seppuku. OneHead will now allow it... UWU!"
             )
             return
 
@@ -107,9 +115,7 @@ class Behaviour(Cog):
             return
 
         if previous_game.has_been_previously_reported(reporter, player_name):
-            await ctx.send(
-                f"{reporter} has already reported by {player_name} and therefore cannot be reported again."
-            )
+            await ctx.send(f"{reporter} has already been reported by {player_name}.")
             return
 
         player: Player = self.database.lookup_player(player_name)
