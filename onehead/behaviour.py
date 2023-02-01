@@ -104,7 +104,7 @@ class Behaviour(Cog):
 
         if reporter == player_name:
             await ctx.send(
-                f"{player} has brought dishonour upon themselves and has attempted to commit seppuku. OneHead will now allow it... UWU!"
+                f"{player_name} has brought dishonour upon themselves and has attempted to commit seppuku. OneHead will now allow it... UWU!"
             )
             return
 

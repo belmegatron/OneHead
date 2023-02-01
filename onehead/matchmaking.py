@@ -147,9 +147,15 @@ class Matchmaking(Cog):
 
         balanced_teams: dict = self._calculate_balance()
 
-        log.debug(f"Teams: {balanced_teams}")
+        radiant: Team = balanced_teams[Side.RADIANT]
+        dire: Team = balanced_teams[Side.DIRE]
+        
+        radiant_mmr: int = sum([x["adjusted_mmr"] for x in radiant])
+        dire_mmr: int = sum([x["adjusted_mmr"] for x in dire])
+        
+        log.debug(f"Radiant MMR: {radiant_mmr}, Dire MMR: {dire_mmr}")
 
-        return balanced_teams[Side.RADIANT], balanced_teams[Side.DIRE]
+        return radiant, dire
 
     @has_role(Roles.MEMBER)
     @command(aliases=["mmr"])
