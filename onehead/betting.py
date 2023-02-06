@@ -82,6 +82,7 @@ class Betting(Cog):
             return
 
         name: str = ctx.author.display_name
+        side = side.lower()
 
         try:
             record: Player = self.database.lookup_player(name)
@@ -95,7 +96,7 @@ class Betting(Cog):
             await ctx.send(f"{name} cannot be found in the database.")
             return
 
-        if side.lower() in Side is False:
+        if side not in Side:
             await ctx.send(
                 f"{name} - Cannot bet on {side} - Must be either Radiant/Dire."
             )

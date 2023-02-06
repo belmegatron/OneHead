@@ -198,8 +198,10 @@ class Core(Cog):
                 "Cannot enter result as the Betting window for the game is currently open. Use the !stop command if you wish to abort the game."
             )
             return
+        
+        result = result.lower()
 
-        if result in Side is False:
+        if result not in Side:
             await ctx.send(
                 f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}."
             )
