@@ -1,9 +1,9 @@
 import json
-import os
 import sys
 from dataclasses import dataclass
 from enum import EnumMeta, auto
 from logging import DEBUG, Formatter, Logger, StreamHandler, getLogger
+from pathlib import Path
 from typing import Any, Literal, Optional, TypedDict
 
 from discord.ext.commands import Bot
@@ -32,7 +32,7 @@ TeamCombination = tuple[Team, Team]
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
 bot: Optional[Bot] = None
 
-ROOT_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ROOT_DIR: str = Path(__file__).resolve().parent.parent
 
 
 class EnumeratorMeta(EnumMeta):
@@ -104,7 +104,8 @@ def get_player_names(t1: "Team", t2: "Team") -> tuple[tuple[str, ...], tuple[str
 def load_config() -> dict:
 
     try:
-        with open(os.path.join(ROOT_DIR, "secrets/config.json"), "r") as f:
+        config_path: Path = Path(ROOT_DIR, "secrets/config.json")
+        with open(str(config_path), "r") as f:
             config: dict = json.load(f)
     except IOError as e:
         raise OneHeadException(e)
