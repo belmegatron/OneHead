@@ -44,8 +44,8 @@ class Betting(Cog):
         return bet_results
 
     @has_role(Roles.MEMBER)
-    @command(aliases=["bets"])
-    async def get_active_bets(self, ctx: Context) -> None:
+    @command()
+    async def bets(self, ctx: Context) -> None:
 
         bot: Bot = get_bot_instance()
         core: Cog = bot.get_cog("Core")

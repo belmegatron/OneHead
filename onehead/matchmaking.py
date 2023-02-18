@@ -158,8 +158,8 @@ class Matchmaking(Cog):
         return radiant, dire
 
     @has_role(Roles.MEMBER)
-    @command(aliases=["mmr"])
-    async def show_internal_mmr(self, ctx: Context) -> None:
+    @command()
+    async def mmr(self, ctx: Context) -> None:
         """
         Shows the internal MMR used for balancing teams.
         """
