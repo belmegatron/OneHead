@@ -230,24 +230,7 @@ class Lobby(Cog):
         self.players_ready = []
 
 
-async def on_voice_state_update(
-    member: "Member", before: "VoiceState", after: "VoiceState"
-) -> None:
-
-    bot: Bot = get_bot_instance()
-    lobby: Lobby = bot.get_cog("Lobby")
-
-    signups: list[str] = lobby.get_signups()
-
-    name: str = member.display_name
-
-    if after.afk and name in signups:
-        signups.remove(name)
-        log.info(f"{name} is now AFK.")
-        await lobby.context.send(f"{name} has been signed out due to being AFK.")
-
-
-async def on_member_update(before: "Member", after: "Member") -> None:
+async def on_presence_update(before: "Member", after: "Member") -> None:
 
     bot: Bot = get_bot_instance()
     lobby: Lobby = bot.get_cog("Lobby")

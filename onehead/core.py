@@ -10,7 +10,7 @@ from onehead.common import (OneHeadException, Roles, Side, get_player_names,
                             load_config, set_bot_instance)
 from onehead.database import Database
 from onehead.game import Game
-from onehead.lobby import Lobby, on_member_update, on_voice_state_update
+from onehead.lobby import Lobby, on_presence_update
 from onehead.matchmaking import Matchmaking
 from onehead.mental_health import MentalHealth
 from onehead.registration import Registration
@@ -19,7 +19,7 @@ from onehead.transfers import Transfers
 from version import __changelog__, __version__
 
 
-def bot_factory() -> Bot:
+async def bot_factory() -> Bot:
     """
     Factory method for generating an instance of our Bot.
 
@@ -44,25 +44,24 @@ def bot_factory() -> Bot:
     behaviour: Behaviour = Behaviour(database)
     transfers: Transfers = Transfers(database, lobby)
 
-    bot.add_cog(database)
-    bot.add_cog(lobby)
-    bot.add_cog(scoreboard)
-    bot.add_cog(registration)
-    bot.add_cog(team_balance)
-    bot.add_cog(channels)
-    bot.add_cog(mental_health)
-    bot.add_cog(betting)
-    bot.add_cog(behaviour)
-    bot.add_cog(transfers)
+    await bot.add_cog(database)
+    await bot.add_cog(lobby)
+    await bot.add_cog(scoreboard)
+    await bot.add_cog(registration)
+    await bot.add_cog(team_balance)
+    await bot.add_cog(channels)
+    await bot.add_cog(mental_health)
+    await bot.add_cog(betting)
+    await bot.add_cog(behaviour)
+    await bot.add_cog(transfers)
 
-    # Add cogs first, then instantiate OneHeadCore as we reference them as instance variables
+    # Add cogs first, then instantiate Core as we reference them as instance variables
     token: str = config["discord"]["token"]
     core: Core = Core(bot, token)
-    bot.add_cog(core)
+    await bot.add_cog(core)
 
     # Register events
-    bot.event(on_voice_state_update)
-    bot.event(on_member_update)
+    bot.event(on_presence_update)
 
     # Make the bot instance globally accessible for callbacks etc.
     set_bot_instance(bot)
