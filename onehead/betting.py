@@ -5,8 +5,7 @@ from discord import Embed, colour
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import (Bet, OneHeadException, Player, Roles, Side,
-                            get_bot_instance)
+from onehead.common import Bet, OneHeadException, Player, Roles, Side, get_bot_instance
 
 if TYPE_CHECKING:
     from onehead.database import Database
@@ -16,12 +15,10 @@ if TYPE_CHECKING:
 
 class Betting(Cog):
     def __init__(self, database: "Database", lobby: "Lobby") -> None:
-
         self.database: Database = database
         self.lobby: Lobby = lobby
 
     def get_bet_results(self, radiant_won: bool) -> dict[str, float]:
-
         bot: Bot = get_bot_instance()
         core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
@@ -34,9 +31,7 @@ class Betting(Cog):
             if bet_results.get(bet.player) is None:
                 bet_results[bet.player] = 0
 
-            if (radiant_won and bet.side == Side.RADIANT) or (
-                radiant_won is False and bet.side == Side.DIRE
-            ):
+            if (radiant_won and bet.side == Side.RADIANT) or (radiant_won is False and bet.side == Side.DIRE):
                 bet_results[bet.player] += bet.stake * 2.0
             else:
                 bet_results[bet.player] -= bet.stake
@@ -46,7 +41,6 @@ class Betting(Cog):
     @has_role(Roles.MEMBER)
     @command()
     async def bets(self, ctx: Context) -> None:
-
         bot: Bot = get_bot_instance()
         core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
@@ -87,23 +81,17 @@ class Betting(Cog):
         try:
             record: Player = self.database.lookup_player(name)
         except OneHeadException:
-            await ctx.send(f"Unable to find player in database")
+            await ctx.send("Unable to find player in database")
             return
 
-        available_balance: int = record["rbucks"]
-
-        if available_balance is None:
-            await ctx.send(f"{name} cannot be found in the database.")
-            return
-
-        if side not in Side:
-            await ctx.send(
-                f"{name} - Cannot bet on {side} - Must be either Radiant/Dire."
-            )
-            return
+        available_balance: int = record.get("rbucks", 0)
 
         if available_balance == 0:
             await ctx.send(f"{name} cannot bet as they have no available RBUCKS.")
+            return
+        
+        if side not in Side:
+            await ctx.send(f"{name} - Cannot bet on {side} - Must be either Radiant/Dire.")
             return
 
         if amount == "all":
@@ -112,9 +100,7 @@ class Betting(Cog):
             try:
                 stake = int(amount)
             except ValueError:
-                await ctx.send(
-                    f"{name} - {amount} is not a valid number of RBUCKS to place a bet with."
-                )
+                await ctx.send(f"{name} - {amount} is not a valid number of RBUCKS to place a bet with.")
                 return
 
         if stake <= 0:
@@ -123,14 +109,14 @@ class Betting(Cog):
 
         if stake > available_balance:
             await ctx.send(
-                f"Unable to place bet - {name} tried to stake {stake} RBUCKS but only has {available_balance} RBUCKS available."
+                f"Unable to place bet - {name} tried to stake {stake:.0f} RBUCKS but only has {available_balance:.0f} RBUCKS available."
             )
             return
 
         bets.append(Bet(side, stake, name))
         self.database.update_rbucks(name, -stake)
 
-        await ctx.send(f"{name} has placed a bet of {stake} RBUCKS on {side.title()}.")
+        await ctx.send(f"{name} has placed a bet of {stake:.0f} RBUCKS on {side.title()}.")
 
     @has_role(Roles.MEMBER)
     @command()
@@ -157,7 +143,6 @@ class Betting(Cog):
 
     @staticmethod
     def create_bet_report(bet_results: dict) -> Embed:
-
         contents: str = ""
 
         for name, delta in bet_results.items():
@@ -175,7 +160,6 @@ class Betting(Cog):
         return embed
 
     async def refund_all_bets(self, ctx: Context) -> None:
-
         bot: Bot = get_bot_instance()
         core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
