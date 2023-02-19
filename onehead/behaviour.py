@@ -115,7 +115,7 @@ class Behaviour(Cog):
             return
 
         if previous_game.has_been_previously_reported(reporter, player_name):
-            await ctx.send(f"{reporter} has already been reported by {player_name}.")
+            await ctx.send(f"{player_name} has already been reported by {reporter}.")
             return
 
         player: Player = self.database.lookup_player(player_name)
