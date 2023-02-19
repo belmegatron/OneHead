@@ -200,7 +200,7 @@ class Core(Cog):
             )
             return
         
-        result = result.lower()
+        result: str = result.lower()
 
         if result not in Side:
             await ctx.send(

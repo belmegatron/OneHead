@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING
 from discord import Status
 from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
                                   command, cooldown, has_role)
+from discord.role import Role
 from tabulate import tabulate
 
 from onehead.common import Player, Roles, get_bot_instance, get_logger
 from onehead.database import Database
 
 if TYPE_CHECKING:
-    from discord import VoiceState
     from discord.member import Member
 
 
@@ -45,11 +45,11 @@ class Lobby(Cog):
         Messages all registered players of the IHL to come and sign up.
         """
 
-        ihl_role: list[Member] = [x for x in ctx.guild.roles if x.name == Roles.MEMBER]
+        ihl_role: Role = [x for x in ctx.guild.roles if x.name == Roles.MEMBER][0]
         if not ihl_role:
             return
 
-        await ctx.send(f"IHL DOTA - LET'S GO! {ihl_role[0].mention}")
+        await ctx.send(f"IHL DOTA - LET'S GO! {ihl_role.mention}")
 
     async def signup_check(self, ctx: Context) -> bool:
 
