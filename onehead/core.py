@@ -156,6 +156,8 @@ class Core(Cog):
         await self.setup_teams(ctx)
         await self.current_game.open_transfer_window(ctx)
         await self.current_game.open_betting_window(ctx)
+        
+        await ctx.send("GLHF")
 
     @has_role(Roles.ADMIN)
     @command()

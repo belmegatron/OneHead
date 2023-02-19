@@ -6,10 +6,7 @@ import discord.ext.test as dpytest
 from onehead.core import Core
 from onehead.game import Game
 
-from conftest import add_ihl_role
-
-
-TEST_USER: str = "TestUser0_0_nick"
+from conftest import add_ihl_role, TEST_USER
 
 
 class TestCommend:
@@ -60,8 +57,8 @@ class TestCommend:
         core.previous_game.dire = []
 
         await add_ihl_role(bot, "IHL")    
-        await dpytest.message(f"!commend RBEEZAY")
-        assert dpytest.verify().message().content(f"RBEEZAY cannot be commended as they did not participate in the previous game.")
+        await dpytest.message("!commend RBEEZAY")
+        assert dpytest.verify().message().content("RBEEZAY cannot be commended as they did not participate in the previous game.")
         
     @pytest.mark.asyncio
     async def test_previously_commended(self, bot: Bot) -> None:
@@ -73,7 +70,7 @@ class TestCommend:
         core.previous_game._commends["RBEEZAY"] = [TEST_USER]
 
         await add_ihl_role(bot, "IHL")    
-        await dpytest.message(f"!commend RBEEZAY")
+        await dpytest.message("!commend RBEEZAY")
         assert dpytest.verify().message().content(f"RBEEZAY has already been commended by {TEST_USER}.")
         
     @pytest.mark.asyncio
@@ -85,8 +82,8 @@ class TestCommend:
         core.previous_game.dire = []
 
         await add_ihl_role(bot, "IHL")    
-        await dpytest.message(f"!commend RBEEZAY")
-        assert dpytest.verify().message().content(f"RBEEZAY has been commended.")
+        await dpytest.message("!commend RBEEZAY")
+        assert dpytest.verify().message().content("RBEEZAY has been commended.")
         
 
 class TestReport:
@@ -145,8 +142,8 @@ class TestReport:
         core.previous_game.dire = []
 
         await add_ihl_role(bot, "IHL")    
-        await dpytest.message(f"!report RBEEZAY abandon")
-        assert dpytest.verify().message().content(f"RBEEZAY cannot be reported as they did not participate in the previous game.")
+        await dpytest.message("!report RBEEZAY abandon")
+        assert dpytest.verify().message().content("RBEEZAY cannot be reported as they did not participate in the previous game.")
         
     @pytest.mark.asyncio
     async def test_reported_previously(self, bot: Bot) -> None:
@@ -171,4 +168,4 @@ class TestReport:
 
         await add_ihl_role(bot, "IHL")    
         await dpytest.message("!report RBEEZAY abandon")
-        assert dpytest.verify().message().content(f"RBEEZAY has been reported.")
+        assert dpytest.verify().message().content("RBEEZAY has been reported.")

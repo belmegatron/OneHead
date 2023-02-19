@@ -12,9 +12,6 @@ from onehead.core import Core
 from conftest import add_ihl_role
 
 
-TEST_USER: str = "TestUser0_0_nick"
-
-
 class TestBets:
     @pytest.mark.asyncio
     async def test_no_ihl_role(self, bot: Bot) -> None:
