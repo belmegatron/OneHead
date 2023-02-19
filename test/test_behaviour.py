@@ -117,7 +117,7 @@ class TestReport:
         
         core: Core = bot.get_cog("Core")
         core.previous_game = Game()
-        core.previous_game.radiant = []
+        core.previous_game.radiant = [{"name": "RBEEZAY"}]
         core.previous_game.dire = []
 
         await add_ihl_role(bot, "IHL")    
