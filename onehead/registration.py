@@ -49,6 +49,6 @@ class Registration(Cog):
         exists, _ = self.database.player_exists(name)
         if exists:
             self.database.remove_player(name)
-            await ctx.send(f"{name} successfully removed from the database.")
+            await ctx.send(f"{name} has been successfully removed from the database.")
         else:
             await ctx.send(f"{name} could not be found in the database.")
