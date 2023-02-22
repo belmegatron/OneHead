@@ -2,8 +2,15 @@ from typing import TYPE_CHECKING, Literal
 
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 
-from onehead.common import (OneHeadException, Player, PlayerTransfer, Roles,
-                            Team, get_bot_instance, get_player_names)
+from onehead.common import (
+    OneHeadException,
+    Player,
+    PlayerTransfer,
+    Roles,
+    Team,
+    get_bot_instance,
+    get_player_names,
+)
 from onehead.database import Database
 from onehead.game import Game
 from onehead.lobby import Lobby
@@ -14,15 +21,13 @@ if TYPE_CHECKING:
 
 
 class Transfers(Cog):
-    
     SHUFFLE_COST: Literal[500] = 500
-    
+
     def __init__(self, database: Database, lobby: Lobby) -> None:
         self.database: Database = database
         self.lobby: Lobby = lobby
 
     async def refund_transfers(self, ctx: Context) -> None:
-
         bot: Bot = get_bot_instance()
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         current_game: Game = core.current_game
@@ -47,7 +52,7 @@ class Transfers(Cog):
         bot: Bot = get_bot_instance()
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         current_game: Game = core.current_game
-        
+
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
 
         if current_game.transfer_window_open() is False:
@@ -75,7 +80,9 @@ class Transfers(Cog):
             )
             return
 
-        await ctx.send(f"{name} has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!")
+        await ctx.send(
+            f"{name} has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!"
+        )
 
         self.database.update_rbucks(name, -1 * Transfers.SHUFFLE_COST)
         transfers.append(PlayerTransfer(name, Transfers.SHUFFLE_COST))

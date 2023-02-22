@@ -6,8 +6,15 @@ from typing import Any
 from discord.ext.commands import Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import (OneHeadException, Player, Roles, Side, Team,
-                            TeamCombination, get_logger)
+from onehead.common import (
+    OneHeadException,
+    Player,
+    Roles,
+    Side,
+    Team,
+    TeamCombination,
+    get_logger,
+)
 from onehead.database import Database
 from onehead.lobby import Lobby
 from onehead.statistics import Statistics
@@ -17,7 +24,6 @@ log: Logger = get_logger()
 
 class Matchmaking(Cog):
     def __init__(self, database: Database, pre_game: Lobby) -> None:
-
         self.database: Database = database
         self.pre_game: Lobby = pre_game
 
@@ -149,10 +155,10 @@ class Matchmaking(Cog):
 
         radiant: Team = balanced_teams[Side.RADIANT]
         dire: Team = balanced_teams[Side.DIRE]
-        
+
         radiant_mmr: int = sum([x["adjusted_mmr"] for x in radiant])
         dire_mmr: int = sum([x["adjusted_mmr"] for x in dire])
-        
+
         log.debug(f"Radiant MMR: {radiant_mmr}, Dire MMR: {dire_mmr}")
 
         return radiant, dire

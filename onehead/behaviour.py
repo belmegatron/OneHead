@@ -3,8 +3,7 @@ from typing import TYPE_CHECKING
 
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 
-from onehead.common import (Player, Roles, get_bot_instance, get_logger,
-                            get_player_names)
+from onehead.common import Player, Roles, get_bot_instance, get_logger, get_player_names
 from onehead.database import Database
 from onehead.game import Game
 
@@ -34,7 +33,11 @@ class Behaviour(Cog):
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         previous_game: Game | None = core.previous_game
 
-        if previous_game is None or previous_game.radiant is None or previous_game.dire is None:
+        if (
+            previous_game is None
+            or previous_game.radiant is None
+            or previous_game.dire is None
+        ):
             await ctx.send("Unable to commend as a game is yet to be played.")
             return
 
@@ -51,7 +54,9 @@ class Behaviour(Cog):
             return
 
         if player_name not in radiant and player_name not in dire:
-            await ctx.send(f"{player_name} cannot be commended as they did not participate in the previous game.")
+            await ctx.send(
+                f"{player_name} cannot be commended as they did not participate in the previous game."
+            )
             return
 
         if previous_game.has_been_previously_commended(commender, player_name):
@@ -61,7 +66,9 @@ class Behaviour(Cog):
         player: Player = self.database.lookup_player(player_name)
         current_behaviour_score: int = player["behaviour"]
 
-        new_score: int = min(current_behaviour_score + self.COMMEND_MODIFIER, self.MAX_BEHAVIOUR_SCORE)
+        new_score: int = min(
+            current_behaviour_score + self.COMMEND_MODIFIER, self.MAX_BEHAVIOUR_SCORE
+        )
 
         self.database.modify_behaviour_score(player_name, new_score, True)
 
@@ -80,7 +87,11 @@ class Behaviour(Cog):
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         previous_game: Game | None = core.previous_game
 
-        if previous_game is None or previous_game.radiant is None or previous_game.dire is None:
+        if (
+            previous_game is None
+            or previous_game.radiant is None
+            or previous_game.dire is None
+        ):
             await ctx.send("Unable to report as a game is yet to be played.")
             return
 
@@ -99,7 +110,9 @@ class Behaviour(Cog):
             return
 
         if player_name not in radiant and player_name not in dire:
-            await ctx.send(f"{player_name} cannot be reported as they did not participate in the previous game.")
+            await ctx.send(
+                f"{player_name} cannot be reported as they did not participate in the previous game."
+            )
             return
 
         if previous_game.has_been_previously_reported(reporter, player_name):
@@ -109,7 +122,9 @@ class Behaviour(Cog):
         player: Player = self.database.lookup_player(player_name)
         current_behaviour_score: int = player["behaviour"]
 
-        new_score: int = max(current_behaviour_score + self.REPORT_MODIFIER, self.MIN_BEHAVIOUR_SCORE)
+        new_score: int = max(
+            current_behaviour_score + self.REPORT_MODIFIER, self.MIN_BEHAVIOUR_SCORE
+        )
 
         self.database.modify_behaviour_score(player_name, new_score, False)
 

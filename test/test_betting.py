@@ -73,7 +73,11 @@ class TestPlaceBet:
 
         core.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
-        assert dpytest.verify().message().content("RBEEZAY cannot bet as they have no available RBUCKS.")
+        assert (
+            dpytest.verify()
+            .message()
+            .content("RBEEZAY cannot bet as they have no available RBUCKS.")
+        )
 
     @pytest.mark.asyncio
     async def test_invalid_side(self, bot: Bot) -> None:
@@ -85,7 +89,11 @@ class TestPlaceBet:
 
         core.current_game._betting_window_open = True
         await dpytest.message("!bet derp all", 0, member)
-        assert dpytest.verify().message().content("RBEEZAY - Cannot bet on derp - Must be either Radiant/Dire.")
+        assert (
+            dpytest.verify()
+            .message()
+            .content("RBEEZAY - Cannot bet on derp - Must be either Radiant/Dire.")
+        )
 
     @pytest.mark.asyncio
     async def test_stake_not_valid_int(self, bot: Bot) -> None:
@@ -98,7 +106,11 @@ class TestPlaceBet:
         core.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} foobar", 0, member)
         assert (
-            dpytest.verify().message().content("RBEEZAY - foobar is not a valid number of RBUCKS to place a bet with.")
+            dpytest.verify()
+            .message()
+            .content(
+                "RBEEZAY - foobar is not a valid number of RBUCKS to place a bet with."
+            )
         )
 
     @pytest.mark.asyncio
@@ -112,7 +124,9 @@ class TestPlaceBet:
         core.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} -100", 0, member)
         assert (
-            dpytest.verify().message().content("RBEEZAY - Bet stake must be greater than 0.")
+            dpytest.verify()
+            .message()
+            .content("RBEEZAY - Bet stake must be greater than 0.")
         )
 
     @pytest.mark.asyncio
@@ -128,9 +142,13 @@ class TestPlaceBet:
         stake: int = record["rbucks"] + 100
         await dpytest.message(f"!bet {Side.RADIANT} {stake:.0f}", 0, member)
         assert (
-            dpytest.verify().message().content(f"Unable to place bet - RBEEZAY tried to stake {stake:.0f} RBUCKS but only has {record['rbucks']:.0f} RBUCKS available.")
+            dpytest.verify()
+            .message()
+            .content(
+                f"Unable to place bet - RBEEZAY tried to stake {stake:.0f} RBUCKS but only has {record['rbucks']:.0f} RBUCKS available."
+            )
         )
-    
+
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
         member: Member = await dpytest.member_join(name="RBEEZAY")
@@ -143,5 +161,9 @@ class TestPlaceBet:
         core.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
         assert (
-            dpytest.verify().message().content(f"RBEEZAY has placed a bet of {record['rbucks']:.0f} RBUCKS on {Side.RADIANT.title()}.")
+            dpytest.verify()
+            .message()
+            .content(
+                f"RBEEZAY has placed a bet of {record['rbucks']:.0f} RBUCKS on {Side.RADIANT.title()}."
+            )
         )

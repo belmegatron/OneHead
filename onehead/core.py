@@ -1,13 +1,27 @@
 from discord import Embed, Intents
-from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
-                                  command, has_role, max_concurrency)
+from discord.ext.commands import (
+    Bot,
+    BucketType,
+    Cog,
+    Command,
+    Context,
+    command,
+    has_role,
+    max_concurrency,
+)
 from tabulate import tabulate
 
 from onehead.behaviour import Behaviour
 from onehead.betting import Betting
 from onehead.channels import Channels
-from onehead.common import (OneHeadException, Roles, Side, get_player_names,
-                            load_config, set_bot_instance)
+from onehead.common import (
+    OneHeadException,
+    Roles,
+    Side,
+    get_player_names,
+    load_config,
+    set_bot_instance,
+)
 from onehead.database import Database
 from onehead.game import Game
 from onehead.lobby import Lobby, on_presence_update
@@ -118,7 +132,9 @@ class Core(Cog):
         await self.channels.create_discord_channels(ctx)
 
         if self.current_game.radiant is None or self.current_game.dire is None:
-            raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
+            raise OneHeadException(
+                f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}"
+            )
 
         await self.channels.move_discord_channels(ctx)
         await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
@@ -198,7 +214,9 @@ class Core(Cog):
         result = result.lower()
 
         if result not in Side:
-            await ctx.send(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
+            await ctx.send(
+                f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}."
+            )
             return
 
         bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
@@ -213,9 +231,13 @@ class Core(Cog):
         await ctx.send("Updating Scores...")
 
         if self.current_game.radiant is None or self.current_game.dire is None:
-            raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
+            raise OneHeadException(
+                f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}"
+            )
 
-        radiant_names, dire_names = get_player_names(self.current_game.radiant, self.current_game.dire)
+        radiant_names, dire_names = get_player_names(
+            self.current_game.radiant, self.current_game.dire
+        )
 
         if result == Side.RADIANT:
             await ctx.send("Radiant Victory!")
@@ -241,8 +263,14 @@ class Core(Cog):
         If a game is active, displays the teams and their respective players.
         """
 
-        if self.current_game.in_progress() and self.current_game.radiant and self.current_game.dire:
-            t1_names, t2_names = get_player_names(self.current_game.radiant, self.current_game.dire)
+        if (
+            self.current_game.in_progress()
+            and self.current_game.radiant
+            and self.current_game.dire
+        ):
+            t1_names, t2_names = get_player_names(
+                self.current_game.radiant, self.current_game.dire
+            )
             players = {Side.RADIANT: t1_names, Side.DIRE: t2_names}
             in_game_players = tabulate(players, headers="keys", tablefmt="simple")
             await ctx.send(f"**Current Game** ```\n" f"{in_game_players}```")
@@ -265,7 +293,9 @@ class Core(Cog):
         Display the top 10 most recent matches in the IHL.
         """
 
-        await ctx.send("https://www.dotabuff.com/esports/leagues/13630-igc-inhouse-league")
+        await ctx.send(
+            "https://www.dotabuff.com/esports/leagues/13630-igc-inhouse-league"
+        )
 
     @has_role(Roles.ADMIN)
     @command(aliases=["sim"])

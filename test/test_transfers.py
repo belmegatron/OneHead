@@ -25,7 +25,11 @@ class TestShuffle:
         current_game._transfer_window_open = False
 
         await dpytest.message("!shuffle")
-        assert dpytest.verify().message().content("Unable to shuffle as player transfer window is closed.")
+        assert (
+            dpytest.verify()
+            .message()
+            .content("Unable to shuffle as player transfer window is closed.")
+        )
 
     @pytest.mark.asyncio
     async def test_invalid_teams(self, bot: Bot) -> None:
@@ -49,7 +53,11 @@ class TestShuffle:
         current_game.dire = []
 
         await dpytest.message("!shuffle")
-        assert dpytest.verify().message().content(f"{TEST_USER} is unable to shuffle as they did not sign up.")
+        assert (
+            dpytest.verify()
+            .message()
+            .content(f"{TEST_USER} is unable to shuffle as they did not sign up.")
+        )
 
     @pytest.mark.asyncio
     async def test_insufficient_rbucks(self, bot: Bot) -> None:
@@ -87,17 +95,25 @@ class TestShuffle:
         current_game._transfer_window_open = True
         current_game.radiant = []
         current_game.dire = []
-        
+
         core.lobby.get_signups = Mock()
         core.lobby.get_signups.return_value = [TEST_USER]
 
         core.database.lookup_player = Mock()
-        core.database.lookup_player.return_value = {"rbucks": Transfers.SHUFFLE_COST + 100}
+        core.database.lookup_player.return_value = {
+            "rbucks": Transfers.SHUFFLE_COST + 100
+        }
         core.database.update_rbucks = Mock()
-        
+
         core.matchmaking.balance = AsyncMock()
         core.matchmaking.balance.return_value = [{"name": "A"}], [{"name": "B"}]
         core.setup_teams = AsyncMock()
 
         await dpytest.message("!shuffle")
-        assert dpytest.verify().message().content(f"{TEST_USER} has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!")
+        assert (
+            dpytest.verify()
+            .message()
+            .content(
+                f"{TEST_USER} has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!"
+            )
+        )

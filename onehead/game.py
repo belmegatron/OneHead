@@ -7,7 +7,6 @@ from onehead.common import Bet, PlayerTransfer, Team
 
 class Game:
     def __init__(self) -> None:
-
         self._in_progress: bool = False
         self._cancel_event: asyncio.Event = asyncio.Event()
         self._transfer_window_open: bool = False
@@ -30,7 +29,6 @@ class Game:
         self._cancel_event.set()
 
     async def open_transfer_window(self, ctx) -> None:
-
         self._transfer_window_open = True
         await ctx.send("Player transfer window is now open for 2 minutes!")
 
@@ -43,7 +41,6 @@ class Game:
         await ctx.send("Player transfer window has now closed!")
 
     async def open_betting_window(self, ctx: Context) -> None:
-
         self._betting_window_open = True
 
         await ctx.send("Bets are now open for 5 minutes!")
@@ -81,7 +78,6 @@ class Game:
         return reports is not None and reporter in reports
 
     def add_report(self, reporter: str, reportee: str) -> None:
-
         updated_reports: list[str] | None = self._reports.get(reportee)
         if updated_reports is None:
             self._reports[reportee] = [reporter]
@@ -89,7 +85,6 @@ class Game:
             updated_reports.append(reporter)
 
     def add_commend(self, commender: str, commendee: str) -> None:
-
         updated_commends: list[str] | None = self._commends.get(commendee)
         if updated_commends is None:
             self._commends[commendee] = [commender]

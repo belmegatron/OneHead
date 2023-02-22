@@ -5,11 +5,9 @@ from onehead.database import Database
 
 
 class Registration(Cog):
-
     MIN_MMR: int = 1000
 
     def __init__(self, database: Database) -> None:
-
         self.database: Database = database
 
     @has_role(Roles.MEMBER)

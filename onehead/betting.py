@@ -5,8 +5,7 @@ from discord import Embed, colour
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import (Bet, OneHeadException, Player, Roles, Side,
-                            get_bot_instance)
+from onehead.common import Bet, OneHeadException, Player, Roles, Side, get_bot_instance
 
 if TYPE_CHECKING:
     from onehead.core import Core
@@ -33,7 +32,9 @@ class Betting(Cog):
             if bet_results.get(bet.player) is None:
                 bet_results[bet.player] = 0
 
-            if (radiant_won and bet.side == Side.RADIANT) or (radiant_won is False and bet.side == Side.DIRE):
+            if (radiant_won and bet.side == Side.RADIANT) or (
+                radiant_won is False and bet.side == Side.DIRE
+            ):
                 bet_results[bet.player] += bet.stake * 2.0
             else:
                 bet_results[bet.player] -= bet.stake
@@ -93,7 +94,9 @@ class Betting(Cog):
             return
 
         if side not in Side:
-            await ctx.send(f"{name} - Cannot bet on {side} - Must be either Radiant/Dire.")
+            await ctx.send(
+                f"{name} - Cannot bet on {side} - Must be either Radiant/Dire."
+            )
             return
 
         if amount == "all":
@@ -102,7 +105,9 @@ class Betting(Cog):
             try:
                 stake = int(amount)
             except ValueError:
-                await ctx.send(f"{name} - {amount} is not a valid number of RBUCKS to place a bet with.")
+                await ctx.send(
+                    f"{name} - {amount} is not a valid number of RBUCKS to place a bet with."
+                )
                 return
 
         if stake <= 0:
@@ -118,7 +123,9 @@ class Betting(Cog):
         bets.append(Bet(side, stake, name))
         self.database.update_rbucks(name, -stake)
 
-        await ctx.send(f"{name} has placed a bet of {stake:.0f} RBUCKS on {side.title()}.")
+        await ctx.send(
+            f"{name} has placed a bet of {stake:.0f} RBUCKS on {side.title()}."
+        )
 
     @has_role(Roles.MEMBER)
     @command()

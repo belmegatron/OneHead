@@ -102,7 +102,6 @@ def get_player_names(t1: "Team", t2: "Team") -> tuple[tuple[str, ...], tuple[str
 
 
 def load_config() -> dict:
-
     try:
         config_path: Path = Path(ROOT_DIR, "secrets/config.json")
         with open(str(config_path), "r") as f:

@@ -36,7 +36,7 @@ async def add_ihl_role(bot: Bot, role: str, name: str = None) -> None:
     guilds: Sequence[Guild] = bot.guilds
     guild: Guild = guilds[0]
     members: list[Member] = list(bot.get_all_members())
-    
+
     if name is not None:
         target_member: Member = [member for member in members if member.name == name][0]
     else:

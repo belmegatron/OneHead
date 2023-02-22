@@ -28,7 +28,9 @@ class ScoreBoard(Cog):
             if remaining_size <= self.DISCORD_MAX_MESSAGE_LENGTH:
                 chunk: str = scoreboard[offset:]
             else:
-                max_chunk: str = scoreboard[offset: offset + self.DISCORD_MAX_MESSAGE_LENGTH]
+                max_chunk: str = scoreboard[
+                    offset : offset + self.DISCORD_MAX_MESSAGE_LENGTH
+                ]
                 eol: int = max_chunk.rfind("\n")
                 chunk = max_chunk[:eol]
 
@@ -122,11 +124,15 @@ class ScoreBoard(Cog):
         Statistics.calculate_win_percentage(scoreboard)
         Statistics.calculate_rating(scoreboard)
 
-        scoreboard_sorted_rows: list[Player] = self._calculate_positions(scoreboard, "rating")
-        scoreboard_sorted_rows_and_columns: list[dict[str, Any]] = self._sort_scoreboard_key_order(
-            scoreboard_sorted_rows
+        scoreboard_sorted_rows: list[Player] = self._calculate_positions(
+            scoreboard, "rating"
         )
+        scoreboard_sorted_rows_and_columns: list[
+            dict[str, Any]
+        ] = self._sort_scoreboard_key_order(scoreboard_sorted_rows)
 
-        sorted_scoreboard: str = tabulate(scoreboard_sorted_rows_and_columns, headers="keys", tablefmt="simple")
+        sorted_scoreboard: str = tabulate(
+            scoreboard_sorted_rows_and_columns, headers="keys", tablefmt="simple"
+        )
 
         return sorted_scoreboard

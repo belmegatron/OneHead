@@ -11,7 +11,6 @@ class Database(commands.Cog):
         self.db: TinyDB = TinyDB(config["tinydb"]["path"])
 
     def player_exists(self, player_name: str) -> tuple[bool, int]:
-
         User: Query = Query()
 
         result: Document = self.db.get(User.name == player_name)
@@ -22,7 +21,6 @@ class Database(commands.Cog):
             return False, -1
 
     def add_player(self, player_name: str, mmr: int) -> None:
-
         if not isinstance(player_name, str):
             raise OneHeadException("Player Name not a valid string.")
 
@@ -47,7 +45,6 @@ class Database(commands.Cog):
         )
 
     def remove_player(self, player_name: str) -> None:
-
         if not isinstance(player_name, str):
             raise OneHeadException("Player name not a valid string.")
 
@@ -59,7 +56,6 @@ class Database(commands.Cog):
         self.db.remove(doc_ids=[doc_id])
 
     def update_rbucks(self, bettor_name: str, rbucks: int) -> None:
-
         exists, doc_id = self.player_exists(bettor_name)
 
         if exists is False:
@@ -68,7 +64,6 @@ class Database(commands.Cog):
         self.db.update(add("rbucks", rbucks), doc_ids=[doc_id])
 
     def update_player(self, player_name: str, win: bool) -> None:
-
         exists, doc_id = self.player_exists(player_name)
 
         if exists is False:
@@ -86,7 +81,6 @@ class Database(commands.Cog):
             self.db.update(add("rbucks", 50), doc_ids=[doc_id])
 
     def lookup_player(self, player_name: str) -> Player:
-
         User: Query = Query()
 
         response: Player = self.db.get(User.name == player_name)
@@ -105,7 +99,6 @@ class Database(commands.Cog):
     def modify_behaviour_score(
         self, player_name: str, new_score: int, is_commend: bool
     ) -> None:
-
         exists, doc_id = self.player_exists(player_name)
 
         if exists is False:

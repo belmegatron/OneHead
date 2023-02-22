@@ -3,14 +3,21 @@ from logging import Logger
 from typing import TYPE_CHECKING
 
 from discord import Status
-from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
-                                  command, cooldown, has_role)
+from discord.ext.commands import (
+    Bot,
+    BucketType,
+    Cog,
+    Command,
+    Context,
+    command,
+    cooldown,
+    has_role,
+)
 from discord.guild import Guild
 from discord.role import Role
 from tabulate import tabulate
 
-from onehead.common import (OneHeadException, Player, Roles, get_bot_instance,
-                            get_logger)
+from onehead.common import OneHeadException, Player, Roles, get_bot_instance, get_logger
 from onehead.database import Database
 
 if TYPE_CHECKING:
@@ -45,7 +52,7 @@ class Lobby(Cog):
         """
         Messages all registered players of the IHL to come and sign up.
         """
-        
+
         guild: Guild | None = ctx.guild
         if guild is None:
             raise OneHeadException("No Guild associated with Discord Context.")
@@ -62,7 +69,9 @@ class Lobby(Cog):
             if signup_count == 0:
                 await ctx.send("There are currently no signups.")
             else:
-                await ctx.send(f"Only {signup_count} Signup(s), require {10 - signup_count} more.")
+                await ctx.send(
+                    f"Only {signup_count} Signup(s), require {10 - signup_count} more."
+                )
         else:
             return True
 
@@ -90,15 +99,21 @@ class Lobby(Cog):
             )
 
             original_signups: list[str] = self._signups
-            players: list[Player] = [self.database.lookup_player(signup) for signup in self._signups]
+            players: list[Player] = [
+                self.database.lookup_player(signup) for signup in self._signups
+            ]
 
             # TODO: Need to handle the case where we have > 10 with the same behaviour score.
 
             top_10_players_by_behaviour_score: list[Player] = sorted(
                 players, key=lambda d: d["behaviour"], reverse=True
             )[:10]
-            self._signups = [player["name"] for player in top_10_players_by_behaviour_score]
-            benched_players: list[str] = [x for x in original_signups if x not in self._signups]
+            self._signups = [
+                player["name"] for player in top_10_players_by_behaviour_score
+            ]
+            benched_players: list[str] = [
+                x for x in original_signups if x not in self._signups
+            ]
 
         await ctx.send(f"**Benched Players:** ```\n{benched_players}```")
         await ctx.send(f"**Selected Players:** ```\n{self._signups}```")
@@ -111,7 +126,9 @@ class Lobby(Cog):
         """
 
         await ctx.send(f"There are currently {len(self._signups)} players signed up.")
-        signups_dict = [{"#": i, "name": name} for i, name in enumerate(self._signups, start=1)]
+        signups_dict = [
+            {"#": i, "name": name} for i, name in enumerate(self._signups, start=1)
+        ]
         signups: str = tabulate(signups_dict, headers="keys", tablefmt="simple")
 
         await ctx.send(f"**Current Signups** ```\n{signups}```")
@@ -204,14 +221,20 @@ class Lobby(Cog):
         Initiates a ready check, after approx. 30s the result of the check will be displayed.
         """
         if await self.signup_check(ctx):
-            await ctx.send("Ready Check Started, 30s remaining - type '!ready' to ready up.")
+            await ctx.send(
+                "Ready Check Started, 30s remaining - type '!ready' to ready up."
+            )
             self._ready_check_in_progress = True
             await sleep(30)
-            players_not_ready: list[str] = [x for x in self._signups if x not in self._players_ready]
+            players_not_ready: list[str] = [
+                x for x in self._signups if x not in self._players_ready
+            ]
             if len(players_not_ready) == 0:
                 await ctx.send("Ready Check Complete - All players ready.")
             else:
-                await ctx.send(f"Still waiting on {len(players_not_ready)} players: {', '.join(players_not_ready)}")
+                await ctx.send(
+                    f"Still waiting on {len(players_not_ready)} players: {', '.join(players_not_ready)}"
+                )
 
         self._ready_check_in_progress = False
         self._players_ready = []

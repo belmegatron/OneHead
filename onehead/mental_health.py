@@ -6,7 +6,6 @@ from onehead.common import Roles
 
 
 class MentalHealth(Cog):
-
     quotes: list[str] = [
         """'It's not whether you get knocked down; it's whether you get up.' — Vince Lombardi""",
         """'The only way to prove that you’re a good sport is to lose.' - Ernie Banks""",
