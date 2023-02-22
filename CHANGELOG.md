@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.43.0] - 2023-02-22
+
+### Added
+- Added a new set of dpytest based tests for testing commands.
+
+### Changed
+- discordpy upgraded to v2.0.
+- Fixed a bug in ready check falsely reporting all players were ready.
+- Fixed a bug in commend/report where the player being commended/reported and the player issuing the command were in the wrong order.
+- Fixed a bug where calling !bet could have resulted in the bet not being registered.
+
 ## [1.42.5] - 2023-02-06
 
 ### Changed
