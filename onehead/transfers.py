@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 
@@ -7,6 +7,10 @@ from onehead.common import (OneHeadException, Player, PlayerTransfer, Roles,
 from onehead.database import Database
 from onehead.game import Game
 from onehead.lobby import Lobby
+
+if TYPE_CHECKING:
+    from onehead.core import Core
+    from onehead.matchmaking import Matchmaking
 
 
 class Transfers(Cog):
@@ -20,7 +24,7 @@ class Transfers(Cog):
     async def refund_transfers(self, ctx: Context) -> None:
 
         bot: Bot = get_bot_instance()
-        core: Cog = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         current_game: Game = core.current_game
 
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
@@ -41,7 +45,7 @@ class Transfers(Cog):
         """
 
         bot: Bot = get_bot_instance()
-        core: Cog = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         current_game: Game = core.current_game
         
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
@@ -80,7 +84,7 @@ class Transfers(Cog):
             tuple[str, ...], tuple[str, ...]
         ] = get_player_names(current_game.radiant, current_game.dire)
 
-        matchmaking: Cog = bot.get_cog("Matchmaking")
+        matchmaking: Matchmaking = bot.get_cog("Matchmaking")  # type: ignore[assignment]
 
         shuffled_teams: tuple[Team, Team] = await matchmaking.balance(ctx)
 

@@ -1,13 +1,12 @@
-import pytest
 from unittest.mock import Mock
 
-from discord.ext.commands import Bot, errors
 import discord.ext.test as dpytest
+import pytest
+from conftest import TEST_USER, add_ihl_role
+from discord.ext.commands import Bot, errors
 
 from onehead.common import OneHeadException
 from onehead.registration import Registration
-
-from conftest import add_ihl_role, TEST_USER
 
 
 class TestRegister:
@@ -28,7 +27,7 @@ class TestRegister:
         await add_ihl_role(bot, "IHL")
         await dpytest.message(f"!register {Registration.MIN_MMR - 100}")
         assert dpytest.verify().message().content(f"{Registration.MIN_MMR - 100} MMR is too low, must be greater or equal to {Registration.MIN_MMR}.")
-    
+
     @pytest.mark.asyncio
     async def test_already_registered(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")

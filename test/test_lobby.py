@@ -1,16 +1,15 @@
-import pytest
 from typing import Sequence
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
 
-from discord.ext.commands import Bot, errors
 import discord.ext.test as dpytest
+import pytest
+from conftest import TEST_USER, add_ihl_role
+from discord.ext.commands import Bot, errors
 from discord.guild import Guild
 from discord.role import Role
 
-from onehead.lobby import Lobby
 import onehead.lobby
-
-from conftest import add_ihl_role, TEST_USER
+from onehead.lobby import Lobby
 
 
 class TestSummon:

@@ -1,15 +1,13 @@
+import discord.ext.test as dpytest
 import pytest
-
+from conftest import add_ihl_role
 from discord import Embed, colour
 from discord.ext.commands import Bot, errors
 from discord.member import Member
-import discord.ext.test as dpytest
 
 from onehead.betting import Bet
 from onehead.common import Player, Side
 from onehead.core import Core
-
-from conftest import add_ihl_role
 
 
 class TestBets:
@@ -127,7 +125,7 @@ class TestPlaceBet:
         record: Player = core.database.lookup_player("RBEEZAY")
 
         core.current_game._betting_window_open = True
-        stake: int = record['rbucks'] + 100
+        stake: int = record["rbucks"] + 100
         await dpytest.message(f"!bet {Side.RADIANT} {stake:.0f}", 0, member)
         assert (
             dpytest.verify().message().content(f"Unable to place bet - RBEEZAY tried to stake {stake:.0f} RBUCKS but only has {record['rbucks']:.0f} RBUCKS available.")

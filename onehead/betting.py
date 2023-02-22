@@ -5,9 +5,11 @@ from discord import Embed, colour
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import Bet, OneHeadException, Player, Roles, Side, get_bot_instance
+from onehead.common import (Bet, OneHeadException, Player, Roles, Side,
+                            get_bot_instance)
 
 if TYPE_CHECKING:
+    from onehead.core import Core
     from onehead.database import Database
     from onehead.game import Game
     from onehead.lobby import Lobby
@@ -20,7 +22,7 @@ class Betting(Cog):
 
     def get_bet_results(self, radiant_won: bool) -> dict[str, float]:
         bot: Bot = get_bot_instance()
-        core: Cog = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         current_game: Game = core.current_game
 
         active_bets: list[Bet] = current_game.get_bets()
@@ -42,7 +44,7 @@ class Betting(Cog):
     @command()
     async def bets(self, ctx: Context) -> None:
         bot: Bot = get_bot_instance()
-        core: Cog = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         current_game: Game = core.current_game
 
         active_bets: list[Bet] = current_game.get_bets()
@@ -66,7 +68,7 @@ class Betting(Cog):
         """
 
         bot: Bot = get_bot_instance()
-        core: Cog = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         current_game: Game = core.current_game
 
         bets: list[Bet] = current_game.get_bets()
@@ -89,7 +91,7 @@ class Betting(Cog):
         if available_balance == 0:
             await ctx.send(f"{name} cannot bet as they have no available RBUCKS.")
             return
-        
+
         if side not in Side:
             await ctx.send(f"{name} - Cannot bet on {side} - Must be either Radiant/Dire.")
             return
@@ -161,7 +163,7 @@ class Betting(Cog):
 
     async def refund_all_bets(self, ctx: Context) -> None:
         bot: Bot = get_bot_instance()
-        core: Cog = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         current_game: Game = core.current_game
 
         active_bets: list[Bet] = current_game.get_bets()

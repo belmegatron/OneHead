@@ -3,11 +3,14 @@ from logging import Logger
 from typing import TYPE_CHECKING
 
 from discord import Status
-from discord.ext.commands import Bot, BucketType, Cog, Command, Context, command, cooldown, has_role
+from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
+                                  command, cooldown, has_role)
+from discord.guild import Guild
 from discord.role import Role
 from tabulate import tabulate
 
-from onehead.common import Player, Roles, get_bot_instance, get_logger
+from onehead.common import (OneHeadException, Player, Roles, get_bot_instance,
+                            get_logger)
 from onehead.database import Database
 
 if TYPE_CHECKING:
@@ -23,7 +26,7 @@ class Lobby(Cog):
         self._signups: list[str] = []
         self._players_ready: list[str] = []
         self._ready_check_in_progress: bool = False
-        self.context: Context = None
+        self._context: Context | None = None
         self._signups_disabled: bool = False
 
     def disable_signups(self) -> None:
@@ -42,8 +45,12 @@ class Lobby(Cog):
         """
         Messages all registered players of the IHL to come and sign up.
         """
+        
+        guild: Guild | None = ctx.guild
+        if guild is None:
+            raise OneHeadException("No Guild associated with Discord Context.")
 
-        ihl_role: Role = [x for x in ctx.guild.roles if x.name == Roles.MEMBER][0]
+        ihl_role: Role = [x for x in guild.roles if x.name == Roles.MEMBER][0]
         if not ihl_role:
             return
 
@@ -104,7 +111,7 @@ class Lobby(Cog):
         """
 
         await ctx.send(f"There are currently {len(self._signups)} players signed up.")
-        signups_dict = [{"#": i + 1, "name": name} for i, name in enumerate(self._signups)]
+        signups_dict = [{"#": i, "name": name} for i, name in enumerate(self._signups, start=1)]
         signups: str = tabulate(signups_dict, headers="keys", tablefmt="simple")
 
         await ctx.send(f"**Current Signups** ```\n{signups}```")
@@ -129,11 +136,12 @@ class Lobby(Cog):
 
         if name in self._signups:
             await ctx.send(f"{name} is already signed up.")
+            return
         else:
             self._signups.append(name)
 
-        if self.context is None:
-            self.context = ctx
+        if self._context is None:
+            self._context = ctx
 
         await Command.invoke(self.who, ctx)
 
@@ -211,7 +219,9 @@ class Lobby(Cog):
 
 async def on_presence_update(before: "Member", after: "Member") -> None:
     bot: Bot = get_bot_instance()
-    lobby: Lobby = bot.get_cog("Lobby")
+    lobby: Lobby = bot.get_cog("Lobby")  # type: ignore[assignment]
+    if lobby._context is None:
+        return
 
     signups: list[str] = lobby.get_signups()
 
@@ -221,4 +231,4 @@ async def on_presence_update(before: "Member", after: "Member") -> None:
         reason: str = "Offline" if after.status == Status.offline else "Idle"
         log.info(f"{name} is now {reason}.")
         signups.remove(name)
-        await lobby.context.send(f"{name} has been signed out due to being {reason}.")
+        await lobby._context.send(f"{name} has been signed out due to being {reason}.")

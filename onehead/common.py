@@ -32,7 +32,7 @@ TeamCombination = tuple[Team, Team]
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
 bot: Optional[Bot] = None
 
-ROOT_DIR: str = Path(__file__).resolve().parent.parent
+ROOT_DIR: Path = Path(__file__).resolve().parent.parent
 
 
 class EnumeratorMeta(EnumMeta):

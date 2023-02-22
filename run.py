@@ -1,12 +1,13 @@
 import asyncio
 
-from discord.ext.commands import Bot, Cog
+from discord.ext.commands import Bot
 
-from onehead.core import bot_factory
+from onehead.core import Core, bot_factory
+
 
 async def main() -> None:
     bot: Bot = await bot_factory()
-    core: Cog = bot.get_cog("Core")
+    core: Core = bot.get_cog("Core")  # type: ignore[assignment]
     await bot.start(core.token)
 
 

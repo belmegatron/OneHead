@@ -71,7 +71,6 @@ async def bot_factory() -> Bot:
 
 class Core(Cog):
     def __init__(self, bot: Bot, token: str) -> None:
-
         self.current_game: Game = Game()
         self.previous_game: Game | None = None
 
@@ -79,15 +78,15 @@ class Core(Cog):
         self.token: str = token
 
         self.config: dict = load_config()
-        self.behaviour: Behaviour = bot.get_cog("Behaviour")
-        self.database: Database = bot.get_cog("Database")
-        self.scoreboard: ScoreBoard = bot.get_cog("ScoreBoard")
-        self.lobby: Lobby = bot.get_cog("Lobby")
-        self.matchmaking: Matchmaking = bot.get_cog("Matchmaking")
-        self.channels: Channels = bot.get_cog("Channels")
-        self.registration: Registration = bot.get_cog("Registration")
-        self.betting: Betting = bot.get_cog("Betting")
-        self.transfers: Transfers = bot.get_cog("Transfers")
+        self.behaviour: Behaviour = bot.get_cog("Behaviour")  # type: ignore[assignment]
+        self.database: Database = bot.get_cog("Database")  # type: ignore[assignment]
+        self.scoreboard: ScoreBoard = bot.get_cog("ScoreBoard")  # type: ignore[assignment]
+        self.lobby: Lobby = bot.get_cog("Lobby")  # type: ignore[assignment]
+        self.matchmaking: Matchmaking = bot.get_cog("Matchmaking")  # type: ignore[assignment]
+        self.channels: Channels = bot.get_cog("Channels")  # type: ignore[assignment]
+        self.registration: Registration = bot.get_cog("Registration")  # type: ignore[assignment]
+        self.betting: Betting = bot.get_cog("Betting")  # type: ignore[assignment]
+        self.transfers: Transfers = bot.get_cog("Transfers")  # type: ignore[assignment]
 
         if None in (
             self.database,
@@ -103,7 +102,6 @@ class Core(Cog):
             raise OneHeadException("Unable to find cog(s)")
 
     async def reset(self, ctx: Context, game_cancelled=False) -> None:
-
         await self.channels.move_back_to_lobby(ctx)
 
         if game_cancelled is True:
@@ -115,15 +113,12 @@ class Core(Cog):
         self.lobby.clear_signups()
 
     async def setup_teams(self, ctx: Context) -> None:
-
-        status: Command = self.bot.get_command("status")
+        status: Command = self.bot.get_command("status")  # type: ignore[assignment]
         await Command.invoke(status, ctx)
         await self.channels.create_discord_channels(ctx)
 
         if self.current_game.radiant is None or self.current_game.dire is None:
-            raise OneHeadException(
-                f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}"
-            )
+            raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
 
         await self.channels.move_discord_channels(ctx)
         await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
@@ -156,7 +151,7 @@ class Core(Cog):
         await self.setup_teams(ctx)
         await self.current_game.open_transfer_window(ctx)
         await self.current_game.open_betting_window(ctx)
-        
+
         await ctx.send("GLHF")
 
     @has_role(Roles.ADMIN)
@@ -199,13 +194,11 @@ class Core(Cog):
                 "Cannot enter result as the Betting window for the game is currently open. Use the !stop command if you wish to abort the game."
             )
             return
-        
-        result: str = result.lower()
+
+        result = result.lower()
 
         if result not in Side:
-            await ctx.send(
-                f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}."
-            )
+            await ctx.send(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
             return
 
         bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
@@ -220,13 +213,9 @@ class Core(Cog):
         await ctx.send("Updating Scores...")
 
         if self.current_game.radiant is None or self.current_game.dire is None:
-            raise OneHeadException(
-                f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}"
-            )
+            raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
 
-        radiant_names, dire_names = get_player_names(
-            self.current_game.radiant, self.current_game.dire
-        )
+        radiant_names, dire_names = get_player_names(self.current_game.radiant, self.current_game.dire)
 
         if result == Side.RADIANT:
             await ctx.send("Radiant Victory!")
@@ -241,7 +230,7 @@ class Core(Cog):
             for player in dire_names:
                 self.database.update_player(player, True)
 
-        scoreboard: Command = self.bot.get_command("scoreboard")
+        scoreboard: Command = self.bot.get_command("scoreboard")  # type: ignore[assignment]
         await Command.invoke(scoreboard, ctx)
         await self.reset(ctx)
 
@@ -252,14 +241,8 @@ class Core(Cog):
         If a game is active, displays the teams and their respective players.
         """
 
-        if (
-            self.current_game.in_progress()
-            and self.current_game.radiant
-            and self.current_game.dire
-        ):
-            t1_names, t2_names = get_player_names(
-                self.current_game.radiant, self.current_game.dire
-            )
+        if self.current_game.in_progress() and self.current_game.radiant and self.current_game.dire:
+            t1_names, t2_names = get_player_names(self.current_game.radiant, self.current_game.dire)
             players = {Side.RADIANT: t1_names, Side.DIRE: t2_names}
             in_game_players = tabulate(players, headers="keys", tablefmt="simple")
             await ctx.send(f"**Current Game** ```\n" f"{in_game_players}```")
@@ -282,9 +265,7 @@ class Core(Cog):
         Display the top 10 most recent matches in the IHL.
         """
 
-        await ctx.send(
-            "https://www.dotabuff.com/esports/leagues/13630-igc-inhouse-league"
-        )
+        await ctx.send("https://www.dotabuff.com/esports/leagues/13630-igc-inhouse-league")
 
     @has_role(Roles.ADMIN)
     @command(aliases=["sim"])

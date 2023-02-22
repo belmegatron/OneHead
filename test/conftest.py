@@ -1,12 +1,11 @@
-import pytest_asyncio
 from typing import Generator, Sequence
 
-from discord.ext.commands import Bot
 import discord.ext.test as dpytest
+import pytest_asyncio
+from discord.ext.commands import Bot
 from discord.guild import Guild
 from discord.member import Member
 from discord.role import Role
-
 
 from onehead.core import bot_factory
 

@@ -1,15 +1,14 @@
-import pytest
 from unittest.mock import AsyncMock
 
-from discord.ext.commands import Bot, errors
 import discord.ext.test as dpytest
+import pytest
+from conftest import add_ihl_role
+from discord.ext.commands import Bot, errors
 
-from onehead.core import Core
 from onehead.common import OneHeadException, Player, Side
+from onehead.core import Core
 from onehead.game import Game
 from onehead.lobby import Lobby
-
-from conftest import add_ihl_role
 
 
 class TestStart:
@@ -193,4 +192,4 @@ class TestStatus:
         core.current_game.dire = [{"name": "F"}, {"name": "G"}, {"name": "H"}, {"name": "I"}, {"name": "J"}]
         
         await dpytest.message("!status")
-        assert dpytest.verify().message().content('**Current Game** ```\nradiant    dire\n---------  ------\nA          F\nB          G\nC          H\nD          I\nE          J```')
+        assert dpytest.verify().message().content("**Current Game** ```\nradiant    dire\n---------  ------\nA          F\nB          G\nC          H\nD          I\nE          J```")

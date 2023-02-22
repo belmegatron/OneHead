@@ -1,12 +1,10 @@
-import pytest
-
-from discord.ext.commands import Bot, errors
 import discord.ext.test as dpytest
+import pytest
+from conftest import TEST_USER, add_ihl_role
+from discord.ext.commands import Bot, errors
 
 from onehead.core import Core
 from onehead.game import Game
-
-from conftest import add_ihl_role, TEST_USER
 
 
 class TestCommend:
