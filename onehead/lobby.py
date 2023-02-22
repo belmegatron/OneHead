@@ -3,8 +3,7 @@ from logging import Logger
 from typing import TYPE_CHECKING
 
 from discord import Status
-from discord.ext.commands import (Bot, BucketType, Cog, Command, Context,
-                                  command, cooldown, has_role)
+from discord.ext.commands import Bot, BucketType, Cog, Command, Context, command, cooldown, has_role
 from discord.role import Role
 from tabulate import tabulate
 
@@ -20,11 +19,10 @@ log: Logger = get_logger()
 
 class Lobby(Cog):
     def __init__(self, database: Database) -> None:
-
         self.database: Database = database
         self._signups: list[str] = []
-        self.players_ready: list[str] = []
-        self.ready_check_in_progress: bool = False
+        self._players_ready: list[str] = []
+        self._ready_check_in_progress: bool = False
         self.context: Context = None
         self._signups_disabled: bool = False
 
@@ -52,15 +50,12 @@ class Lobby(Cog):
         await ctx.send(f"IHL DOTA - LET'S GO! {ihl_role.mention}")
 
     async def signup_check(self, ctx: Context) -> bool:
-
         signup_count: int = len(self._signups)
         if signup_count < 10:
             if signup_count == 0:
                 await ctx.send("There are currently no signups.")
             else:
-                await ctx.send(
-                    f"Only {signup_count} Signup(s), require {10 - signup_count} more."
-                )
+                await ctx.send(f"Only {signup_count} Signup(s), require {10 - signup_count} more.")
         else:
             return True
 
@@ -83,27 +78,20 @@ class Lobby(Cog):
         )
 
         if len(self._signups) > 10:
-
             await ctx.send(
                 "More than 10 signups identified, selecting the top 10 players with the highest behaviour score."
             )
 
             original_signups: list[str] = self._signups
-            players: list[Player] = [
-                self.database.lookup_player(signup) for signup in self._signups
-            ]
+            players: list[Player] = [self.database.lookup_player(signup) for signup in self._signups]
 
             # TODO: Need to handle the case where we have > 10 with the same behaviour score.
 
             top_10_players_by_behaviour_score: list[Player] = sorted(
                 players, key=lambda d: d["behaviour"], reverse=True
             )[:10]
-            self._signups = [
-                player["name"] for player in top_10_players_by_behaviour_score
-            ]
-            benched_players: list[str] = [
-                x for x in original_signups if x not in self._signups
-            ]
+            self._signups = [player["name"] for player in top_10_players_by_behaviour_score]
+            benched_players: list[str] = [x for x in original_signups if x not in self._signups]
 
         await ctx.send(f"**Benched Players:** ```\n{benched_players}```")
         await ctx.send(f"**Selected Players:** ```\n{self._signups}```")
@@ -116,9 +104,7 @@ class Lobby(Cog):
         """
 
         await ctx.send(f"There are currently {len(self._signups)} players signed up.")
-        signups_dict = [
-            {"#": i + 1, "name": name} for i, name in enumerate(self._signups)
-        ]
+        signups_dict = [{"#": i + 1, "name": name} for i, name in enumerate(self._signups)]
         signups: str = tabulate(signups_dict, headers="keys", tablefmt="simple")
 
         await ctx.send(f"**Current Signups** ```\n{signups}```")
@@ -196,11 +182,11 @@ class Lobby(Cog):
             await ctx.send(f"{name} needs to sign in first.")
             return
 
-        if self.ready_check_in_progress is False:
+        if self._ready_check_in_progress is False:
             await ctx.send("No ready check initiated.")
             return
 
-        self.players_ready.append(name)
+        self._players_ready.append(name)
         await ctx.send(f"{name} is ready.")
 
     @has_role(Roles.MEMBER)
@@ -210,28 +196,20 @@ class Lobby(Cog):
         Initiates a ready check, after approx. 30s the result of the check will be displayed.
         """
         if await self.signup_check(ctx):
-            await ctx.send(
-                "Ready Check Started, 30s remaining - type '!ready' to ready up."
-            )
-            self.ready_check_in_progress = True
+            await ctx.send("Ready Check Started, 30s remaining - type '!ready' to ready up.")
+            self._ready_check_in_progress = True
             await sleep(30)
-            players_ready_count: int = len(self.players_ready)
-            players_not_ready: str = ", ".join(
-                [x for x in self._signups if x not in self.players_ready]
-            )
-            if players_ready_count == 10:
+            players_not_ready: list[str] = [x for x in self._signups if x not in self._players_ready]
+            if len(players_not_ready) == 0:
                 await ctx.send("Ready Check Complete - All players ready.")
             else:
-                await ctx.send(
-                    f"Still waiting on {10 - players_ready_count} players: {players_not_ready}"
-                )
+                await ctx.send(f"Still waiting on {len(players_not_ready)} players: {', '.join(players_not_ready)}")
 
-        self.ready_check_in_progress = False
-        self.players_ready = []
+        self._ready_check_in_progress = False
+        self._players_ready = []
 
 
 async def on_presence_update(before: "Member", after: "Member") -> None:
-
     bot: Bot = get_bot_instance()
     lobby: Lobby = bot.get_cog("Lobby")
 
