@@ -10,6 +10,9 @@ from onehead.lobby import Lobby
 
 
 class Transfers(Cog):
+    
+    SHUFFLE_COST: Literal[500] = 500
+    
     def __init__(self, database: Database, lobby: Lobby) -> None:
         self.database: Database = database
         self.lobby: Lobby = lobby
@@ -40,12 +43,17 @@ class Transfers(Cog):
         bot: Bot = get_bot_instance()
         core: Cog = bot.get_cog("Core")
         current_game: Game = core.current_game
-
+        
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
 
         if current_game.transfer_window_open() is False:
             await ctx.send("Unable to shuffle as player transfer window is closed.")
             return
+
+        if current_game.radiant is None or current_game.dire is None:
+            raise OneHeadException(
+                f"Expected valid teams: {current_game.radiant}, {current_game.dire}"
+            )
 
         name: str = ctx.author.display_name
 
@@ -56,23 +64,17 @@ class Transfers(Cog):
         profile: Player = self.database.lookup_player(name)
         current_balance: int = profile["rbucks"]
 
-        cost: Literal[500] = 500
-        if current_balance < cost:
+        if current_balance < self.SHUFFLE_COST:
             await ctx.send(
                 f"{name} cannot shuffle as they only have {current_balance} "
-                f"RBUCKS. A shuffle costs {cost} RBUCKS"
+                f"RBUCKS. A shuffle costs {Transfers.SHUFFLE_COST} RBUCKS"
             )
             return
 
-        await ctx.send(f"{name} has spent **{cost}** RBUCKS to **shuffle** the teams!")
+        await ctx.send(f"{name} has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!")
 
-        self.database.update_rbucks(name, -1 * cost)
-        transfers.append(PlayerTransfer(name, cost))
-
-        if current_game.radiant is None or current_game.dire is None:
-            raise OneHeadException(
-                f"Expected valid teams: {current_game.radiant}, {current_game.dire}"
-            )
+        self.database.update_rbucks(name, -1 * Transfers.SHUFFLE_COST)
+        transfers.append(PlayerTransfer(name, Transfers.SHUFFLE_COST))
 
         current_teams_names_only: tuple[
             tuple[str, ...], tuple[str, ...]

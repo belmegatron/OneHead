@@ -28,7 +28,7 @@ class ScoreBoard(Cog):
             if remaining_size <= self.DISCORD_MAX_MESSAGE_LENGTH:
                 chunk: str = scoreboard[offset:]
             else:
-                max_chunk: str = scoreboard[offset : offset + self.DISCORD_MAX_MESSAGE_LENGTH]
+                max_chunk: str = scoreboard[offset: offset + self.DISCORD_MAX_MESSAGE_LENGTH]
                 eol: int = max_chunk.rfind("\n")
                 chunk = max_chunk[:eol]
 
