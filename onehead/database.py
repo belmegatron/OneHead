@@ -1,112 +1,74 @@
+from typing import cast
+
 from discord.ext import commands
 from tinydb import Query, TinyDB
-from tinydb.operations import add
+from tinydb.operations import add, subtract
 from tinydb.table import Document, Table
 
-from onehead.common import OneHeadException, Player
+from onehead.behaviour import Behaviour
+from onehead.betting import Betting
+from onehead.common import OneHeadException, Player, Operation
 
 
 class Database(commands.Cog):
     def __init__(self, config: dict) -> None:
         self.db: TinyDB = TinyDB(config["tinydb"]["path"])
 
-    def player_exists(self, player_name: str) -> tuple[bool, int]:
+    def _get_document(self, name: str) -> Document | None:
         User: Query = Query()
+        result: Document | None = self.db.get(User.name == name)
+        return result
 
-        result: Document = self.db.get(User.name == player_name)
+    def get(self, name: str) -> Player | None:
+        document: Document | None = self._get_document(name)
+        player: Player | None = cast(Player, document)
+        return player
 
-        if result:
-            return True, result.doc_id
-        else:
-            return False, -1
+    def add(self, name: str, mmr: int) -> None:
+        player: Player | None = self.get(name)
 
-    def add_player(self, player_name: str, mmr: int) -> None:
-        if not isinstance(player_name, str):
-            raise OneHeadException("Player Name not a valid string.")
-
-        exists, _ = self.player_exists(player_name)
-
-        if exists:
-            raise OneHeadException(f"{player_name} is already registered.")
+        if player is None:
+            raise OneHeadException(f"{name} is already registered.")
 
         self.db.insert(
             {
-                "name": player_name,
+                "name": name,
                 "win": 0,
                 "loss": 0,
                 "mmr": mmr,
                 "win_streak": 0,
                 "loss_streak": 0,
-                "rbucks": 100,
+                "rbucks": Betting.INITIAL_BALANCE,
                 "commends": 0,
                 "reports": 0,
-                "behaviour": 10000,
+                "behaviour": Behaviour.MAX_BEHAVIOUR_SCORE,
             }
         )
 
-    def remove_player(self, player_name: str) -> None:
-        if not isinstance(player_name, str):
-            raise OneHeadException("Player name not a valid string.")
+    def remove(self, name: str) -> None:
+        player: Document | None = self._get_document(name)
 
-        exists, doc_id = self.player_exists(player_name)
+        if player is None:
+            raise OneHeadException(f"{name} does not exist in database.")
 
-        if exists is False:
-            raise OneHeadException(f"{player_name} does not exist in database.")
+        self.db.remove(doc_ids=[player.doc_id])
 
-        self.db.remove(doc_ids=[doc_id])
+    def modify(self, name: str, key: str, value: str | int, operation: Operation = Operation.REPLACE) -> None:
+        document: Document | None = self._get_document(name)
 
-    def update_rbucks(self, bettor_name: str, rbucks: int) -> None:
-        exists, doc_id = self.player_exists(bettor_name)
+        if document is None:
+            raise OneHeadException(f"{name} does not exist in database.")
 
-        if exists is False:
-            raise OneHeadException(f"{bettor_name} cannot be found.")
-
-        self.db.update(add("rbucks", rbucks), doc_ids=[doc_id])
-
-    def update_player(self, player_name: str, win: bool) -> None:
-        exists, doc_id = self.player_exists(player_name)
-
-        if exists is False:
-            raise OneHeadException(f"{player_name} does not exist in database.")
-
-        if win:
-            self.db.update(add("win", 1), doc_ids=[doc_id])
-            self.db.update(add("win_streak", 1), doc_ids=[doc_id])
-            self.db.update({"loss_streak": 0}, doc_ids=[doc_id])
-            self.db.update(add("rbucks", 100), doc_ids=[doc_id])
+        if operation == Operation.REPLACE:
+            self.db.update({key: value}, doc_ids=[document.doc_id])
+        elif operation == Operation.ADD:
+            self.db.update(add(key, value), doc_ids=[document.doc_id])
+        elif operation == Operation.SUBTRACT:
+            self.db.update(subtract(key, value), doc_ids=[document.doc_id])
         else:
-            self.db.update(add("loss", 1), doc_ids=[doc_id])
-            self.db.update(add("loss_streak", 1), doc_ids=[doc_id])
-            self.db.update({"win_streak": 0}, doc_ids=[doc_id])
-            self.db.update(add("rbucks", 50), doc_ids=[doc_id])
+            raise OneHeadException(f"{operation} is not a valid database operation.")
 
-    def lookup_player(self, player_name: str) -> Player:
-        User: Query = Query()
-
-        response: Player = self.db.get(User.name == player_name)
-        if response is None:
-            raise OneHeadException(
-                f"Failed to find {player_name} when performing a lookup in the database."
-            )
-
-        return response
-
-    def retrieve_table(self) -> list[Player]:
+    def get_all(self) -> list[Player]:
         table: Table = self.db.table("_default")
         table_dict: dict[str, Player] = table._read_table()  # type: ignore
         return list(table_dict.values())
-
-    def modify_behaviour_score(
-        self, player_name: str, new_score: int, is_commend: bool
-    ) -> None:
-        exists, doc_id = self.player_exists(player_name)
-
-        if exists is False:
-            raise OneHeadException(f"{player_name} does not exist in database.")
-
-        self.db.update({"behaviour": new_score}, doc_ids=[doc_id])
-
-        if is_commend:
-            self.db.update(add("commends", 1), doc_ids=[doc_id])
-        else:
-            self.db.update(add("reports", 1), doc_ids=[doc_id])

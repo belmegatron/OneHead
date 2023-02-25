@@ -73,8 +73,8 @@ class TestShuffle:
         core.lobby.get_signups = Mock()
         core.lobby.get_signups.return_value = [TEST_USER]
 
-        core.database.lookup_player = Mock()
-        core.database.lookup_player.return_value = {"rbucks": 0}
+        core.database.get = Mock()
+        core.database.get.return_value = {"rbucks": 0}
 
         await dpytest.message("!shuffle")
         assert (
@@ -99,11 +99,11 @@ class TestShuffle:
         core.lobby.get_signups = Mock()
         core.lobby.get_signups.return_value = [TEST_USER]
 
-        core.database.lookup_player = Mock()
-        core.database.lookup_player.return_value = {
+        core.database.get = Mock()
+        core.database.get.return_value = {
             "rbucks": Transfers.SHUFFLE_COST + 100
         }
-        core.database.update_rbucks = Mock()
+        core.database.modify = Mock()
 
         core.matchmaking.balance = AsyncMock()
         core.matchmaking.balance.return_value = [{"name": "A"}], [{"name": "B"}]

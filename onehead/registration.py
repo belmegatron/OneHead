@@ -1,14 +1,13 @@
 from discord.ext.commands import Cog, Context, command, has_role
 
-from onehead.common import OneHeadException, Roles
-from onehead.database import Database
+from onehead.common import IPlayerDatabase, OneHeadException, Player, Roles
 
 
 class Registration(Cog):
     MIN_MMR: int = 1000
 
-    def __init__(self, database: Database) -> None:
-        self.database: Database = database
+    def __init__(self, database: IPlayerDatabase) -> None:
+        self.database: IPlayerDatabase = database
 
     @has_role(Roles.MEMBER)
     @command(aliases=["reg"])
@@ -25,14 +24,12 @@ class Registration(Cog):
             raise OneHeadException(f"{mmr} is not a valid integer.")
 
         if mmr_int < self.MIN_MMR:
-            await ctx.send(
-                f"{mmr_int} MMR is too low, must be greater or equal to {self.MIN_MMR}."
-            )
+            await ctx.send(f"{mmr_int} MMR is too low, must be greater or equal to {self.MIN_MMR}.")
             return
 
-        exists, _ = self.database.player_exists(name)
-        if exists is False:
-            self.database.add_player(ctx.author.display_name, mmr_int)
+        player: Player | None = self.database.get(name)
+        if player is None:
+            self.database.add(ctx.author.display_name, mmr_int)
             await ctx.send(f"{name} successfully registered.")
         else:
             await ctx.send(f"{name} is already registered.")
@@ -44,9 +41,9 @@ class Registration(Cog):
         Removes a player from the internal IHL database.
         """
 
-        exists, _ = self.database.player_exists(name)
-        if exists:
-            self.database.remove_player(name)
+        player: Player | None = self.database.get(name)
+        if player:
+            self.database.remove(name)
             await ctx.send(f"{name} has been successfully removed from the database.")
         else:
             await ctx.send(f"{name} could not be found in the database.")

@@ -9,13 +9,14 @@ from tabulate import tabulate
 from onehead.common import (
     OneHeadException,
     Player,
+    IPlayerDatabase,
     Roles,
     Side,
     Team,
     TeamCombination,
     get_logger,
 )
-from onehead.database import Database
+
 from onehead.lobby import Lobby
 from onehead.statistics import Statistics
 
@@ -23,24 +24,24 @@ log: Logger = get_logger()
 
 
 class Matchmaking(Cog):
-    def __init__(self, database: Database, pre_game: Lobby) -> None:
-        self.database: Database = database
+    def __init__(self, database: IPlayerDatabase, pre_game: Lobby) -> None:
+        self.database: IPlayerDatabase = database
         self.pre_game: Lobby = pre_game
 
-    def _get_profiles(self) -> list[Player]:
+    def _get_player_records(self) -> list[Player]:
         """
-        Obtains player profiles for all players that have signed up to play.
+        Obtains player records for all players that have signed up to play.
 
-        :return: Player profiles for all signed up players.
+        :return: Player records for all signed up players.
         """
 
-        profiles: list[Player] = []
-        for player in self.pre_game._signups:
-            profile: Player = self.database.lookup_player(player)
-            if profile:
-                profiles.append(profile)
+        players: list[Player] = []
+        for player_name in self.pre_game._signups:
+            player: Player | None = self.database.get(player_name)
+            if player:
+                players.append(player)
 
-        return profiles
+        return players
 
     @staticmethod
     def _calculate_unique_team_combinations(
@@ -76,12 +77,8 @@ class Matchmaking(Cog):
         """
 
         for unique_combination in all_unique_combinations:
-            t1_rating: int = sum(
-                [player["adjusted_mmr"] for player in unique_combination[Side.RADIANT]]
-            )
-            t2_rating: int = sum(
-                [player["adjusted_mmr"] for player in unique_combination[Side.DIRE]]
-            )
+            t1_rating: int = sum([player["adjusted_mmr"] for player in unique_combination[Side.RADIANT]])
+            t2_rating: int = sum([player["adjusted_mmr"] for player in unique_combination[Side.DIRE]])
 
             unique_combination["rating_difference"] = abs(t1_rating - t2_rating)
 
@@ -93,34 +90,25 @@ class Matchmaking(Cog):
         a rating value associated with each player.
         """
 
-        profiles: list[Player] = self._get_profiles()
+        profiles: list[Player] = self._get_player_records()
         profile_count: int = len(profiles)
         if profile_count != 10:
-            raise OneHeadException(
-                f"Error: Only {profile_count} profiles could be found in database."
-            )
+            raise OneHeadException(f"Error: Only {profile_count} profiles could be found in database.")
 
         Statistics.calculate_rating(profiles)
         Statistics.calculate_adjusted_mmr(profiles)
 
         team_combinations: list[Team] = list(itertools.combinations(profiles, 5))
 
-        matchup_combinations: list[TeamCombination] = list(
-            itertools.combinations(team_combinations, 2)
-        )
+        matchup_combinations: list[TeamCombination] = list(itertools.combinations(team_combinations, 2))
 
-        unique_combinations: list[
-            TeamCombination
-        ] = self._calculate_unique_team_combinations(matchup_combinations)
+        unique_combinations: list[TeamCombination] = self._calculate_unique_team_combinations(matchup_combinations)
 
         if not unique_combinations:
-            raise OneHeadException(
-                "No valid matchups could be calculated. Possible Duplicate Player Name."
-            )
+            raise OneHeadException("No valid matchups could be calculated. Possible Duplicate Player Name.")
 
         unique_combinations_dict: list[dict[str, Team]] = [
-            {Side.RADIANT: combination[0], Side.DIRE: combination[1]}
-            for combination in unique_combinations
+            {Side.RADIANT: combination[0], Side.DIRE: combination[1]} for combination in unique_combinations
         ]
 
         self._calculate_rating_differences(unique_combinations_dict)
@@ -131,9 +119,7 @@ class Matchmaking(Cog):
         )
 
         # Take the top 5 that are closest in terms of rating and pick one at random.
-        balanced_teams: dict[str, Team] = random.choice(
-            sorted_unique_combinations_dict[:5]
-        )
+        balanced_teams: dict[str, Team] = random.choice(sorted_unique_combinations_dict[:5])
 
         return balanced_teams
 
@@ -170,7 +156,7 @@ class Matchmaking(Cog):
         Shows the internal MMR used for balancing teams.
         """
 
-        scoreboard: list[Player] = self.database.retrieve_table()
+        scoreboard: list[Player] = self.database.get_all()
         Statistics.calculate_rating(scoreboard)
         Statistics.calculate_adjusted_mmr(scoreboard)
 
@@ -183,7 +169,5 @@ class Matchmaking(Cog):
             for profile in scoreboard
         ]
         sorted_ratings: list[dict[str, Any]] = sorted(ratings, key=lambda k: k["adjusted"], reverse=True)  # type: ignore
-        tabulated_ratings: str = tabulate(
-            sorted_ratings, headers="keys", tablefmt="simple"
-        )
+        tabulated_ratings: str = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
         await ctx.send(f"**Internal MMR** ```\n{tabulated_ratings}```")

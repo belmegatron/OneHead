@@ -1,22 +1,25 @@
 from dataclasses import asdict
-from typing import TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 
 from discord import Embed, colour
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import Bet, OneHeadException, Player, Roles, Side, get_bot_instance
+from onehead.common import Bet, IPlayerDatabase, Operation, Player, Roles, Side, get_bot_instance
 
 if TYPE_CHECKING:
     from onehead.core import Core
-    from onehead.database import Database
     from onehead.game import Game
     from onehead.lobby import Lobby
 
 
 class Betting(Cog):
-    def __init__(self, database: "Database", lobby: "Lobby") -> None:
-        self.database: Database = database
+    INITIAL_BALANCE: Literal[100] = 100
+    REWARD_ON_WIN: Literal[100] = 100
+    REWARD_ON_LOSS: Literal[50] = 50
+
+    def __init__(self, database: IPlayerDatabase, lobby: "Lobby") -> None:
+        self.database: IPlayerDatabase = database
         self.lobby: Lobby = lobby
 
     def get_bet_results(self, radiant_won: bool) -> dict[str, float]:
@@ -32,9 +35,7 @@ class Betting(Cog):
             if bet_results.get(bet.player) is None:
                 bet_results[bet.player] = 0
 
-            if (radiant_won and bet.side == Side.RADIANT) or (
-                radiant_won is False and bet.side == Side.DIRE
-            ):
+            if (radiant_won and bet.side == Side.RADIANT) or (radiant_won is False and bet.side == Side.DIRE):
                 bet_results[bet.player] += bet.stake * 2.0
             else:
                 bet_results[bet.player] -= bet.stake
@@ -81,10 +82,9 @@ class Betting(Cog):
         name: str = ctx.author.display_name
         side = side.lower()
 
-        try:
-            record: Player = self.database.lookup_player(name)
-        except OneHeadException:
-            await ctx.send("Unable to find player in database")
+        record: Player | None = self.database.get(name)
+        if record is None:
+            await ctx.send(f"Unable to find {name} in database.")
             return
 
         available_balance: int = record.get("rbucks", 0)
@@ -94,9 +94,7 @@ class Betting(Cog):
             return
 
         if side not in Side:
-            await ctx.send(
-                f"{name} - Cannot bet on {side} - Must be either Radiant/Dire."
-            )
+            await ctx.send(f"{name} - Cannot bet on {side} - Must be either Radiant/Dire.")
             return
 
         if amount == "all":
@@ -105,9 +103,7 @@ class Betting(Cog):
             try:
                 stake = int(amount)
             except ValueError:
-                await ctx.send(
-                    f"{name} - {amount} is not a valid number of RBUCKS to place a bet with."
-                )
+                await ctx.send(f"{name} - {amount} is not a valid number of RBUCKS to place a bet with.")
                 return
 
         if stake <= 0:
@@ -121,11 +117,13 @@ class Betting(Cog):
             return
 
         bets.append(Bet(side, stake, name))
-        self.database.update_rbucks(name, -stake)
-
-        await ctx.send(
-            f"{name} has placed a bet of {stake:.0f} RBUCKS on {side.title()}."
+        self.database.modify(
+            name,
+            "rbucks",
+            stake,
         )
+
+        await ctx.send(f"{name} has placed a bet of {stake:.0f} RBUCKS on {side.title()}.")
 
     @has_role(Roles.MEMBER)
     @command()
@@ -136,7 +134,7 @@ class Betting(Cog):
 
         subset: list = []
 
-        table: list[Player] = self.database.retrieve_table()
+        table: list[Player] = self.database.get_all()
 
         for player in table:
             subset.append({"name": player["name"], "RBUCKS": player["rbucks"]})
@@ -179,6 +177,6 @@ class Betting(Cog):
             return
 
         for bet in active_bets:
-            self.database.update_rbucks(bet.player, bet.stake)
+            self.database.modify(bet.player, "rbucks", bet.stake, Operation.ADD)
 
         await ctx.send("All bets have been refunded.")

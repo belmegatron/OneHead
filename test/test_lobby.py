@@ -77,8 +77,8 @@ class TestSignup:
         lobby._signups_disabled = False
         lobby._signups.append(TEST_USER)
 
-        lobby.database.player_exists = Mock()
-        lobby.database.player_exists.return_value = True, 0
+        lobby.database.get = Mock()
+        lobby.database.get.return_value = {"name": TEST_USER}
 
         await dpytest.message("!su")
         assert dpytest.verify().message().content(f"{TEST_USER} is already signed up.")
@@ -90,8 +90,8 @@ class TestSignup:
         lobby: Lobby = bot.get_cog("Lobby")
         lobby._signups_disabled = False
 
-        lobby.database.player_exists = Mock()
-        lobby.database.player_exists.return_value = True, 0
+        lobby.database.get = Mock()
+        lobby.database.get.return_value = {"name": TEST_USER}
 
         await dpytest.message("!su")
         assert len(lobby.get_signups()) == 1

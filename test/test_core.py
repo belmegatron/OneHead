@@ -49,7 +49,7 @@ class TestStart:
         await add_ihl_role(bot, "IHL Admin")
 
         lobby: Lobby = bot.get_cog("Lobby")
-        players: list[Player] = lobby.database.retrieve_table()[:10]
+        players: list[Player] = lobby.database.get_all()[:10]
         lobby._signups = [player["name"] for player in players]
 
         core: Core = bot.get_cog("Core")
@@ -147,11 +147,7 @@ class TestResult:
         core: Core = bot.get_cog("Core")
         core.current_game._in_progress = True
         await dpytest.message("!result derp")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
-        )
+        assert dpytest.verify().message().content(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
 
     @pytest.mark.asyncio
     async def test_invalid_team(self, bot: Bot) -> None:

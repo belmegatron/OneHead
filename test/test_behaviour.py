@@ -1,3 +1,5 @@
+from unittest.mock import Mock
+
 import discord.ext.test as dpytest
 import pytest
 from conftest import TEST_USER, add_ihl_role
@@ -94,6 +96,10 @@ class TestCommend:
         core.previous_game = Game()
         core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
         core.previous_game.dire = []
+        
+        core.database.get = Mock()
+        core.database.get.return_value = {"name": "RBEEZAY", "behaviour": 10000}
+        core.database.modify = Mock()
 
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!commend RBEEZAY")
@@ -196,6 +202,10 @@ class TestReport:
         core.previous_game = Game()
         core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
         core.previous_game.dire = []
+        
+        core.database.get = Mock()
+        core.database.get.return_value = {"name": "RBEEZAY", "behaviour": 10000}
+        core.database.modify = Mock()
 
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!report RBEEZAY abandon")

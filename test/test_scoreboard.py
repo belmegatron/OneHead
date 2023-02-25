@@ -20,8 +20,8 @@ class TestScoreboard:
         await add_ihl_role(bot, "IHL")
 
         scoreboard: ScoreBoard = bot.get_cog("ScoreBoard")
-        scoreboard.database.retrieve_table = Mock()
-        scoreboard.database.retrieve_table.return_value = []
+        scoreboard.database.get_all = Mock()
+        scoreboard.database.get_all.return_value = []
 
         with pytest.raises(OneHeadException):
             await dpytest.message("!sb")
@@ -31,8 +31,8 @@ class TestScoreboard:
         await add_ihl_role(bot, "IHL")
 
         scoreboard: ScoreBoard = bot.get_cog("ScoreBoard")
-        scoreboard.database.retrieve_table = Mock()
-        scoreboard.database.retrieve_table.return_value = [
+        scoreboard.database.get_all = Mock()
+        scoreboard.database.get_all.return_value = [
             {
                 "name": "RBEEZAY",
                 "win": 4,
@@ -195,14 +195,12 @@ class TestScoreboard:
         )
 
     @pytest.mark.asyncio
-    async def test_scoreboard_length_greater_than_max_discord_message_size(
-        self, bot: Bot
-    ) -> None:
+    async def test_scoreboard_length_greater_than_max_discord_message_size(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
         scoreboard: ScoreBoard = bot.get_cog("ScoreBoard")
-        scoreboard.database.retrieve_table = Mock()
-        scoreboard.database.retrieve_table.return_value = [
+        scoreboard.database.get_all = Mock()
+        scoreboard.database.get_all.return_value = [
             {
                 "name": "RBEEZAY",
                 "win": 4,

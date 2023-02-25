@@ -16,6 +16,8 @@ from onehead.betting import Betting
 from onehead.channels import Channels
 from onehead.common import (
     OneHeadException,
+    IPlayerDatabase, 
+    Operation,
     Roles,
     Side,
     get_player_names,
@@ -93,7 +95,7 @@ class Core(Cog):
 
         self.config: dict = load_config()
         self.behaviour: Behaviour = bot.get_cog("Behaviour")  # type: ignore[assignment]
-        self.database: Database = bot.get_cog("Database")  # type: ignore[assignment]
+        self.database: IPlayerDatabase = bot.get_cog("Database")  # type: ignore[assignment]
         self.scoreboard: ScoreBoard = bot.get_cog("ScoreBoard")  # type: ignore[assignment]
         self.lobby: Lobby = bot.get_cog("Lobby")  # type: ignore[assignment]
         self.matchmaking: Matchmaking = bot.get_cog("Matchmaking")  # type: ignore[assignment]
@@ -223,7 +225,9 @@ class Core(Cog):
 
         for name, delta in bet_results.items():
             if delta > 0:
-                self.database.update_rbucks(name, delta)
+                self.database.modify(name, "rbucks", delta, Operation.ADD)
+            elif delta < 0:
+                self.database.modify(name, "rbucks", delta, Operation.SUBTRACT)
 
         report: Embed = self.betting.create_bet_report(bet_results)
         await ctx.send(embed=report)
@@ -242,16 +246,28 @@ class Core(Cog):
         if result == Side.RADIANT:
             await ctx.send("Radiant Victory!")
             for player in radiant_names:
-                self.database.update_player(player, True)
+                self.database.modify(player, "win", 1, Operation.ADD)
+                self.database.modify(player, "win_streak", 1, Operation.ADD)
+                self.database.modify(player, "loss_streak", 0)
+                self.database.modify(player, "rbucks", Betting.REWARD_ON_WIN)
             for player in dire_names:
-                self.database.update_player(player, False)
+                self.database.modify(player, "loss", 1, Operation.ADD)
+                self.database.modify(player, "loss_streak", 1, Operation.ADD)
+                self.database.modify(player, "win_streak", 0)
+                self.database.modify(player, "rbucks", Betting.REWARD_ON_LOSS)
         elif result == Side.DIRE:
             await ctx.send("Dire Victory!")
             for player in radiant_names:
-                self.database.update_player(player, False)
+                self.database.modify(player, "loss", 1, Operation.ADD)
+                self.database.modify(player, "loss_streak", 1, Operation.ADD)
+                self.database.modify(player, "win_streak", 0)
+                self.database.modify(player, "rbucks", Betting.REWARD_ON_LOSS)
             for player in dire_names:
-                self.database.update_player(player, True)
-
+                self.database.modify(player, "win", 1, Operation.ADD)
+                self.database.modify(player, "win_streak", 1, Operation.ADD)
+                self.database.modify(player, "loss_streak", 0)
+                self.database.modify(player, "rbucks", Betting.REWARD_ON_WIN)
+                
         scoreboard: Command = self.bot.get_command("scoreboard")  # type: ignore[assignment]
         await Command.invoke(scoreboard, ctx)
         await self.reset(ctx)

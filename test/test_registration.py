@@ -39,8 +39,8 @@ class TestRegister:
         await add_ihl_role(bot, "IHL")
         registration: Registration = bot.get_cog("Registration")
 
-        registration.database.player_exists = Mock()
-        registration.database.player_exists.return_value = True, 0
+        registration.database.get = Mock()
+        registration.database.get.return_value = {"name": TEST_USER}
 
         await dpytest.message(f"!register {Registration.MIN_MMR + 100}")
         assert dpytest.verify().message().content(f"{TEST_USER} is already registered.")
@@ -52,12 +52,10 @@ class TestRegister:
 
         registration.database.player_exists = Mock()
         registration.database.player_exists.return_value = False, 0
-        registration.database.add_player = Mock()
+        registration.database.add = Mock()
 
         await dpytest.message(f"!register {Registration.MIN_MMR + 100}")
-        assert (
-            dpytest.verify().message().content(f"{TEST_USER} successfully registered.")
-        )
+        assert dpytest.verify().message().content(f"{TEST_USER} successfully registered.")
 
 
 class TestDeregister:
@@ -71,28 +69,20 @@ class TestDeregister:
         await add_ihl_role(bot, "IHL Admin")
         registration: Registration = bot.get_cog("Registration")
 
-        registration.database.player_exists = Mock()
-        registration.database.player_exists.return_value = False, 0
+        registration.database.get = Mock()
+        registration.database.get.return_value = None
 
         await dpytest.message("!deregister RBEEZAY")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("RBEEZAY could not be found in the database.")
-        )
+        assert dpytest.verify().message().content("RBEEZAY could not be found in the database.")
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
         registration: Registration = bot.get_cog("Registration")
 
-        registration.database.player_exists = Mock()
-        registration.database.player_exists.return_value = True, 0
-        registration.database.remove_player = Mock()
+        registration.database.get = Mock()
+        registration.database.get.return_value = {"name": "RBEEZAY"}
+        registration.database.remove = Mock()
 
         await dpytest.message("!deregister RBEEZAY")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("RBEEZAY has been successfully removed from the database.")
-        )
+        assert dpytest.verify().message().content("RBEEZAY has been successfully removed from the database.")

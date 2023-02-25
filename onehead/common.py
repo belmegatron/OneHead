@@ -1,10 +1,10 @@
 import json
 import sys
 from dataclasses import dataclass
-from enum import EnumMeta, auto
+from enum import Enum, EnumMeta, auto
 from logging import DEBUG, Formatter, Logger, StreamHandler, getLogger
 from pathlib import Path
-from typing import Any, Literal, Optional, TypedDict
+from typing import Any, Literal, Optional, TypedDict, Protocol
 
 from discord.ext.commands import Bot
 from strenum import LowercaseStrEnum, StrEnum
@@ -74,6 +74,30 @@ class OneHeadException(BaseException):
     pass
 
 
+class Operation(Enum):
+    REPLACE = 0
+    ADD = 1
+    SUBTRACT = 2
+
+
+class IPlayerDatabase(Protocol):
+    def get(self, name: str) -> Player | None:
+        pass
+
+    def add(self, name: str, mmr: int) -> None:
+        pass
+
+    def remove(self, name: str) -> None:
+        pass
+
+    def get_all(self) -> list[Player]:
+        pass
+
+    def modify(self, name: str, key: str, value: str | int, operation: Operation = Operation.REPLACE) -> None:
+        pass
+
+
+
 def get_bot_instance() -> Bot:
     if bot is None:
         raise OneHeadException("Global bot instance is None")
@@ -114,9 +138,7 @@ def load_config() -> dict:
 
 def set_logger() -> Logger:
     handler: StreamHandler = StreamHandler(stream=sys.stdout)
-    formatter: Formatter = Formatter(
-        fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-    )
+    formatter: Formatter = Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
     handler.setFormatter(formatter)
     log: Logger = getLogger("onehead")
     log.setLevel(DEBUG)

@@ -3,12 +3,12 @@ from typing import TYPE_CHECKING
 
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 
-from onehead.common import Player, Roles, get_bot_instance, get_logger, get_player_names
-from onehead.database import Database
+from onehead.common import Player, Roles, IPlayerDatabase, Operation, get_bot_instance, get_logger, get_player_names
 from onehead.game import Game
 
 if TYPE_CHECKING:
     from onehead.core import Core
+
 
 log: Logger = get_logger()
 
@@ -19,8 +19,8 @@ class Behaviour(Cog):
     COMMEND_MODIFIER = 100
     REPORT_MODIFIER = -200
 
-    def __init__(self, database: Database) -> None:
-        self.database: Database = database
+    def __init__(self, database: IPlayerDatabase) -> None:
+        self.database: IPlayerDatabase = database
 
     @has_role(Roles.MEMBER)
     @command()
@@ -33,11 +33,7 @@ class Behaviour(Cog):
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         previous_game: Game | None = core.previous_game
 
-        if (
-            previous_game is None
-            or previous_game.radiant is None
-            or previous_game.dire is None
-        ):
+        if previous_game is None or previous_game.radiant is None or previous_game.dire is None:
             await ctx.send("Unable to commend as a game is yet to be played.")
             return
 
@@ -54,23 +50,24 @@ class Behaviour(Cog):
             return
 
         if player_name not in radiant and player_name not in dire:
-            await ctx.send(
-                f"{player_name} cannot be commended as they did not participate in the previous game."
-            )
+            await ctx.send(f"{player_name} cannot be commended as they did not participate in the previous game.")
             return
 
         if previous_game.has_been_previously_commended(commender, player_name):
             await ctx.send(f"{player_name} has already been commended by {commender}.")
             return
 
-        player: Player = self.database.lookup_player(player_name)
+        player: Player | None = self.database.get(player_name)
+        if player is None:
+            await ctx.send(f"{player_name} could not be found in the database.")
+            return
+
         current_behaviour_score: int = player["behaviour"]
 
-        new_score: int = min(
-            current_behaviour_score + self.COMMEND_MODIFIER, self.MAX_BEHAVIOUR_SCORE
-        )
+        new_score: int = min(current_behaviour_score + self.COMMEND_MODIFIER, self.MAX_BEHAVIOUR_SCORE)
 
-        self.database.modify_behaviour_score(player_name, new_score, True)
+        self.database.modify(player_name, "behaviour", new_score)
+        self.database.modify(player_name, "commends", 1, operation=Operation.ADD)
 
         previous_game.add_commend(commender, player_name)
 
@@ -87,11 +84,7 @@ class Behaviour(Cog):
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         previous_game: Game | None = core.previous_game
 
-        if (
-            previous_game is None
-            or previous_game.radiant is None
-            or previous_game.dire is None
-        ):
+        if previous_game is None or previous_game.radiant is None or previous_game.dire is None:
             await ctx.send("Unable to report as a game is yet to be played.")
             return
 
@@ -110,23 +103,24 @@ class Behaviour(Cog):
             return
 
         if player_name not in radiant and player_name not in dire:
-            await ctx.send(
-                f"{player_name} cannot be reported as they did not participate in the previous game."
-            )
+            await ctx.send(f"{player_name} cannot be reported as they did not participate in the previous game.")
             return
 
         if previous_game.has_been_previously_reported(reporter, player_name):
             await ctx.send(f"{player_name} has already been reported by {reporter}.")
             return
 
-        player: Player = self.database.lookup_player(player_name)
+        player: Player | None = self.database.get(player_name)
+        if player is None:
+            await ctx.send(f"{player_name} could not be found in the database.")
+            return
+
         current_behaviour_score: int = player["behaviour"]
 
-        new_score: int = max(
-            current_behaviour_score + self.REPORT_MODIFIER, self.MIN_BEHAVIOUR_SCORE
-        )
+        new_score: int = max(current_behaviour_score + self.REPORT_MODIFIER, self.MIN_BEHAVIOUR_SCORE)
 
-        self.database.modify_behaviour_score(player_name, new_score, False)
+        self.database.modify(player_name, "behaviour", new_score)
+        self.database.modify(player_name, "reports", 1, Operation.ADD)
 
         previous_game.add_report(reporter, player_name)
 
