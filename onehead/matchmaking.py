@@ -9,7 +9,6 @@ from tabulate import tabulate
 from onehead.common import (
     OneHeadException,
     Player,
-    IPlayerDatabase,
     Roles,
     Side,
     Team,
@@ -18,15 +17,16 @@ from onehead.common import (
 )
 
 from onehead.lobby import Lobby
+from onehead.protocols.database import IPlayerDatabase
 from onehead.statistics import Statistics
 
 log: Logger = get_logger()
 
 
 class Matchmaking(Cog):
-    def __init__(self, database: IPlayerDatabase, pre_game: Lobby) -> None:
+    def __init__(self, database: IPlayerDatabase, lobby: Lobby) -> None:
         self.database: IPlayerDatabase = database
-        self.pre_game: Lobby = pre_game
+        self.lobby: Lobby = lobby
 
     def _get_player_records(self) -> list[Player]:
         """
@@ -36,7 +36,7 @@ class Matchmaking(Cog):
         """
 
         players: list[Player] = []
-        for player_name in self.pre_game._signups:
+        for player_name in self.lobby._signups:
             player: Player | None = self.database.get(player_name)
             if player:
                 players.append(player)
@@ -131,7 +131,7 @@ class Matchmaking(Cog):
         :return: Balanced teams.
         """
 
-        signup_count: int = len(self.pre_game._signups)
+        signup_count: int = len(self.lobby._signups)
         await ctx.send("Balancing teams...")
         if signup_count != 10:
             err: str = f"Only {signup_count} Signups, require {10 - signup_count} more."

@@ -17,7 +17,8 @@ from discord.guild import Guild
 from discord.role import Role
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, IPlayerDatabase, Player, Roles, get_bot_instance, get_logger
+from onehead.common import OneHeadException, Player, Roles, get_bot_instance, get_logger
+from onehead.protocols.database import IPlayerDatabase
 
 if TYPE_CHECKING:
     from discord.member import Member

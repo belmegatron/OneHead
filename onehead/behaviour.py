@@ -3,8 +3,15 @@ from typing import TYPE_CHECKING
 
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 
-from onehead.common import Player, Roles, IPlayerDatabase, Operation, get_bot_instance, get_logger, get_player_names
+from onehead.common import (
+    Player,
+    Roles,
+    get_bot_instance,
+    get_logger,
+    get_player_names,
+)
 from onehead.game import Game
+from onehead.protocols.database import IPlayerDatabase, Operation
 
 if TYPE_CHECKING:
     from onehead.core import Core

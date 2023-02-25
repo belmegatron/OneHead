@@ -7,7 +7,8 @@ from tinydb.table import Document, Table
 
 from onehead.behaviour import Behaviour
 from onehead.betting import Betting
-from onehead.common import OneHeadException, Player, Operation
+from onehead.common import OneHeadException, Player
+from onehead.protocols.database import Operation
 
 
 class Database(commands.Cog):

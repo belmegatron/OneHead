@@ -3,7 +3,8 @@ from typing import Any, Literal
 from discord.ext.commands import Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import IPlayerDatabase, OneHeadException, Player, Roles
+from onehead.common import OneHeadException, Player, Roles
+from onehead.protocols.database import IPlayerDatabase
 from onehead.statistics import Statistics
 
 

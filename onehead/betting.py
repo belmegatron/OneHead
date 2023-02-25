@@ -5,7 +5,9 @@ from discord import Embed, colour
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 from tabulate import tabulate
 
-from onehead.common import Bet, IPlayerDatabase, Operation, Player, Roles, Side, get_bot_instance
+from onehead.common import Bet, Player, Roles, Side, get_bot_instance
+from onehead.protocols.database import IPlayerDatabase, Operation
+
 
 if TYPE_CHECKING:
     from onehead.core import Core
@@ -45,6 +47,9 @@ class Betting(Cog):
     @has_role(Roles.MEMBER)
     @command()
     async def bets(self, ctx: Context) -> None:
+        """
+        Lists active bets for the current game.
+        """
         bot: Bot = get_bot_instance()
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         current_game: Game = core.current_game

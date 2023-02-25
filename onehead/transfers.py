@@ -3,8 +3,6 @@ from typing import TYPE_CHECKING, Literal
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 
 from onehead.common import (
-    IPlayerDatabase, 
-    Operation,
     OneHeadException,
     Player,
     PlayerTransfer,
@@ -15,6 +13,8 @@ from onehead.common import (
 )
 from onehead.game import Game
 from onehead.lobby import Lobby
+from onehead.protocols.database import IPlayerDatabase, Operation
+
 
 if TYPE_CHECKING:
     from onehead.core import Core

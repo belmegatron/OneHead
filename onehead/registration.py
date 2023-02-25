@@ -1,6 +1,7 @@
 from discord.ext.commands import Cog, Context, command, has_role
 
-from onehead.common import IPlayerDatabase, OneHeadException, Player, Roles
+from onehead.common import OneHeadException, Player, Roles
+from onehead.protocols.database import IPlayerDatabase
 
 
 class Registration(Cog):
