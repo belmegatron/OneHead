@@ -16,8 +16,8 @@ class Statistics:
         """
 
         for record in profiles:
-            if record["win"] == 0:
-                record["%"] = 0
+            if record.win == 0:
+                record.percentage = 0
             else:
                 record["%"] = round(record["win"] / (record["win"] + record["loss"]) * 100, 1)
 

@@ -8,7 +8,7 @@ from discord.ext.commands import Bot, errors
 from discord.member import Member
 
 from onehead.betting import Bet
-from onehead.common import Side
+from onehead.common import Player, Side
 from onehead.core import Core
 
 
@@ -71,7 +71,7 @@ class TestPlaceBet:
         core: Core = bot.get_cog("Core")
 
         core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 0}
+        core.database.get.return_value = Player(name="RBEEZAY", rbucks=0)
 
         core.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
@@ -84,7 +84,7 @@ class TestPlaceBet:
         core: Core = bot.get_cog("Core")
 
         core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
+        core.database.get.return_value = Player(name="RBEEZAY", rbucks=100)
 
         core.current_game._betting_window_open = True
         await dpytest.message("!bet derp all", 0, member)
@@ -97,7 +97,7 @@ class TestPlaceBet:
         core: Core = bot.get_cog("Core")
 
         core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
+        core.database.get.return_value = Player(name="RBEEZAY", rbucks=100)
 
         core.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} foobar", 0, member)
@@ -112,7 +112,7 @@ class TestPlaceBet:
         core: Core = bot.get_cog("Core")
 
         core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
+        core.database.get.return_value = Player(name="RBEEZAY", rbucks=100)
 
         core.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} -100", 0, member)
@@ -125,17 +125,17 @@ class TestPlaceBet:
         core: Core = bot.get_cog("Core")
 
         core.database.get = Mock()
-        record = {"name": "RBEEZAY", "rbucks": 100}
+        record = Player(name="RBEEZAY", rbucks=100)
         core.database.get.return_value = record
 
         core.current_game._betting_window_open = True
-        stake: int = record["rbucks"] + 100
+        stake: int = record.rbucks + 100
         await dpytest.message(f"!bet {Side.RADIANT} {stake:.0f}", 0, member)
         assert (
             dpytest.verify()
             .message()
             .content(
-                f"Unable to place bet - RBEEZAY tried to stake {stake:.0f} RBUCKS but only has {record['rbucks']:.0f} RBUCKS available."
+                f"Unable to place bet - RBEEZAY tried to stake {stake:.0f} RBUCKS but only has {record.rbucks:.0f} RBUCKS available."
             )
         )
 
@@ -146,7 +146,7 @@ class TestPlaceBet:
         core: Core = bot.get_cog("Core")
 
         core.database.get = Mock()
-        record = {"name": "RBEEZAY", "rbucks": 100}
+        record = Player(name="RBEEZAY", rbucks=100)
         core.database.get.return_value = record
         core.database.modify = Mock()
 
@@ -155,5 +155,5 @@ class TestPlaceBet:
         assert (
             dpytest.verify()
             .message()
-            .content(f"RBEEZAY has placed a bet of {record['rbucks']:.0f} RBUCKS on {Side.RADIANT.title()}.")
+            .content(f"RBEEZAY has placed a bet of {record.rbucks:.0f} RBUCKS on {Side.RADIANT.title()}.")
         )

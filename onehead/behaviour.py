@@ -4,11 +4,12 @@ from typing import TYPE_CHECKING
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 
 from onehead.common import (
+    BehaviourConstants,
     Player,
     Roles,
     get_bot_instance,
     get_logger,
-    get_player_names,
+    get_player_names
 )
 from onehead.game import Game
 from onehead.protocols.database import IPlayerDatabase, Operation
@@ -21,11 +22,6 @@ log: Logger = get_logger()
 
 
 class Behaviour(Cog):
-    MAX_BEHAVIOUR_SCORE = 10000
-    MIN_BEHAVIOUR_SCORE = 0
-    COMMEND_MODIFIER = 100
-    REPORT_MODIFIER = -200
-
     def __init__(self, database: IPlayerDatabase) -> None:
         self.database: IPlayerDatabase = database
 
@@ -69,9 +65,7 @@ class Behaviour(Cog):
             await ctx.send(f"{player_name} could not be found in the database.")
             return
 
-        current_behaviour_score: int = player["behaviour"]
-
-        new_score: int = min(current_behaviour_score + self.COMMEND_MODIFIER, self.MAX_BEHAVIOUR_SCORE)
+        new_score: int = min(player.behaviour + BehaviourConstants.COMMEND.value, BehaviourConstants.MAX_BEHAVIOUR_SCORE.value)
 
         self.database.modify(player_name, "behaviour", new_score)
         self.database.modify(player_name, "commends", 1, operation=Operation.ADD)
@@ -122,9 +116,7 @@ class Behaviour(Cog):
             await ctx.send(f"{player_name} could not be found in the database.")
             return
 
-        current_behaviour_score: int = player["behaviour"]
-
-        new_score: int = max(current_behaviour_score + self.REPORT_MODIFIER, self.MIN_BEHAVIOUR_SCORE)
+        new_score: int = max(player.behaviour + BehaviourConstants.REPORT.value, BehaviourConstants.MIN_BEHAVIOUR_SCORE.value)
 
         self.database.modify(player_name, "behaviour", new_score)
         self.database.modify(player_name, "reports", 1, Operation.ADD)

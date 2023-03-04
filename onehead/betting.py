@@ -1,5 +1,5 @@
 from dataclasses import asdict
-from typing import Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from discord import Embed, colour
 from discord.ext.commands import Bot, Cog, Context, command, has_role
@@ -16,10 +16,6 @@ if TYPE_CHECKING:
 
 
 class Betting(Cog):
-    INITIAL_BALANCE: Literal[100] = 100
-    REWARD_ON_WIN: Literal[100] = 100
-    REWARD_ON_LOSS: Literal[50] = 50
-
     def __init__(self, database: IPlayerDatabase, lobby: "Lobby") -> None:
         self.database: IPlayerDatabase = database
         self.lobby: Lobby = lobby
@@ -87,14 +83,12 @@ class Betting(Cog):
         name: str = ctx.author.display_name
         side = side.lower()
 
-        record: Player | None = self.database.get(name)
-        if record is None:
+        player: Player | None = self.database.get(name)
+        if player is None:
             await ctx.send(f"Unable to find {name} in database.")
             return
 
-        available_balance: int = record.get("rbucks", 0)
-
-        if available_balance == 0:
+        if player.rbucks == 0:
             await ctx.send(f"{name} cannot bet as they have no available RBUCKS.")
             return
 
@@ -103,7 +97,7 @@ class Betting(Cog):
             return
 
         if amount == "all":
-            stake: int = available_balance
+            stake: int = player.rbucks
         else:
             try:
                 stake = int(amount)
@@ -115,9 +109,9 @@ class Betting(Cog):
             await ctx.send(f"{name} - Bet stake must be greater than 0.")
             return
 
-        if stake > available_balance:
+        if stake > player.rbucks:
             await ctx.send(
-                f"Unable to place bet - {name} tried to stake {stake:.0f} RBUCKS but only has {available_balance:.0f} RBUCKS available."
+                f"Unable to place bet - {name} tried to stake {stake:.0f} RBUCKS but only has {player.rbucks:.0f} RBUCKS available."
             )
             return
 
@@ -142,9 +136,9 @@ class Betting(Cog):
         table: list[Player] = self.database.get_all()
 
         for player in table:
-            subset.append({"name": player["name"], "RBUCKS": player["rbucks"]})
+            subset.append({"name": player.name, "rbucks": player.rbucks})
 
-        subset = sorted(subset, key=lambda d: d["RBUCKS"], reverse=True)  # type: ignore
+        subset = sorted(subset, key=lambda d: d["rbucks"], reverse=True)  # type: ignore
 
         bucks_board: str = tabulate(subset, headers="keys", tablefmt="simple")
 
@@ -163,7 +157,7 @@ class Betting(Cog):
             # All bets are at an assumed price of 2.0, therefore need to divide by 2 to ignore the stake.
             corrected_delta: int = delta if delta <= 0 else int(delta / 2)
 
-            line: str = f"{name} {won_or_lost} {abs(corrected_delta)} RBUCKS!\n"
+            line: str = f"{name} {won_or_lost} {abs(corrected_delta):.0f} rbucks!\n"
             contents += line
 
         embed: Embed = Embed(title="**RBUCKS**", colour=colour.Colour.green())

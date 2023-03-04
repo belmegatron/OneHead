@@ -1,33 +1,14 @@
 import json
 import sys
-from dataclasses import dataclass
-from enum import EnumMeta, auto
+from dataclasses import dataclass, fields
+from enum import Enum, EnumMeta, auto
 from logging import DEBUG, Formatter, Logger, StreamHandler, getLogger
 from pathlib import Path
-from typing import Any, Literal, Optional, TypedDict
+from typing import Any, Literal, Optional
 
 from discord.ext.commands import Bot
 from strenum import LowercaseStrEnum, StrEnum
 
-Player = TypedDict(
-    "Player",
-    {
-        "#": int,
-        "name": str,
-        "mmr": int,
-        "win": int,
-        "loss": int,
-        "rbucks": int,
-        "rating": int,
-        "adjusted_mmr": int,
-        "%": float,
-        "commends": int,
-        "reports": int,
-        "behaviour": int,
-    },
-)
-Team = tuple[Player, Player, Player, Player, Player]
-TeamCombination = tuple[Team, Team]
 
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
 bot: Optional[Bot] = None
@@ -55,6 +36,42 @@ class Roles(StrEnum):
 class Side(LowercaseStrEnum, metaclass=EnumeratorMeta):
     RADIANT = auto()
     DIRE = auto()
+    
+
+class BehaviourConstants(Enum):
+    MAX_BEHAVIOUR_SCORE = 10000
+    MIN_BEHAVIOUR_SCORE = 0
+    COMMEND = 100
+    REPORT = -200
+
+
+class BettingConstants(Enum):
+    INITIAL_BALANCE: Literal[100] = 100
+    REWARD_ON_WIN: Literal[100] = 100
+    REWARD_ON_LOSS: Literal[50] = 50
+    
+    
+@dataclass
+class Player:
+    name: str = ""
+    mmr: int = 1000
+    win: int = 0
+    loss: int = 0
+    rating: int = 0
+    commends: int = 0
+    reports: int = 0
+    rbucks: int = BettingConstants.INITIAL_BALANCE.value
+    behaviour: int = BehaviourConstants.MAX_BEHAVIOUR_SCORE.value
+
+
+def player_from_dict(d: dict) -> Player:
+    fieldSet = {f.name for f in fields(Player) if f.init}
+    filteredArgDict = {k: v for k, v in d.items() if k in fieldSet}
+    return Player(**filteredArgDict)
+
+        
+Team = tuple[Player, Player, Player, Player, Player]
+TeamCombination = tuple[Team, Team]
 
 
 @dataclass
@@ -95,8 +112,8 @@ def get_player_names(t1: "Team", t2: "Team") -> tuple[tuple[str, ...], tuple[str
     :return: Names of players on each team.
     """
 
-    t1_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t1]))
-    t2_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t2]))
+    t1_names: tuple[str, ...] = tuple(sorted([x.name for x in t1]))
+    t2_names: tuple[str, ...] = tuple(sorted([x.name for x in t2]))
 
     return t1_names, t2_names
 

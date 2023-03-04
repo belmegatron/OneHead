@@ -5,9 +5,7 @@ from tinydb import Query, TinyDB
 from tinydb.operations import add, subtract
 from tinydb.table import Document, Table
 
-from onehead.behaviour import Behaviour
-from onehead.betting import Betting
-from onehead.common import OneHeadException, Player
+from onehead.common import BettingConstants, BehaviourConstants, OneHeadException, Player
 from onehead.protocols.database import Operation
 
 
@@ -39,10 +37,10 @@ class Database(commands.Cog):
                 "mmr": mmr,
                 "win_streak": 0,
                 "loss_streak": 0,
-                "rbucks": Betting.INITIAL_BALANCE,
+                "rbucks": BettingConstants.INITIAL_BALANCE,
                 "commends": 0,
                 "reports": 0,
-                "behaviour": Behaviour.MAX_BEHAVIOUR_SCORE,
+                "behaviour": BehaviourConstants.MAX_BEHAVIOUR_SCORE,
             }
         )
 

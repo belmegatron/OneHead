@@ -5,6 +5,7 @@ import pytest
 from conftest import TEST_USER, add_ihl_role
 from discord.ext.commands import Bot, errors
 
+from onehead.common import Player
 from onehead.core import Core
 from onehead.game import Game
 
@@ -19,15 +20,11 @@ class TestCommend:
     async def test_no_previous_game(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!commend RBEEZAY")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Unable to commend as a game is yet to be played.")
-        )
+        assert dpytest.verify().message().content("Unable to commend as a game is yet to be played.")
 
     @pytest.mark.asyncio
     async def test_commender_did_not_play(self, bot: Bot) -> None:
-        core: Core = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")    # type: ignore[assignment]
         core.previous_game = Game()
         core.previous_game.radiant = []
         core.previous_game.dire = []
@@ -46,22 +43,18 @@ class TestCommend:
     async def test_commend_self(self, bot: Bot) -> None:
         core: Core = bot.get_cog("Core")
         core.previous_game = Game()
-        core.previous_game.radiant = [{"name": TEST_USER}]
+        core.previous_game.radiant = [Player(name=TEST_USER)]
         core.previous_game.dire = []
 
         await add_ihl_role(bot, "IHL")
         await dpytest.message(f"!commend {TEST_USER}")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(f"{TEST_USER} you cannot commend yourself, nice try...")
-        )
+        assert dpytest.verify().message().content(f"{TEST_USER} you cannot commend yourself, nice try...")
 
     @pytest.mark.asyncio
     async def test_commendee_did_not_play(self, bot: Bot) -> None:
         core: Core = bot.get_cog("Core")
         core.previous_game = Game()
-        core.previous_game.radiant = [{"name": TEST_USER}]
+        core.previous_game.radiant = [Player(name=TEST_USER)]
         core.previous_game.dire = []
 
         await add_ihl_role(bot, "IHL")
@@ -69,36 +62,36 @@ class TestCommend:
         assert (
             dpytest.verify()
             .message()
-            .content(
-                "RBEEZAY cannot be commended as they did not participate in the previous game."
-            )
+            .content("RBEEZAY cannot be commended as they did not participate in the previous game.")
         )
 
     @pytest.mark.asyncio
     async def test_previously_commended(self, bot: Bot) -> None:
         core: Core = bot.get_cog("Core")
         core.previous_game = Game()
-        core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
+        core.previous_game.radiant = [
+            Player(name="RBEEZAY"),
+            Player(name=TEST_USER)
+        ]
         core.previous_game.dire = []
         core.previous_game._commends["RBEEZAY"] = [TEST_USER]
 
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!commend RBEEZAY")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(f"RBEEZAY has already been commended by {TEST_USER}.")
-        )
+        assert dpytest.verify().message().content(f"RBEEZAY has already been commended by {TEST_USER}.")
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
         core: Core = bot.get_cog("Core")
         core.previous_game = Game()
-        core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
+        core.previous_game.radiant = [
+            Player(name="RBEEZAY"),
+            Player(name=TEST_USER)
+        ]
         core.previous_game.dire = []
-        
+
         core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "behaviour": 10000}
+        core.database.get.return_value = Player(name="RBEEZAY")
         core.database.modify = Mock()
 
         await add_ihl_role(bot, "IHL")
@@ -123,17 +116,13 @@ class TestReport:
     async def test_no_previous_game(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!report RBEEZAY abandon")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Unable to report as a game is yet to be played.")
-        )
+        assert dpytest.verify().message().content("Unable to report as a game is yet to be played.")
 
     @pytest.mark.asyncio
     async def test_reporter_did_not_play(self, bot: Bot) -> None:
         core: Core = bot.get_cog("Core")
         core.previous_game = Game()
-        core.previous_game.radiant = [{"name": "RBEEZAY"}]
+        core.previous_game.radiant = [Player("RBEEZAY")]
         core.previous_game.dire = []
 
         await add_ihl_role(bot, "IHL")
@@ -150,7 +139,7 @@ class TestReport:
     async def test_report_self(self, bot: Bot) -> None:
         core: Core = bot.get_cog("Core")
         core.previous_game = Game()
-        core.previous_game.radiant = [{"name": TEST_USER}]
+        core.previous_game.radiant = [Player(name=TEST_USER)]
         core.previous_game.dire = []
 
         await add_ihl_role(bot, "IHL")
@@ -167,7 +156,7 @@ class TestReport:
     async def test_reportee_did_not_play(self, bot: Bot) -> None:
         core: Core = bot.get_cog("Core")
         core.previous_game = Game()
-        core.previous_game.radiant = [{"name": TEST_USER}]
+        core.previous_game.radiant = [Player(name=TEST_USER)]
         core.previous_game.dire = []
 
         await add_ihl_role(bot, "IHL")
@@ -175,36 +164,36 @@ class TestReport:
         assert (
             dpytest.verify()
             .message()
-            .content(
-                "RBEEZAY cannot be reported as they did not participate in the previous game."
-            )
+            .content("RBEEZAY cannot be reported as they did not participate in the previous game.")
         )
 
     @pytest.mark.asyncio
     async def test_reported_previously(self, bot: Bot) -> None:
         core: Core = bot.get_cog("Core")
         core.previous_game = Game()
-        core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
+        core.previous_game.radiant = [
+            Player(name="RBEEZAY"),
+            Player(name=TEST_USER),
+        ]
         core.previous_game.dire = []
         core.previous_game._reports["RBEEZAY"] = [TEST_USER]
 
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!report RBEEZAY abandon")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(f"RBEEZAY has already been reported by {TEST_USER}.")
-        )
+        assert dpytest.verify().message().content(f"RBEEZAY has already been reported by {TEST_USER}.")
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
         core: Core = bot.get_cog("Core")
         core.previous_game = Game()
-        core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
+        core.previous_game.radiant = [
+            Player(name="RBEEZAY"),
+            Player(name=TEST_USER),
+        ]
         core.previous_game.dire = []
-        
+
         core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "behaviour": 10000}
+        core.database.get.return_value = Player(name="RBEEZAY")
         core.database.modify = Mock()
 
         await add_ihl_role(bot, "IHL")

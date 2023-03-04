@@ -1,4 +1,5 @@
 from asyncio import sleep
+from dataclasses import asdict
 from logging import Logger
 from typing import TYPE_CHECKING
 
@@ -17,7 +18,7 @@ from discord.guild import Guild
 from discord.role import Role
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, Player, Roles, get_bot_instance, get_logger
+from onehead.common import OneHeadException, Player, Roles, get_bot_instance, get_logger, player_from_dict
 from onehead.protocols.database import IPlayerDatabase
 
 if TYPE_CHECKING:
@@ -109,9 +110,10 @@ class Lobby(Cog):
                 players.append(player)
 
             # TODO: Need to handle the case where we have > 10 with the same behaviour score.
+            player_dicts = [asdict(x) for x in players]
 
-            top_10_players_by_behaviour_score: list[Player] = sorted(
-                players, key=lambda d: d["behaviour"], reverse=True
+            top_10_players_by_behaviour_score: list[dict] = sorted(
+                player_dicts, key=lambda d: d["behaviour"], reverse=True
             )[:10]
             self._signups = [player["name"] for player in top_10_players_by_behaviour_score]
             benched_players: list[str] = [x for x in original_signups if x not in self._signups]

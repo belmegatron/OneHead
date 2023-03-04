@@ -74,16 +74,14 @@ class Transfers(Cog):
             await ctx.send(f"Unable to find {name} in database.")
             return
 
-        current_balance: int = profile["rbucks"]
-
-        if current_balance < self.SHUFFLE_COST:
+        if profile.rbucks < self.SHUFFLE_COST:
             await ctx.send(
-                f"{name} cannot shuffle as they only have {current_balance} "
-                f"RBUCKS. A shuffle costs {Transfers.SHUFFLE_COST} RBUCKS"
+                f"{name} cannot shuffle as they only have {profile.rbucks:.0f} "
+                f"RBUCKS. A shuffle costs {Transfers.SHUFFLE_COST:.0f} RBUCKS"
             )
             return
 
-        await ctx.send(f"{name} has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!")
+        await ctx.send(f"{name} has spent **{Transfers.SHUFFLE_COST:.0f}** RBUCKS to **shuffle** the teams!")
 
         self.database.modify(name, "rbucks", Transfers.SHUFFLE_COST, Operation.SUBTRACT)
         transfers.append(PlayerTransfer(name, Transfers.SHUFFLE_COST))

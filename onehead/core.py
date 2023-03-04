@@ -15,6 +15,7 @@ from onehead.behaviour import Behaviour
 from onehead.betting import Betting
 from onehead.channels import Channels
 from onehead.common import (
+    BettingConstants,
     OneHeadException,
     Roles,
     Side,
@@ -240,24 +241,24 @@ class Core(Cog):
                 self.database.modify(player, "win", 1, Operation.ADD)
                 self.database.modify(player, "win_streak", 1, Operation.ADD)
                 self.database.modify(player, "loss_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_WIN)
+                self.database.modify(player, "rbucks", BettingConstants.REWARD_ON_WIN.value)
             for player in dire_names:
                 self.database.modify(player, "loss", 1, Operation.ADD)
                 self.database.modify(player, "loss_streak", 1, Operation.ADD)
                 self.database.modify(player, "win_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_LOSS)
+                self.database.modify(player, "rbucks", BettingConstants.REWARD_ON_LOSS.value)
         elif result == Side.DIRE:
             await ctx.send("Dire Victory!")
             for player in radiant_names:
                 self.database.modify(player, "loss", 1, Operation.ADD)
                 self.database.modify(player, "loss_streak", 1, Operation.ADD)
                 self.database.modify(player, "win_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_LOSS)
+                self.database.modify(player, "rbucks", BettingConstants.REWARD_ON_LOSS.value)
             for player in dire_names:
                 self.database.modify(player, "win", 1, Operation.ADD)
                 self.database.modify(player, "win_streak", 1, Operation.ADD)
                 self.database.modify(player, "loss_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_WIN)
+                self.database.modify(player, "rbucks", BettingConstants.REWARD_ON_WIN.value)
 
         scoreboard: Command = self.bot.get_command("scoreboard")  # type: ignore[assignment]
         await Command.invoke(scoreboard, ctx)
