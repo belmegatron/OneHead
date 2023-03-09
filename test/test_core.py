@@ -5,6 +5,7 @@ import pytest
 from conftest import add_ihl_role
 from discord.ext.commands import Bot, errors
 
+from onehead.betting import Bet
 from onehead.common import OneHeadException, Player, Side
 from onehead.core import Core
 from onehead.game import Game
@@ -165,8 +166,9 @@ class TestResult:
         core: Core = bot.get_cog("Core")
         current_game: Game = core.current_game
         current_game._in_progress = True
-        current_game.radiant = []
+        current_game.radiant = [Player(name="RBEEZAY")]
         current_game.dire = []
+        current_game._bets = [Bet(Side.RADIANT, 100, "RBEEZAY"), Bet(Side.DIRE, 500, "RBEEZAY")]
 
         core.scoreboard.scoreboard = AsyncMock()
         core.channels.move_back_to_lobby = AsyncMock()
