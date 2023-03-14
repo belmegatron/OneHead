@@ -28,7 +28,7 @@ class Database(commands.Cog):
     def add(self, name: str, mmr: int) -> None:
         player: Player | None = self.get(name)
 
-        if player is None:
+        if player:
             raise OneHeadException(f"{name} is already registered.")
 
         self.db.insert(
