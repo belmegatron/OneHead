@@ -253,7 +253,7 @@ async def on_presence_update(before: "Member", after: "Member") -> None:
 
 async def allow_message(message: Message, bot: Bot) -> bool:
     
-    if message.author.display_name != "ERIC":
+    if message.author.display_name not in ("ERIC", "SCOUT"):
         return True
     
     commands: list[str] = [command.name for command in bot.commands]
