@@ -220,8 +220,10 @@ class Core(Cog):
 
         bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
 
-        for name, delta in bet_results.items():
-            self.database.modify(name, "rbucks", delta, Operation.ADD)
+        for name, bets in bet_results.items():
+            for bet_result in bets:
+                if bet_result > 0:
+                    self.database.modify(name, "rbucks", bet_result, Operation.ADD)
 
         report: Embed = self.betting.create_bet_report(bet_results)
         await ctx.send(embed=report)
@@ -303,7 +305,7 @@ class Core(Cog):
         """
         self.lobby._signups = [
             "ERIC",
-            "HARRY",
+            "GEE",
             "JEFFERIES",
             "ZEED",
             "PECRO",

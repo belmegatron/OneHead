@@ -19,6 +19,7 @@ from discord.role import Role
 from tabulate import tabulate
 
 from onehead.common import OneHeadException, Player, Roles, get_bot_instance, get_logger
+from onehead.game import Game
 from onehead.protocols.database import IPlayerDatabase
 
 if TYPE_CHECKING:
@@ -235,7 +236,15 @@ class Lobby(Cog):
 
 
 async def on_presence_update(before: "Member", after: "Member") -> None:
+    
     bot: Bot = get_bot_instance()
+    
+    core: Cog = bot.get_cog("Core")  # type: ignore[assignment]
+    game: Game = core.current_game  # type: ignore[attr-defined]
+    
+    if game.in_progress():
+        return
+    
     lobby: Lobby = bot.get_cog("Lobby")  # type: ignore[assignment]
     if lobby._context is None:
         return
@@ -243,7 +252,7 @@ async def on_presence_update(before: "Member", after: "Member") -> None:
     signups: list[str] = lobby.get_signups()
 
     name: str = after.display_name
-
+    
     if after.status in (Status.offline, Status.idle) and name in signups:
         reason: str = "Offline" if after.status == Status.offline else "Idle"
         log.info(f"{name} is now {reason}.")

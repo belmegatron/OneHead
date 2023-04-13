@@ -24,23 +24,23 @@ class Betting(Cog):
         self.database: IPlayerDatabase = database
         self.lobby: Lobby = lobby
 
-    def get_bet_results(self, radiant_won: bool) -> dict[str, float]:
+    def get_bet_results(self, radiant_won: bool) -> dict[str, list[float]]:
         bot: Bot = get_bot_instance()
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
         current_game: Game = core.current_game
 
         active_bets: list[Bet] = current_game.get_bets()
 
-        bet_results: dict[str, float] = {}
+        bet_results: dict[str, list[float]] = {}
 
         for bet in active_bets:
             if bet_results.get(bet.player) is None:
-                bet_results[bet.player] = 0
+                bet_results[bet.player] = []
 
             if (radiant_won and bet.side == Side.RADIANT) or (radiant_won is False and bet.side == Side.DIRE):
-                bet_results[bet.player] += bet.stake * 2.0
+                bet_results[bet.player].append(bet.stake * 2.0)
             else:
-                bet_results[bet.player] -= bet.stake
+                bet_results[bet.player].append(-1 * bet.stake)
 
         return bet_results
 
@@ -126,6 +126,7 @@ class Betting(Cog):
             name,
             "rbucks",
             stake,
+            Operation.SUBTRACT
         )
 
         await ctx.send(f"{name} has placed a bet of {stake:.0f} RBUCKS on {side.title()}.")
@@ -154,17 +155,18 @@ class Betting(Cog):
         await ctx.send(embed=embed)
 
     @staticmethod
-    def create_bet_report(bet_results: dict) -> Embed:
+    def create_bet_report(bet_results: dict[str, list[float]]) -> Embed:
         contents: str = ""
 
-        for name, delta in bet_results.items():
-            won_or_lost: str = "won" if delta >= 0 else "lost"
+        for name, deltas in bet_results.items():
+            for delta in deltas:
+                won_or_lost: str = "won" if delta >= 0 else "lost"
 
-            # All bets are at an assumed price of 2.0, therefore need to divide by 2 to ignore the stake.
-            corrected_delta: int = delta if delta <= 0 else int(delta / 2)
+                # All bets are at an assumed price of 2.0, therefore need to divide by 2 to ignore the stake.
+                corrected_delta: int = int(delta) if delta <= 0 else int(delta / 2)
 
-            line: str = f"{name} {won_or_lost} {abs(corrected_delta)} RBUCKS!\n"
-            contents += line
+                line: str = f"{name} {won_or_lost} {abs(corrected_delta)} RBUCKS!\n"
+                contents += line
 
         embed: Embed = Embed(title="**RBUCKS**", colour=colour.Colour.green())
         embed.add_field(name="Bet Report", value=f"```{contents}```")
