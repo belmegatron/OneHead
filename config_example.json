@@ -8,5 +8,10 @@
             "lobby": "INTERNAL WAITING ROOM",
             "match": "IGC IHL"
         }
+    },
+    "ihl": {
+        "start_date": "2023-04-13",
+        "max_games": 100,
+        "game_count": 1
     }
 }

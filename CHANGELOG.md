@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.45.0] - 2023-04-13
+
+### Added
+- Added !season command to show info on current IHL season.
+- Added IHL section to config for tracking game count.
+
 ## [1.44.2] - 2023-04-13
 
 ### Changed

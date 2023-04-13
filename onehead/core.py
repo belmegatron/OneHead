@@ -1,3 +1,5 @@
+from logging import Logger
+
 from discord import Embed, Intents
 from discord.ext.commands import (
     Bot,
@@ -21,6 +23,8 @@ from onehead.common import (
     get_player_names,
     load_config,
     set_bot_instance,
+    update_config,
+    get_logger
 )
 from onehead.database import Database
 from onehead.game import Game
@@ -32,6 +36,9 @@ from onehead.registration import Registration
 from onehead.scoreboard import ScoreBoard
 from onehead.transfers import Transfers
 from version import __changelog__, __version__
+
+
+log: Logger = get_logger()
 
 
 async def bot_factory() -> Bot:
@@ -170,6 +177,8 @@ class Core(Cog):
         await self.current_game.open_betting_window(ctx)
 
         await ctx.send("GLHF")
+        
+        log.info(f"Game {self.config['ihl']['game_count']} has started")
 
     @has_role(Roles.ADMIN)
     @command()
@@ -218,6 +227,8 @@ class Core(Cog):
             await ctx.send(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
             return
 
+        log.info("End of game{}")
+        
         bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
 
         for name, bets in bet_results.items():
@@ -263,6 +274,17 @@ class Core(Cog):
         scoreboard: Command = self.bot.get_command("scoreboard")  # type: ignore[assignment]
         await Command.invoke(scoreboard, ctx)
         await self.reset(ctx)
+        
+        try:
+            self.config["ihl"]["game_count"] += 1
+        except KeyError as e:
+            raise OneHeadException(f"Unable to incremement game count due to missing config settings: {e}")
+        
+        update_config(self.config)
+        
+        if self.is_end_of_season():
+            await ctx.send("End of IHL Season!")
+            # TODO: Make a big song and dance about the end of an IHL season, present winners, go crazy.
 
     @has_role(Roles.MEMBER)
     @command()
@@ -289,6 +311,7 @@ class Core(Cog):
         await ctx.send(f"**Current Version** - {__version__}")
         await ctx.send(f"**Changelog** - {__changelog__}")
 
+    @has_role(Roles.MEMBER)
     @command()
     async def matches(self, ctx: Context) -> None:
         """
@@ -296,6 +319,29 @@ class Core(Cog):
         """
 
         await ctx.send("https://www.dotabuff.com/esports/leagues/13630-igc-inhouse-league")
+        
+    @has_role(Roles.MEMBER)
+    @command()
+    async def season(self, ctx: Context) -> None:
+        """
+        Display info on the current IHL season.
+        """
+        try:
+            season_start_date: str = self.config['ihl']['start_date']
+        except KeyError as e:
+            raise OneHeadException(f"IHL season start date missing from config: {e}")
+            
+        await ctx.send(f"Start Date: {season_start_date}")
+    
+    def is_end_of_season(self) -> bool:
+        
+        try:
+            max_game_count: int = self.config["ihl"]["max_games"]
+            current_game_count: int = self.config["ihl"]["game_count"] 
+        except KeyError as e:
+            raise OneHeadException(f"Failed to check end of season: {e}")
+        
+        return (current_game_count < max_game_count) is False
 
     @has_role(Roles.ADMIN)
     @command(aliases=["sim"])

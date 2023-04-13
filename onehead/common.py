@@ -112,6 +112,15 @@ def load_config() -> dict:
     return config
 
 
+def update_config(updated_config: dict) -> None:
+    try:
+        config_path: Path = Path(ROOT_DIR, "secrets/config.json")
+        with open(str(config_path), "w") as f:
+            json.dump(updated_config, f)
+    except IOError as e:
+        raise OneHeadException(e)
+
+
 def set_logger() -> Logger:
     handler: StreamHandler = StreamHandler(stream=sys.stdout)
     formatter: Formatter = Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
