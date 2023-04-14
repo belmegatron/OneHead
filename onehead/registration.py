@@ -6,6 +6,7 @@ from onehead.protocols.database import IPlayerDatabase
 
 class Registration(Cog):
     MIN_MMR: int = 1000
+    MAX_MMR: int = 10000
 
     def __init__(self, database: IPlayerDatabase) -> None:
         self.database: IPlayerDatabase = database
@@ -26,6 +27,10 @@ class Registration(Cog):
 
         if mmr_int < self.MIN_MMR:
             await ctx.send(f"{mmr_int} MMR is too low, must be greater or equal to {self.MIN_MMR}.")
+            return
+        
+        if mmr_int > self.MAX_MMR:
+            await ctx.send(f"{mmr_int} MMR is too high, must be less than or equal to {self.MAX_MMR}.")
             return
 
         player: Player | None = self.database.get(name)

@@ -227,7 +227,7 @@ class Core(Cog):
             await ctx.send(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
             return
 
-        log.info("End of game{}")
+        log.info(f"Game {self.config['ihl']['game_count']} has ended")
         
         bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
 
@@ -275,10 +275,7 @@ class Core(Cog):
         await Command.invoke(scoreboard, ctx)
         await self.reset(ctx)
         
-        try:
-            self.config["ihl"]["game_count"] += 1
-        except KeyError as e:
-            raise OneHeadException(f"Unable to incremement game count due to missing config settings: {e}")
+        self.config["ihl"]["game_count"] += 1
         
         update_config(self.config)
         

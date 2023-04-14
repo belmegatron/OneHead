@@ -33,6 +33,18 @@ class TestRegister:
                 f"{Registration.MIN_MMR - 100} MMR is too low, must be greater or equal to {Registration.MIN_MMR}."
             )
         )
+        
+    @pytest.mark.asyncio
+    async def test_mmr_greater_than_max(self, bot: Bot) -> None:
+        await add_ihl_role(bot, "IHL")
+        await dpytest.message(f"!register {Registration.MAX_MMR + 100}")
+        assert (
+            dpytest.verify()
+            .message()
+            .content(
+                f"{Registration.MAX_MMR + 100} MMR is too high, must be less than or equal to {Registration.MAX_MMR}."
+            )
+        )
 
     @pytest.mark.asyncio
     async def test_already_registered(self, bot: Bot) -> None:
@@ -50,8 +62,8 @@ class TestRegister:
         await add_ihl_role(bot, "IHL")
         registration: Registration = bot.get_cog("Registration")
 
-        registration.database.player_exists = Mock()
-        registration.database.player_exists.return_value = False, 0
+        registration.database.get = Mock()
+        registration.database.get.return_value = None
         registration.database.add = Mock()
 
         await dpytest.message(f"!register {Registration.MIN_MMR + 100}")
