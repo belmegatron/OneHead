@@ -4,21 +4,15 @@ from logging import Logger
 from typing import Any
 
 from discord.ext.commands import Cog, Context, command, has_role
+from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import (
-    OneHeadException,
-    Player,
-    Roles,
-    Side,
-    Team,
-    TeamCombination,
-    get_logger,
-)
+from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination
 
 from onehead.lobby import Lobby
 from onehead.protocols.database import IPlayerDatabase
 from onehead.statistics import Statistics
+
 
 log: Logger = get_logger()
 
@@ -77,8 +71,12 @@ class Matchmaking(Cog):
         """
 
         for unique_combination in all_unique_combinations:
-            t1_rating: int = sum([player["adjusted_mmr"] for player in unique_combination[Side.RADIANT]])
-            t2_rating: int = sum([player["adjusted_mmr"] for player in unique_combination[Side.DIRE]])
+            t1_rating: int = sum(
+                [player["adjusted_mmr"] for player in unique_combination[Side.RADIANT]]
+            )
+            t2_rating: int = sum(
+                [player["adjusted_mmr"] for player in unique_combination[Side.DIRE]]
+            )
 
             unique_combination["rating_difference"] = abs(t1_rating - t2_rating)
 
@@ -93,22 +91,31 @@ class Matchmaking(Cog):
         profiles: list[Player] = self._get_player_records()
         profile_count: int = len(profiles)
         if profile_count != 10:
-            raise OneHeadException(f"Error: Only {profile_count} profiles could be found in database.")
+            raise OneHeadException(
+                f"Error: Only `{profile_count}` profiles could be found in database."
+            )
 
         Statistics.calculate_rating(profiles)
         Statistics.calculate_adjusted_mmr(profiles)
 
         team_combinations: list[Team] = list(itertools.combinations(profiles, 5))
 
-        matchup_combinations: list[TeamCombination] = list(itertools.combinations(team_combinations, 2))
+        matchup_combinations: list[TeamCombination] = list(
+            itertools.combinations(team_combinations, 2)
+        )
 
-        unique_combinations: list[TeamCombination] = self._calculate_unique_team_combinations(matchup_combinations)
+        unique_combinations: list[
+            TeamCombination
+        ] = self._calculate_unique_team_combinations(matchup_combinations)
 
         if not unique_combinations:
-            raise OneHeadException("No valid matchups could be calculated. Possible Duplicate Player Name.")
+            raise OneHeadException(
+                "No valid matchups could be calculated. Possible duplicate player name."
+            )
 
         unique_combinations_dict: list[dict[str, Team]] = [
-            {Side.RADIANT: combination[0], Side.DIRE: combination[1]} for combination in unique_combinations
+            {Side.RADIANT: combination[0], Side.DIRE: combination[1]}
+            for combination in unique_combinations
         ]
 
         self._calculate_rating_differences(unique_combinations_dict)
@@ -119,7 +126,9 @@ class Matchmaking(Cog):
         )
 
         # Take the top 5 that are closest in terms of rating and pick one at random.
-        balanced_teams: dict[str, Team] = random.choice(sorted_unique_combinations_dict[:5])
+        balanced_teams: dict[str, Team] = random.choice(
+            sorted_unique_combinations_dict[:5]
+        )
 
         return balanced_teams
 
@@ -134,7 +143,9 @@ class Matchmaking(Cog):
         signup_count: int = len(self.lobby._signups)
         await ctx.send("Balancing teams...")
         if signup_count != 10:
-            err: str = f"Only {signup_count} Signups, require {10 - signup_count} more."
+            err: str = (
+                f"Only `{signup_count}` Signups, require `{10 - signup_count}` more."
+            )
             await ctx.send(err)
 
         balanced_teams: dict = self._calculate_balance()
@@ -145,7 +156,7 @@ class Matchmaking(Cog):
         radiant_mmr: int = sum([x["adjusted_mmr"] for x in radiant])
         dire_mmr: int = sum([x["adjusted_mmr"] for x in dire])
 
-        log.debug(f"Radiant MMR: {radiant_mmr}, Dire MMR: {dire_mmr}")
+        log.info(f"Radiant MMR: `{radiant_mmr}`, Dire MMR: `{dire_mmr}`")
 
         return radiant, dire
 
@@ -169,5 +180,7 @@ class Matchmaking(Cog):
             for profile in scoreboard
         ]
         sorted_ratings: list[dict[str, Any]] = sorted(ratings, key=lambda k: k["adjusted"], reverse=True)  # type: ignore
-        tabulated_ratings: str = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
+        tabulated_ratings: str = tabulate(
+            sorted_ratings, headers="keys", tablefmt="simple"
+        )
         await ctx.send(f"**Internal MMR** ```\n{tabulated_ratings}```")

@@ -100,9 +100,7 @@ class TestShuffle:
         core.lobby.get_signups.return_value = [TEST_USER]
 
         core.database.get = Mock()
-        core.database.get.return_value = {
-            "rbucks": Transfers.SHUFFLE_COST + 100
-        }
+        core.database.get.return_value = {"rbucks": Transfers.SHUFFLE_COST + 100}
         core.database.modify = Mock()
 
         core.matchmaking.balance = AsyncMock()

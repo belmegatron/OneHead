@@ -148,7 +148,11 @@ class TestResult:
         core: Core = bot.get_cog("Core")
         core.current_game._in_progress = True
         await dpytest.message("!result derp")
-        assert dpytest.verify().message().content(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
+        assert (
+            dpytest.verify()
+            .message()
+            .content(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
+        )
 
     @pytest.mark.asyncio
     async def test_invalid_team(self, bot: Bot) -> None:
@@ -168,7 +172,10 @@ class TestResult:
         current_game._in_progress = True
         current_game.radiant = [Player(name="RBEEZAY")]
         current_game.dire = []
-        current_game._bets = [Bet(Side.RADIANT, 100, "RBEEZAY"), Bet(Side.DIRE, 500, "RBEEZAY")]
+        current_game._bets = [
+            Bet(Side.RADIANT, 100, "RBEEZAY"),
+            Bet(Side.DIRE, 500, "RBEEZAY"),
+        ]
 
         core.scoreboard.scoreboard = AsyncMock()
         core.channels.move_back_to_lobby = AsyncMock()

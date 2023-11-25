@@ -1,11 +1,20 @@
 from dataclasses import asdict
-from typing import Literal, TYPE_CHECKING
+from logging import Logger
+from typing import Literal, TYPE_CHECKING, Any
 
 from discord import Embed, colour
 from discord.ext.commands import Bot, Cog, Context, command, has_role
+from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import Bet, Player, Roles, Side, get_bot_instance
+from onehead.common import (
+    Bet,
+    Player,
+    Roles,
+    Side,
+    get_bot_instance,
+    get_discord_id_from_name,
+)
 from onehead.protocols.database import IPlayerDatabase, Operation
 
 
@@ -13,6 +22,9 @@ if TYPE_CHECKING:
     from onehead.core import Core
     from onehead.game import Game
     from onehead.lobby import Lobby
+
+
+log: Logger = get_logger()
 
 
 class Betting(Cog):
@@ -37,7 +49,9 @@ class Betting(Cog):
             if bet_results.get(bet.player) is None:
                 bet_results[bet.player] = []
 
-            if (radiant_won and bet.side == Side.RADIANT) or (radiant_won is False and bet.side == Side.DIRE):
+            if (radiant_won and bet.side == Side.RADIANT) or (
+                radiant_won is False and bet.side == Side.DIRE
+            ):
                 bet_results[bet.player].append(bet.stake * 2.0)
             else:
                 bet_results[bet.player].append(-1 * bet.stake)
@@ -55,7 +69,7 @@ class Betting(Cog):
         current_game: Game = core.current_game
 
         active_bets: list[Bet] = current_game.get_bets()
-        bets = [asdict(bet) for bet in active_bets]
+        bets: list[dict[str, Any]] = [asdict(bet) for bet in active_bets]
 
         table_of_bets: str = tabulate(bets, headers="keys", tablefmt="simple")
 
@@ -85,21 +99,25 @@ class Betting(Cog):
             return
 
         name: str = ctx.author.display_name
+        id: int = ctx.author.id
+
         side = side.lower()
 
         record: Player | None = self.database.get(name)
         if record is None:
-            await ctx.send(f"Unable to find {name} in database.")
+            await ctx.send(f"Unable to find <@{id}> in database.")
             return
 
         available_balance: int = record.get("rbucks", 0)
 
         if available_balance == 0:
-            await ctx.send(f"{name} cannot bet as they have no available RBUCKS.")
+            await ctx.send(f"<@{id}> cannot bet as they have no available RBUCKS.")
             return
 
         if side not in Side:
-            await ctx.send(f"{name} - Cannot bet on {side} - Must be either Radiant/Dire.")
+            await ctx.send(
+                f"<@{id}> - Cannot bet on `{side}` - must be either Radiant/Dire."
+            )
             return
 
         if amount == "all":
@@ -108,28 +126,28 @@ class Betting(Cog):
             try:
                 stake = int(amount)
             except ValueError:
-                await ctx.send(f"{name} - {amount} is not a valid number of RBUCKS to place a bet with.")
+                await ctx.send(
+                    f"<@{id}> - `{amount}` is not a valid number of RBUCKS to place a bet with."
+                )
                 return
 
         if stake <= 0:
-            await ctx.send(f"{name} - Bet stake must be greater than 0.")
+            await ctx.send(f"<@{id}> - Bet stake must be greater than 0.")
             return
 
         if stake > available_balance:
             await ctx.send(
-                f"Unable to place bet - {name} tried to stake {stake:.0f} RBUCKS but only has {available_balance:.0f} RBUCKS available."
+                f"Unable to place bet - <@{id}> tried to stake `{stake:.0f}` RBUCKS but only has `{available_balance:.0f}` RBUCKS available."
             )
             return
 
         bets.append(Bet(side, stake, name))
-        self.database.modify(
-            name,
-            "rbucks",
-            stake,
-            Operation.SUBTRACT
-        )
+        self.database.modify(name, "rbucks", stake, Operation.SUBTRACT)
 
-        await ctx.send(f"{name} has placed a bet of {stake:.0f} RBUCKS on {side.title()}.")
+        log.info(f"{name} has placed a bet of {stake:.0f} RBUCKS on {side.title()}.")
+        await ctx.send(
+            f"<@{id}> has placed a bet of `{stake:.0f}` RBUCKS on {side.title()}."
+        )
 
     @has_role(Roles.MEMBER)
     @command()
@@ -166,6 +184,7 @@ class Betting(Cog):
                 corrected_delta: int = int(delta) if delta <= 0 else int(delta / 2)
 
                 line: str = f"{name} {won_or_lost} {abs(corrected_delta)} RBUCKS!\n"
+                log.info(line)
                 contents += line
 
         embed: Embed = Embed(title="**RBUCKS**", colour=colour.Colour.green())
@@ -185,5 +204,7 @@ class Betting(Cog):
 
         for bet in active_bets:
             self.database.modify(bet.player, "rbucks", bet.stake, Operation.ADD)
+
+        log.info("Refunded all bets.")
 
         await ctx.send("All bets have been refunded.")

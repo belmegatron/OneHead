@@ -11,6 +11,7 @@ from discord.ext.commands import (
     has_role,
     max_concurrency,
 )
+from structlog import get_logger
 from tabulate import tabulate
 
 from onehead.behaviour import Behaviour
@@ -24,7 +25,6 @@ from onehead.common import (
     load_config,
     set_bot_instance,
     update_config,
-    get_logger
 )
 from onehead.database import Database
 from onehead.game import Game
@@ -142,10 +142,12 @@ class Core(Cog):
         await self.channels.create_discord_channels(ctx)
 
         if self.current_game.radiant is None or self.current_game.dire is None:
-            raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
+            raise OneHeadException(
+                f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}"
+            )
 
         await self.channels.move_discord_channels(ctx)
-        await ctx.send("Setup Lobby in Dota 2 Client and join with the above teams.")
+        await ctx.send("Create Dota 2 Lobby and join with the above teams.")
 
     @has_role(Roles.ADMIN)
     @command()
@@ -176,9 +178,17 @@ class Core(Cog):
         await self.current_game.open_transfer_window(ctx)
         await self.current_game.open_betting_window(ctx)
 
-        await ctx.send("GLHF")
-        
-        log.info(f"Game {self.config['ihl']['game_count']} has started")
+        if self.current_game.in_progress():
+            await ctx.send("GLHF")
+
+            radiant: list[str]
+            dire: list[str]
+            radiant, dire = get_player_names(
+                self.current_game.radiant, self.current_game.dire
+            )
+
+            log.info(f"Game {self.config['ihl']['game_count']} has started.")
+            log.info(f"Radiant: {radiant}, Dire: {dire}")
 
     @has_role(Roles.ADMIN)
     @command()
@@ -190,7 +200,8 @@ class Core(Cog):
 
         if self.current_game.in_progress():
             self.current_game.cancel()
-            await ctx.send("Game stopped.")
+            log.info(f"Game was cancelled by {ctx.author.display_name}.")
+            await ctx.send("Game cancelled.")
             await self.betting.refund_all_bets(ctx)
             await self.transfers.refund_transfers(ctx)
             await self.reset(ctx, game_cancelled=True)
@@ -211,24 +222,26 @@ class Core(Cog):
 
         if self.current_game.transfer_window_open():
             await ctx.send(
-                "Cannot enter result as the Transfer window for the game is currently open. Use the !stop command if you wish to abort the game."
+                "Cannot enter result as the Transfer window for the game is currently open. Use the `!stop` command if you wish to abort the game."
             )
             return
 
         if self.current_game.betting_window_open():
             await ctx.send(
-                "Cannot enter result as the Betting window for the game is currently open. Use the !stop command if you wish to abort the game."
+                "Cannot enter result as the Betting window for the game is currently open. Use the `!stop` command if you wish to abort the game."
             )
             return
 
         result = result.lower()
 
         if result not in Side:
-            await ctx.send(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
+            await ctx.send(
+                f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}."
+            )
             return
 
-        log.info(f"Game {self.config['ihl']['game_count']} has ended")
-        
+        log.info(f"{ctx.author.display_name} entered a result of {result}.")
+
         bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
 
         for name, bets in bet_results.items():
@@ -242,9 +255,18 @@ class Core(Cog):
         await ctx.send("Updating Scores...")
 
         if self.current_game.radiant is None or self.current_game.dire is None:
-            raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
+            raise OneHeadException(
+                f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}"
+            )
 
-        radiant_names, dire_names = get_player_names(self.current_game.radiant, self.current_game.dire)
+        log.info(f"Game {self.config['ihl']['game_count']} has ended.")
+
+        radiant_names: tuple[str, ...]
+        dire_names: tuple[str, ...]
+
+        radiant_names, dire_names = get_player_names(
+            self.current_game.radiant, self.current_game.dire
+        )
 
         if result == Side.RADIANT:
             await ctx.send("Radiant Victory!")
@@ -252,33 +274,41 @@ class Core(Cog):
                 self.database.modify(player, "win", 1, Operation.ADD)
                 self.database.modify(player, "win_streak", 1, Operation.ADD)
                 self.database.modify(player, "loss_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
+                self.database.modify(
+                    player, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD
+                )
             for player in dire_names:
                 self.database.modify(player, "loss", 1, Operation.ADD)
                 self.database.modify(player, "loss_streak", 1, Operation.ADD)
                 self.database.modify(player, "win_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
+                self.database.modify(
+                    player, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD
+                )
         elif result == Side.DIRE:
             await ctx.send("Dire Victory!")
             for player in radiant_names:
                 self.database.modify(player, "loss", 1, Operation.ADD)
                 self.database.modify(player, "loss_streak", 1, Operation.ADD)
                 self.database.modify(player, "win_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
+                self.database.modify(
+                    player, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD
+                )
             for player in dire_names:
                 self.database.modify(player, "win", 1, Operation.ADD)
                 self.database.modify(player, "win_streak", 1, Operation.ADD)
                 self.database.modify(player, "loss_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
+                self.database.modify(
+                    player, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD
+                )
 
         scoreboard: Command = self.bot.get_command("scoreboard")  # type: ignore[assignment]
         await Command.invoke(scoreboard, ctx)
         await self.reset(ctx)
-        
+
         self.config["ihl"]["game_count"] += 1
-        
+
         update_config(self.config)
-        
+
         if self.is_end_of_season():
             await ctx.send("End of IHL Season!")
             # TODO: Make a big song and dance about the end of an IHL season, present winners, go crazy.
@@ -290,10 +320,22 @@ class Core(Cog):
         If a game is active, displays the teams and their respective players.
         """
 
-        if self.current_game.in_progress() and self.current_game.radiant and self.current_game.dire:
-            t1_names, t2_names = get_player_names(self.current_game.radiant, self.current_game.dire)
-            players = {Side.RADIANT: t1_names, Side.DIRE: t2_names}
-            in_game_players = tabulate(players, headers="keys", tablefmt="simple")
+        if (
+            self.current_game.in_progress()
+            and self.current_game.radiant
+            and self.current_game.dire
+        ):
+            t1_names: tuple[str, ...]
+            t2_names: tuple[str, ...]
+            t1_names, t2_names = get_player_names(
+                self.current_game.radiant, self.current_game.dire
+            )
+
+            players: dict[Side, tuple[str, ...]] = {
+                Side.RADIANT: t1_names,
+                Side.DIRE: t2_names,
+            }
+            in_game_players: str = tabulate(players, headers="keys", tablefmt="simple")
             await ctx.send(f"**Current Game** ```\n" f"{in_game_players}```")
         else:
             await ctx.send("No currently active game.")
@@ -304,7 +346,6 @@ class Core(Cog):
         """
         Displays the current version of OneHead.
         """
-
         await ctx.send(f"**Current Version** - {__version__}")
         await ctx.send(f"**Changelog** - {__changelog__}")
 
@@ -314,9 +355,10 @@ class Core(Cog):
         """
         Display the top 10 most recent matches in the IHL.
         """
+        await ctx.send(
+            "https://www.dotabuff.com/esports/leagues/13630-igc-inhouse-league"
+        )
 
-        await ctx.send("https://www.dotabuff.com/esports/leagues/13630-igc-inhouse-league")
-        
     @has_role(Roles.MEMBER)
     @command()
     async def season(self, ctx: Context) -> None:
@@ -324,20 +366,19 @@ class Core(Cog):
         Display info on the current IHL season.
         """
         try:
-            season_start_date: str = self.config['ihl']['start_date']
+            season_start_date: str = self.config["ihl"]["start_date"]
         except KeyError as e:
             raise OneHeadException(f"IHL season start date missing from config: {e}")
-            
+
         await ctx.send(f"Start Date: {season_start_date}")
-    
+
     def is_end_of_season(self) -> bool:
-        
         try:
             max_game_count: int = self.config["ihl"]["max_games"]
-            current_game_count: int = self.config["ihl"]["game_count"] 
+            current_game_count: int = self.config["ihl"]["game_count"]
         except KeyError as e:
             raise OneHeadException(f"Failed to check end of season: {e}")
-        
+
         return (current_game_count < max_game_count) is False
 
     @has_role(Roles.ADMIN)
@@ -346,14 +387,14 @@ class Core(Cog):
         """
         For testing purposes.
         """
-        self.lobby._signups = [
+        self.lobby._signups += [
             "ERIC",
             "GEE",
             "JEFFERIES",
             "ZEED",
             "PECRO",
             "LAURENCE",
-            "THANOS",
+            "TOCCO",
             "JAMES",
             "LUKE",
             "ZEE",

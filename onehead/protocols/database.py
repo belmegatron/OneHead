@@ -23,5 +23,11 @@ class IPlayerDatabase(Protocol):
     def get_all(self) -> list[Player]:
         pass
 
-    def modify(self, name: str, key: str, value: str | int, operation: Operation = Operation.REPLACE) -> None:
+    def modify(
+        self,
+        name: str,
+        key: str,
+        value: str | int,
+        operation: Operation = Operation.REPLACE,
+    ) -> None:
         pass

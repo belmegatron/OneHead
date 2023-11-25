@@ -54,7 +54,13 @@ class Database(commands.Cog):
 
         self.db.remove(doc_ids=[player.doc_id])
 
-    def modify(self, name: str, key: str, value: str | int, operation: Operation = Operation.REPLACE) -> None:
+    def modify(
+        self,
+        name: str,
+        key: str,
+        value: str | int,
+        operation: Operation = Operation.REPLACE,
+    ) -> None:
         document: Document | None = self._get_document(name)
 
         if document is None:

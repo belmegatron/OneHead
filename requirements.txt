@@ -2,6 +2,7 @@ aiohttp==3.9.0b0
 discord.py>=2.1.0
 dpytest>=0.6
 strenum
+structlog
 tabulate
 types-tabulate
 tinydb

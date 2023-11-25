@@ -96,7 +96,7 @@ class TestCommend:
         core.previous_game = Game()
         core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
         core.previous_game.dire = []
-        
+
         core.database.get = Mock()
         core.database.get.return_value = {"name": "RBEEZAY", "behaviour": 10000}
         core.database.modify = Mock()
@@ -202,7 +202,7 @@ class TestReport:
         core.previous_game = Game()
         core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
         core.previous_game.dire = []
-        
+
         core.database.get = Mock()
         core.database.get.return_value = {"name": "RBEEZAY", "behaviour": 10000}
         core.database.modify = Mock()

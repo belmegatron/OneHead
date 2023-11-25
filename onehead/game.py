@@ -27,8 +27,9 @@ class Game:
 
     def cancel(self) -> None:
         self._cancel_event.set()
+        self._in_progress: bool = False
 
-    async def open_transfer_window(self, ctx) -> None:
+    async def open_transfer_window(self, ctx: Context) -> None:
         self._transfer_window_open = True
         await ctx.send("Player transfer window is now open for 2 minutes!")
 

@@ -33,7 +33,7 @@ class TestRegister:
                 f"{Registration.MIN_MMR - 100} MMR is too low, must be greater or equal to {Registration.MIN_MMR}."
             )
         )
-        
+
     @pytest.mark.asyncio
     async def test_mmr_greater_than_max(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
@@ -67,7 +67,9 @@ class TestRegister:
         registration.database.add = Mock()
 
         await dpytest.message(f"!register {Registration.MIN_MMR + 100}")
-        assert dpytest.verify().message().content(f"{TEST_USER} successfully registered.")
+        assert (
+            dpytest.verify().message().content(f"{TEST_USER} successfully registered.")
+        )
 
 
 class TestDeregister:
@@ -85,7 +87,11 @@ class TestDeregister:
         registration.database.get.return_value = None
 
         await dpytest.message("!deregister RBEEZAY")
-        assert dpytest.verify().message().content("RBEEZAY could not be found in the database.")
+        assert (
+            dpytest.verify()
+            .message()
+            .content("RBEEZAY could not be found in the database.")
+        )
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -97,4 +103,8 @@ class TestDeregister:
         registration.database.remove = Mock()
 
         await dpytest.message("!deregister RBEEZAY")
-        assert dpytest.verify().message().content("RBEEZAY has been successfully removed from the database.")
+        assert (
+            dpytest.verify()
+            .message()
+            .content("RBEEZAY has been successfully removed from the database.")
+        )

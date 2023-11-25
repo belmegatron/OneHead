@@ -1,7 +1,13 @@
-from discord.ext.commands import Cog, Context, command, has_role
+from logging import Logger
 
-from onehead.common import OneHeadException, Player, Roles
+from discord.ext.commands import Cog, Context, command, has_role
+from structlog import get_logger
+
+from onehead.common import Player, Roles, get_discord_id_from_name
 from onehead.protocols.database import IPlayerDatabase
+
+
+log: Logger = get_logger()
 
 
 class Registration(Cog):
@@ -19,26 +25,35 @@ class Registration(Cog):
         """
 
         name: str = ctx.author.display_name
+        id: int = ctx.author.id
 
         try:
             mmr_int: int = int(mmr)
         except ValueError:
-            raise OneHeadException(f"{mmr} is not a valid integer.")
+            await ctx.send(
+                f"<@{id}>, the command you are looking for is `!register <MMR>` (e.g. `!register 9000`)"
+            )
+            return
 
         if mmr_int < self.MIN_MMR:
-            await ctx.send(f"{mmr_int} MMR is too low, must be greater or equal to {self.MIN_MMR}.")
+            await ctx.send(
+                f"`{mmr_int}` MMR is too low, must be greater or equal to {self.MIN_MMR}."
+            )
             return
-        
+
         if mmr_int > self.MAX_MMR:
-            await ctx.send(f"{mmr_int} MMR is too high, must be less than or equal to {self.MAX_MMR}.")
+            await ctx.send(
+                f"`{mmr_int}` MMR is too high, must be less than or equal to {self.MAX_MMR}."
+            )
             return
 
         player: Player | None = self.database.get(name)
         if player is None:
             self.database.add(ctx.author.display_name, mmr_int)
-            await ctx.send(f"{name} successfully registered.")
+            log.info(f"{name} registered with an MMR of {mmr_int}.")
+            await ctx.send(f"<@{id}> successfully registered.")
         else:
-            await ctx.send(f"{name} is already registered.")
+            await ctx.send(f"<@{id}> is already registered.")
 
     @has_role(Roles.ADMIN)
     @command(aliases=["dereg"])
@@ -48,8 +63,12 @@ class Registration(Cog):
         """
 
         player: Player | None = self.database.get(name)
+
+        id: int = get_discord_id_from_name(ctx, name)
+
         if player:
             self.database.remove(name)
-            await ctx.send(f"{name} has been successfully removed from the database.")
+            log.info(f"{name} has been deregistered by {ctx.author.display_name}.")
+            await ctx.send(f"<@{id}> has been deregistered.")
         else:
-            await ctx.send(f"{name} could not be found in the database.")
+            await ctx.send(f"<@{id}> could not be found in the database.")

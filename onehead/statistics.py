@@ -19,7 +19,9 @@ class Statistics:
             if record["win"] == 0:
                 record["%"] = 0
             else:
-                record["%"] = round(record["win"] / (record["win"] + record["loss"]) * 100, 1)
+                record["%"] = round(
+                    record["win"] / (record["win"] + record["loss"]) * 100, 1
+                )
 
     @classmethod
     def calculate_rating(cls, profiles: list[Player]) -> None:

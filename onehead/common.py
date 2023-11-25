@@ -1,12 +1,10 @@
 import json
-import sys
 from dataclasses import dataclass
 from enum import EnumMeta, auto
-from logging import DEBUG, Formatter, Logger, StreamHandler, getLogger
 from pathlib import Path
 from typing import Any, Literal, Optional, TypedDict
 
-from discord.ext.commands import Bot
+from discord.ext.commands import Bot, Context
 from strenum import LowercaseStrEnum, StrEnum
 
 Player = TypedDict(
@@ -121,18 +119,9 @@ def update_config(updated_config: dict) -> None:
         raise OneHeadException(e)
 
 
-def set_logger() -> Logger:
-    handler: StreamHandler = StreamHandler(stream=sys.stdout)
-    formatter: Formatter = Formatter(fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
-    handler.setFormatter(formatter)
-    log: Logger = getLogger("onehead")
-    log.setLevel(DEBUG)
-    log.addHandler(handler)
-    return log
+def get_discord_id_from_name(ctx: Context, name: str) -> int:
+    for member in ctx.guild.members:
+        if member.display_name == name:
+            return member.id
 
-
-log: Logger = set_logger()
-
-
-def get_logger() -> Logger:
-    return log
+    raise OneHeadException(f"{name} is not a member of {ctx.guild.name}.")
