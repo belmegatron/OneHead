@@ -24,8 +24,19 @@ Player = TypedDict(
         "behaviour": int,
     },
 )
+
 Team = tuple[Player, Player, Player, Player, Player]
 TeamCombination = tuple[Team, Team]
+
+Metadata = TypedDict(
+    "Metadata",
+    {
+        "season": int,
+        "current_game_count": int,
+        "max_game_count": int,
+        "timestamp": float,
+    },
+)
 
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
 bot: Optional[Bot] = None
@@ -124,4 +135,4 @@ def get_discord_id_from_name(ctx: Context, name: str) -> int:
         if member.display_name == name:
             return member.id
 
-    raise OneHeadException(f"{name} is not a member of {ctx.guild.name}.")
+    return 0

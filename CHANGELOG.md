@@ -4,8 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.45.1] - 2023-04-14
+## [1.47.0]- 2023-11-26
 
+### Changed
+- Switched to using pyproject.toml
+
+## [1.46.0] - 2023-11-25
+
+### Changed
+- Improved logging by using structlog.
+
+## [1.45.1] - 2023-04-14
+and 
 ### Added
 - Added upper limit to MMR submitted when registering for IHL.
 

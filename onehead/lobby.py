@@ -27,7 +27,7 @@ from onehead.common import (
     get_discord_id_from_name,
 )
 from onehead.game import Game
-from onehead.protocols.database import IPlayerDatabase
+from onehead.protocols.database import OneHeadDatabase
 
 if TYPE_CHECKING:
     from discord.member import Member
@@ -37,8 +37,8 @@ log: Logger = get_logger()
 
 
 class Lobby(Cog):
-    def __init__(self, database: IPlayerDatabase) -> None:
-        self.database: IPlayerDatabase = database
+    def __init__(self, database: OneHeadDatabase) -> None:
+        self.database: OneHeadDatabase = database
         self._signups: list[str] = []
         self._players_ready: list[str] = []
         self._ready_check_in_progress: bool = False
@@ -64,7 +64,7 @@ class Lobby(Cog):
 
         guild: Guild | None = ctx.guild
         if guild is None:
-            raise OneHeadException("No Guild associated with Discord Context.")
+            raise OneHeadException("No Guild associated with Discord context.")
 
         ihl_role: Role = [x for x in guild.roles if x.name == Roles.MEMBER][0]
         if not ihl_role:
@@ -78,9 +78,7 @@ class Lobby(Cog):
             if signup_count == 0:
                 await ctx.send("There are currently no signups.")
             else:
-                await ctx.send(
-                    f"Only `{signup_count}` Signup(s), require `{10 - signup_count}` more."
-                )
+                await ctx.send(f"Only `{signup_count}` signup(s), require `{10 - signup_count}` more.")
         else:
             return True
 
@@ -124,12 +122,8 @@ class Lobby(Cog):
             top_10_players_by_behaviour_score: list[Player] = sorted(
                 players, key=lambda d: d["behaviour"], reverse=True
             )[:10]
-            self._signups = [
-                player["name"] for player in top_10_players_by_behaviour_score
-            ]
-            benched_players: list[str] = [
-                x for x in original_signups if x not in self._signups
-            ]
+            self._signups = [player["name"] for player in top_10_players_by_behaviour_score]
+            benched_players: list[str] = [x for x in original_signups if x not in self._signups]
 
         await ctx.send(f"**Benched Players:** ```\n{benched_players}```")
         await ctx.send(f"**Selected Players:** ```\n{self._signups}```")
@@ -142,14 +136,12 @@ class Lobby(Cog):
         """
 
         await ctx.send(f"There are currently `{len(self._signups)}` players signed up.")
-        signups_dict: list[dict[str, Any]] = [
-            {"#": i, "name": name} for i, name in enumerate(self._signups, start=1)
-        ]
+        signups_dict: list[dict[str, Any]] = [{"#": i, "name": name} for i, name in enumerate(self._signups, start=1)]
         signups: str = tabulate(signups_dict, headers="keys", tablefmt="simple")
 
         await ctx.send(f"**Current Signups** ```\n{signups}```")
 
-    @cooldown(1, 30, BucketType.user)
+    @cooldown(1, 10, BucketType.user)
     @has_role(Roles.MEMBER)
     @command(aliases=["su"])
     async def signup(self, ctx: Context) -> None:
@@ -158,7 +150,7 @@ class Lobby(Cog):
         """
 
         if self._signups_disabled:
-            await ctx.send("Game in Progress - `!su` command unavailable.")
+            await ctx.send("Game in progress - `!su` command unavailable.")
             return
 
         name: str = ctx.author.display_name
@@ -180,7 +172,7 @@ class Lobby(Cog):
 
         await Command.invoke(self.who, ctx)
 
-    @cooldown(1, 30, BucketType.user)
+    @cooldown(1, 10, BucketType.user)
     @has_role(Roles.MEMBER)
     @command(aliases=["so"])
     async def signout(self, ctx: Context) -> None:
@@ -189,13 +181,13 @@ class Lobby(Cog):
         """
 
         if self._signups_disabled:
-            await ctx.send("Game in Progress - `!so` command unavailable.")
+            await ctx.send("Game in progress - `!so` command unavailable.")
             return
 
         name: str = ctx.author.display_name
 
         if name not in self._signups:
-            await ctx.send(f"@<{ctx.author.id}> is not currently signed up.")
+            await ctx.send(f"<@{ctx.author.id}> is not currently signed up.")
         else:
             self._signups.remove(name)
 
@@ -216,9 +208,7 @@ class Lobby(Cog):
 
         self._signups.remove(name)
 
-        log.info(
-            f"{name} has been removed from the signup pool by {ctx.author.display_name}."
-        )
+        log.info(f"{name} has been removed from the signup pool by {ctx.author.display_name}.")
 
         id: int = get_discord_id_from_name(ctx, name)
         await ctx.send(f"<@{id}> has been removed from the signup pool.")
@@ -254,28 +244,17 @@ class Lobby(Cog):
         """
         if await self.signup_check(ctx):
             log.info(f"{ctx.author.display_name} initiated a ready check.")
-            await ctx.send(
-                "Ready check started - `30s` remaining - type `!ready` to ready up."
-            )
+            await ctx.send("Ready check started - `30s` remaining - type `!ready` to ready up.")
             self._ready_check_in_progress = True
             await sleep(30)
 
-            players_not_ready: list[str] = [
-                name for name in self._signups if name not in self._players_ready
-            ]
-            mentions_not_ready: list[str] = [
-                f"<@{get_discord_id_from_name(ctx, name)}>"
-                for name in players_not_ready
-            ]
+            players_not_ready: list[str] = [name for name in self._signups if name not in self._players_ready]
+            mentions_not_ready: list[str] = [f"<@{get_discord_id_from_name(ctx, name)}>" for name in players_not_ready]
             if len(players_not_ready) == 0:
                 await ctx.send("Ready check complete.")
             else:
-                log.info(
-                    f"`{len(players_not_ready)}` not ready: {', '.join(players_not_ready)}."
-                )
-                await ctx.send(
-                    f"Still waiting on `{len(players_not_ready)}` players: {', '.join(mentions_not_ready)}."
-                )
+                log.info(f"`{len(players_not_ready)}` not ready: {', '.join(players_not_ready)}.")
+                await ctx.send(f"Still waiting on `{len(players_not_ready)}` players: {', '.join(mentions_not_ready)}.")
 
         self._ready_check_in_progress = False
         self._players_ready = []
@@ -301,7 +280,7 @@ async def on_presence_update(before: "Member", after: "Member") -> None:
 
     if after.status in (Status.offline, Status.idle) and name in signups:
         reason: str = "Offline" if after.status == Status.offline else "Idle"
-        log.info(f"<@{id}> is now {reason}.")
+        log.info(f"{name} is now {reason}.")
         signups.remove(name)
         await lobby._context.send(f"<@{id}> has been signed out due to being {reason}.")
 

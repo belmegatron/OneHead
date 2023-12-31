@@ -4,7 +4,7 @@ from discord.ext.commands import Cog, Context, command, has_role
 from structlog import get_logger
 
 from onehead.common import Player, Roles, get_discord_id_from_name
-from onehead.protocols.database import IPlayerDatabase
+from onehead.protocols.database import OneHeadDatabase
 
 
 log: Logger = get_logger()
@@ -14,8 +14,8 @@ class Registration(Cog):
     MIN_MMR: int = 1000
     MAX_MMR: int = 10000
 
-    def __init__(self, database: IPlayerDatabase) -> None:
-        self.database: IPlayerDatabase = database
+    def __init__(self, database: OneHeadDatabase) -> None:
+        self.database: OneHeadDatabase = database
 
     @has_role(Roles.MEMBER)
     @command(aliases=["reg"])
@@ -30,21 +30,15 @@ class Registration(Cog):
         try:
             mmr_int: int = int(mmr)
         except ValueError:
-            await ctx.send(
-                f"<@{id}>, the command you are looking for is `!register <MMR>` (e.g. `!register 9000`)"
-            )
+            await ctx.send(f"<@{id}>, the command you are looking for is `!register <MMR>` (e.g. `!register 9000`)")
             return
 
         if mmr_int < self.MIN_MMR:
-            await ctx.send(
-                f"`{mmr_int}` MMR is too low, must be greater or equal to {self.MIN_MMR}."
-            )
+            await ctx.send(f"`{mmr_int}` MMR is too low, must be greater or equal to `{self.MIN_MMR}`.")
             return
 
         if mmr_int > self.MAX_MMR:
-            await ctx.send(
-                f"`{mmr_int}` MMR is too high, must be less than or equal to {self.MAX_MMR}."
-            )
+            await ctx.send(f"`{mmr_int}` MMR is too high, must be less than or equal to `{self.MAX_MMR}`.")
             return
 
         player: Player | None = self.database.get(name)

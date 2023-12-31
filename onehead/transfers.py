@@ -15,7 +15,7 @@ from onehead.common import (
 )
 from onehead.game import Game
 from onehead.lobby import Lobby
-from onehead.protocols.database import IPlayerDatabase, Operation
+from onehead.protocols.database import OneHeadDatabase, Operation
 
 
 if TYPE_CHECKING:
@@ -29,8 +29,8 @@ log: Logger = get_logger()
 class Transfers(Cog):
     SHUFFLE_COST: Literal[500] = 500
 
-    def __init__(self, database: IPlayerDatabase, lobby: Lobby) -> None:
-        self.database: IPlayerDatabase = database
+    def __init__(self, database: OneHeadDatabase, lobby: Lobby) -> None:
+        self.database: OneHeadDatabase = database
         self.lobby: Lobby = lobby
 
     async def refund_transfers(self, ctx: Context) -> None:
@@ -44,9 +44,7 @@ class Transfers(Cog):
             return
 
         for transfer in transfers:
-            self.database.modify(
-                transfer.buyer, "rbucks", transfer.amount, Operation.ADD
-            )
+            self.database.modify(transfer.buyer, "rbucks", transfer.amount, Operation.ADD)
 
         message: str = "All player transactions have been refunded."
         log.info(message)
@@ -70,17 +68,13 @@ class Transfers(Cog):
             return
 
         if current_game.radiant is None or current_game.dire is None:
-            raise OneHeadException(
-                f"Expected valid teams: {current_game.radiant}, {current_game.dire}"
-            )
+            raise OneHeadException(f"Expected valid teams: {current_game.radiant}, {current_game.dire}")
 
         name: str = ctx.author.display_name
         id: int = ctx.author.id
 
         if name not in self.lobby.get_signups():
-            await ctx.send(
-                f"<@{id}> is unable to shuffle are not participating in the current game."
-            )
+            await ctx.send(f"<@{id}> is unable to shuffle are not participating in the current game.")
             return
 
         profile: Player | None = self.database.get(name)
@@ -93,38 +87,31 @@ class Transfers(Cog):
         if current_balance < self.SHUFFLE_COST:
             await ctx.send(
                 f"<@{id}> cannot shuffle as they only have {current_balance} "
-                f"RBUCKS. A shuffle costs {Transfers.SHUFFLE_COST} RBUCKS"
+                f"RBUCKS. A shuffle costs {Transfers.SHUFFLE_COST} RBUCKS."
             )
             return
 
-        await ctx.send(
-            f"@<{id}> has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!"
-        )
+        await ctx.send(f"<@{id}> has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!")
 
         self.database.modify(name, "rbucks", Transfers.SHUFFLE_COST, Operation.SUBTRACT)
         transfers.append(PlayerTransfer(name, Transfers.SHUFFLE_COST))
 
-        current_teams_names_only: tuple[
-            tuple[str, ...], tuple[str, ...]
-        ] = get_player_names(current_game.radiant, current_game.dire)
+        current_teams_names_only: tuple[tuple[str, ...], tuple[str, ...]] = get_player_names(
+            current_game.radiant, current_game.dire
+        )
 
         matchmaking: Matchmaking = bot.get_cog("Matchmaking")  # type: ignore[assignment]
 
         shuffled_teams: tuple[Team, Team] = await matchmaking.balance(ctx)
 
-        shuffled_teams_names_only: tuple[
-            tuple[str, ...], tuple[str, ...]
-        ] = get_player_names(shuffled_teams[0], shuffled_teams[1])
+        shuffled_teams_names_only: tuple[tuple[str, ...], tuple[str, ...]] = get_player_names(
+            shuffled_teams[0], shuffled_teams[1]
+        )
 
         while current_teams_names_only == shuffled_teams_names_only:
             shuffled_teams = await matchmaking.balance(ctx)
-            shuffled_teams_names_only = get_player_names(
-                shuffled_teams[0], shuffled_teams[1]
-            )
+            shuffled_teams_names_only = get_player_names(shuffled_teams[0], shuffled_teams[1])
 
-        log.info(
-            f"@<{id}> has shuffled the teams. New teams are: {shuffled_teams_names_only}"
-        )
         current_game.radiant, current_game.dire = shuffled_teams
 
         await core.setup_teams(ctx)

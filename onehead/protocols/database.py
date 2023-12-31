@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Protocol
 
-from onehead.common import Player
+from onehead.common import Metadata, Player
 
 
 class Operation(Enum):
@@ -10,7 +10,7 @@ class Operation(Enum):
     SUBTRACT = 2
 
 
-class IPlayerDatabase(Protocol):
+class OneHeadDatabase(Protocol):
     def get(self, name: str) -> Player | None:
         pass
 
@@ -30,4 +30,10 @@ class IPlayerDatabase(Protocol):
         value: str | int,
         operation: Operation = Operation.REPLACE,
     ) -> None:
+        pass
+
+    def get_metadata(self) -> Metadata:
+        pass
+
+    def update_metadata(self, data: Metadata) -> None:
         pass

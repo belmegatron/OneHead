@@ -2,7 +2,7 @@ import random
 
 from discord.ext.commands import Cog, Context, command, has_role
 
-from onehead.common import Roles
+from onehead.common import OneHeadException, Roles, get_discord_id_from_name
 
 
 class MentalHealth(Cog):
@@ -125,4 +125,10 @@ class MentalHealth(Cog):
         """
 
         quote: str = random.choice(self.quotes)
-        await ctx.send(f"**{name}**\n {quote}")
+        try:
+            id: int = get_discord_id_from_name(ctx, name)
+            message: str = f"**<@{id}>**\n {quote}"
+        except OneHeadException:
+            message: str = f"**{name}**\n {quote}"
+
+        await ctx.send(message)

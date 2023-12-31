@@ -4,7 +4,7 @@ from discord.ext.commands import Cog, Context, command, has_role
 from tabulate import tabulate
 
 from onehead.common import OneHeadException, Player, Roles
-from onehead.protocols.database import IPlayerDatabase
+from onehead.protocols.database import OneHeadDatabase
 from onehead.statistics import Statistics
 
 
@@ -13,8 +13,8 @@ class ScoreBoard(Cog):
     # this into account.
     DISCORD_MAX_MESSAGE_LENGTH: Literal[1950] = 1950
 
-    def __init__(self, database: IPlayerDatabase) -> None:
-        self.database: IPlayerDatabase = database
+    def __init__(self, database: OneHeadDatabase) -> None:
+        self.database: OneHeadDatabase = database
 
     def _chunk_scoreboard(self, scoreboard: str) -> tuple[str, ...]:
         if len(scoreboard) < self.DISCORD_MAX_MESSAGE_LENGTH:
@@ -28,9 +28,7 @@ class ScoreBoard(Cog):
             if remaining_size <= self.DISCORD_MAX_MESSAGE_LENGTH:
                 chunk: str = scoreboard[offset:]
             else:
-                max_chunk: str = scoreboard[
-                    offset : offset + self.DISCORD_MAX_MESSAGE_LENGTH
-                ]
+                max_chunk: str = scoreboard[offset : offset + self.DISCORD_MAX_MESSAGE_LENGTH]
                 eol: int = max_chunk.rfind("\n")
                 chunk = max_chunk[:eol]
 
@@ -124,15 +122,11 @@ class ScoreBoard(Cog):
         Statistics.calculate_win_percentage(scoreboard)
         Statistics.calculate_rating(scoreboard)
 
-        scoreboard_sorted_rows: list[Player] = self._calculate_positions(
-            scoreboard, "rating"
+        scoreboard_sorted_rows: list[Player] = self._calculate_positions(scoreboard, "rating")
+        scoreboard_sorted_rows_and_columns: list[dict[str, Any]] = self._sort_scoreboard_key_order(
+            scoreboard_sorted_rows
         )
-        scoreboard_sorted_rows_and_columns: list[
-            dict[str, Any]
-        ] = self._sort_scoreboard_key_order(scoreboard_sorted_rows)
 
-        sorted_scoreboard: str = tabulate(
-            scoreboard_sorted_rows_and_columns, headers="keys", tablefmt="simple"
-        )
+        sorted_scoreboard: str = tabulate(scoreboard_sorted_rows_and_columns, headers="keys", tablefmt="simple")
 
         return sorted_scoreboard

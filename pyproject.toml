@@ -1,0 +1,51 @@
+[project]
+name = "onehead"
+version = "1.47.0"
+description = "A Dota 2 in-house league Discord bot."
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["dota", "discord", "inhouse"]
+
+dependencies = [
+    "aiohttp==3.9.0b0",
+    "discord.py>=2.1.0",
+    "dpytest>=0.6",
+    "strenum",
+    "structlog",
+    "tabulate",
+    "types-tabulate",
+    "tinydb"
+]
+
+[build-system]
+requires = ["setuptools>=43.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.mypy]
+disallow_untyped_defs = true
+no_implicit_optional = true
+local_partial_types = true
+allow_untyped_globals = false
+allow_redefinition = false
+implicit_reexport = false
+strict_equality = true
+strict_optional = true
+disallow_untyped_calls = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_return_any = false
+warn_redundant_casts = false
+warn_unreachable = true
+warn_unused_configs = true
+show_column_numbers = true
+show_error_context = true
+show_error_codes = true
+show_traceback = true
+pretty = true
+color_output = true
+error_summary = true
+
+[tool.black]
+line-length = 120

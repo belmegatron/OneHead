@@ -1,10 +1,8 @@
 FROM python
 
-WORKDIR /usr/local/
+WORKDIR /app
 
-COPY onehead onehead/onehead
-
-COPY requirements.txt run.py setup.py version.py ./onehead/
+COPY onehead .
 
 RUN pip install virtualenv
 
@@ -14,8 +12,6 @@ RUN python -m venv $VIRTUAL_ENV
 
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-WORKDIR /usr/local/onehead
-
-RUN pip install -e .
+RUN pip install .
 
 ENTRYPOINT python run.py
