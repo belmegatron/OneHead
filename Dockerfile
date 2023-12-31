@@ -2,7 +2,7 @@ FROM python
 
 WORKDIR /app
 
-COPY onehead .
+COPY . .
 
 RUN pip install virtualenv
 
