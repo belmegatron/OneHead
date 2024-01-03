@@ -1,8 +1,9 @@
 import random
 
+from discord.member import Member
 from discord.ext.commands import Cog, Context, command, has_role
 
-from onehead.common import OneHeadException, Roles, get_discord_id_from_name
+from onehead.common import OneHeadException, Roles, get_discord_member
 
 
 class MentalHealth(Cog):
@@ -125,10 +126,11 @@ class MentalHealth(Cog):
         """
 
         quote: str = random.choice(self.quotes)
-        try:
-            id: int = get_discord_id_from_name(ctx, name)
-            message: str = f"**<@{id}>**\n {quote}"
-        except OneHeadException:
+
+        member: Member | None = get_discord_member(ctx, name)
+        if member:
+            message: str = f"**{member.mention}**\n {quote}"
+        else:
             message: str = f"**{name}**\n {quote}"
 
         await ctx.send(message)

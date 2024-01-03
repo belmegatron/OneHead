@@ -3,11 +3,12 @@ import random
 from logging import Logger
 from typing import Any
 
+from discord.member import Member
 from discord.ext.commands import Cog, Context, command, has_role
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination
+from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination, get_discord_member
 
 from onehead.lobby import Lobby
 from onehead.protocols.database import OneHeadDatabase
@@ -22,7 +23,7 @@ class Matchmaking(Cog):
         self.database: OneHeadDatabase = database
         self.lobby: Lobby = lobby
 
-    def _get_player_records(self) -> list[Player]:
+    def _get_player_records(self, ctx: Context) -> list[Player]:
         """
         Obtains player records for all players that have signed up to play.
 
@@ -31,7 +32,8 @@ class Matchmaking(Cog):
 
         players: list[Player] = []
         for player_name in self.lobby._signups:
-            player: Player | None = self.database.get(player_name)
+            member: Member | None = get_discord_member(ctx, player_name)
+            player: Player | None = self.database.get(member.id)
             if player:
                 players.append(player)
 
@@ -76,7 +78,7 @@ class Matchmaking(Cog):
 
             unique_combination["rating_difference"] = abs(t1_rating - t2_rating)
 
-    def _calculate_balance(self) -> dict:
+    def _calculate_balance(self, ctx: Context) -> dict:
         """
         Calculate balanced lineups for Radiant/Dire.
 
@@ -84,7 +86,7 @@ class Matchmaking(Cog):
         a rating value associated with each player.
         """
 
-        profiles: list[Player] = self._get_player_records()
+        profiles: list[Player] = self._get_player_records(ctx)
         profile_count: int = len(profiles)
         if profile_count != 10:
             raise OneHeadException(f"Error: Only `{profile_count}` profiles could be found in database.")
@@ -131,7 +133,7 @@ class Matchmaking(Cog):
             err: str = f"Only `{signup_count}` Signups, require `{10 - signup_count}` more."
             await ctx.send(err)
 
-        balanced_teams: dict = self._calculate_balance()
+        balanced_teams: dict = self._calculate_balance(ctx)
 
         radiant: Team = balanced_teams[Side.RADIANT]
         dire: Team = balanced_teams[Side.DIRE]

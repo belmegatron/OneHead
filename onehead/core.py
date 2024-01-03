@@ -1,6 +1,7 @@
 from logging import Logger
 from datetime import datetime
 
+from discord.member import Member
 from discord import Embed, Intents
 from discord.ext.commands import (
     Bot,
@@ -25,7 +26,7 @@ from onehead.common import (
     get_player_names,
     load_config,
     set_bot_instance,
-    update_config,
+    get_discord_member,
     Metadata,
 )
 from onehead.database import Database
@@ -160,13 +161,13 @@ class Core(Cog):
         if self.current_game.in_progress():
             await ctx.send("Game already in progress...")
             return
-        
+
         signup_threshold_met: bool = await self.lobby.signup_check(ctx)
         if signup_threshold_met is False:
             return
 
         metadata: Metadata = self.database.get_metadata()
-        await ctx.send(f"Starting game: Season {metadata['season']}, Game {metadata['current_game_count']}.")
+        await ctx.send(f"Starting game: Season {metadata['season']}, Game {metadata['game_id']}.")
         await self.lobby.select_players(ctx)
 
         self.current_game.start()
@@ -187,7 +188,7 @@ class Core(Cog):
             dire: tuple[str, ...]
             radiant, dire = get_player_names(self.current_game.radiant, self.current_game.dire)
 
-            log.info(f"Season {metadata['season']}, Game {metadata['current_game_count']} has started.")
+            log.info(f"Season {metadata['season']}, Game {metadata['game_id']} has started.")
             log.info(f"Radiant: {', '.join(radiant)}, Dire: {', '.join(dire)}.")
 
     @has_role(Roles.ADMIN)
@@ -245,7 +246,8 @@ class Core(Cog):
         for name, bets in bet_results.items():
             for bet_result in bets:
                 if bet_result > 0:
-                    self.database.modify(name, "rbucks", bet_result, Operation.ADD)
+                    m: Member | None = get_discord_member(ctx, name)
+                    self.database.modify(m.id, "rbucks", bet_result, Operation.ADD)
 
         report: Embed = self.betting.create_bet_report(bet_results)
         await ctx.send(embed=report)
@@ -257,7 +259,7 @@ class Core(Cog):
 
         metadata: Metadata = self.database.get_metadata()
 
-        log.info(f"Game {metadata['current_game_count']} has ended.")
+        log.info(f"Game {metadata['game_id']} has ended.")
 
         radiant_names: tuple[str, ...]
         dire_names: tuple[str, ...]
@@ -267,39 +269,43 @@ class Core(Cog):
         if result == Side.RADIANT:
             await ctx.send("Radiant victory!")
             for player in radiant_names:
-                self.database.modify(player, "win", 1, Operation.ADD)
-                self.database.modify(player, "win_streak", 1, Operation.ADD)
-                self.database.modify(player, "loss_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
+                m: Member | None = get_discord_member(ctx, player)
+                self.database.modify(m.id, "win", 1, Operation.ADD)
+                self.database.modify(m.id, "win_streak", 1, Operation.ADD)
+                self.database.modify(m.id, "loss_streak", 0)
+                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
             for player in dire_names:
-                self.database.modify(player, "loss", 1, Operation.ADD)
-                self.database.modify(player, "loss_streak", 1, Operation.ADD)
-                self.database.modify(player, "win_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
+                m: Member | None = get_discord_member(ctx, player)
+                self.database.modify(m.id, "loss", 1, Operation.ADD)
+                self.database.modify(m.id, "loss_streak", 1, Operation.ADD)
+                self.database.modify(m.id, "win_streak", 0)
+                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
         elif result == Side.DIRE:
             await ctx.send("Dire victory!")
             for player in radiant_names:
-                self.database.modify(player, "loss", 1, Operation.ADD)
-                self.database.modify(player, "loss_streak", 1, Operation.ADD)
-                self.database.modify(player, "win_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
+                m: Member | None = get_discord_member(ctx, player)
+                self.database.modify(m.id, "loss", 1, Operation.ADD)
+                self.database.modify(m.id, "loss_streak", 1, Operation.ADD)
+                self.database.modify(m.id, "win_streak", 0)
+                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
             for player in dire_names:
-                self.database.modify(player, "win", 1, Operation.ADD)
-                self.database.modify(player, "win_streak", 1, Operation.ADD)
-                self.database.modify(player, "loss_streak", 0)
-                self.database.modify(player, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
+                m: Member | None = get_discord_member(ctx, player)
+                self.database.modify(m.id, "win", 1, Operation.ADD)
+                self.database.modify(m.id, "win_streak", 1, Operation.ADD)
+                self.database.modify(m.id, "loss_streak", 0)
+                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
 
         scoreboard: Command = self.bot.get_command("scoreboard")  # type: ignore[assignment]
         await Command.invoke(scoreboard, ctx)
         await self.reset(ctx)
 
-        metadata["current_game_count"] += 1
+        metadata["game_id"] += 1
         self.database.update_metadata(metadata)
 
         if self.is_end_of_season():
             await ctx.send(f"Season `{metadata['season']}` has ended!")
             metadata["season"] += 1
-            metadata["current_game_count"] = 0
+            metadata["game_id"] = 1
             self.database.update_metadata(metadata)
             # TODO: Make a big song and dance about the end of an IHL season, present winners, go crazy.
 
@@ -323,7 +329,7 @@ class Core(Cog):
             metadata: Metadata = self.database.get_metadata()
 
             await ctx.send(
-                f"**Current Game** - Season `{metadata['season']}`, Game `{metadata['current_game_count']}` ```\n"
+                f"**Current Game** - Season `{metadata['season']}`, Game `{metadata['game_id']}` ```\n"
                 f"{in_game_players}```"
             )
         else:
@@ -359,7 +365,7 @@ class Core(Cog):
 
     def is_end_of_season(self) -> bool:
         metadata: Metadata = self.database.get_metadata()
-        return (metadata["current_game_count"] < metadata["max_game_count"]) is False
+        return (metadata["game_id"] < metadata["max_game_count"]) is False
 
     @has_role(Roles.ADMIN)
     @command(aliases=["sim"])

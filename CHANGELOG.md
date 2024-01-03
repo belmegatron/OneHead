@@ -4,10 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.49.0] - 2024-01-03
+
+### Changed
+- Use discord ID for identifying users instead of display name.
+
 ## [1.48.0] - 2024-01-02
 
 ### Changed
-- Bumped version for aiohttp and dpytest
+- Bumped version for aiohttp and dpytest.
 
 ## [1.47.0]- 2023-11-26
 
@@ -20,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved logging by using structlog.
 
 ## [1.45.1] - 2023-04-14
-and 
+
 ### Added
 - Added upper limit to MMR submitted when registering for IHL.
 

@@ -5,12 +5,14 @@ from pathlib import Path
 from typing import Any, Literal, Optional, TypedDict
 
 from discord.ext.commands import Bot, Context
+from discord.member import Member
 from strenum import LowercaseStrEnum, StrEnum
 
 Player = TypedDict(
     "Player",
     {
         "#": int,
+        "id": int,
         "name": str,
         "mmr": int,
         "win": int,
@@ -32,7 +34,7 @@ Metadata = TypedDict(
     "Metadata",
     {
         "season": int,
-        "current_game_count": int,
+        "game_id": int,
         "max_game_count": int,
         "timestamp": float,
     },
@@ -130,9 +132,9 @@ def update_config(updated_config: dict) -> None:
         raise OneHeadException(e)
 
 
-def get_discord_id_from_name(ctx: Context, name: str) -> int:
+def get_discord_member(ctx: Context, name: str) -> Member | None:
     for member in ctx.guild.members:
         if member.display_name == name:
-            return member.id
+            return member
 
-    return 0
+    return None

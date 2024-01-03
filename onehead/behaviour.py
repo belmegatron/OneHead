@@ -1,6 +1,7 @@
 from logging import Logger
 from typing import TYPE_CHECKING
 
+from discord.member import Member
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 from structlog import get_logger
 
@@ -9,7 +10,7 @@ from onehead.common import (
     Roles,
     get_bot_instance,
     get_player_names,
-    get_discord_id_from_name,
+    get_discord_member,
 )
 from onehead.game import Game
 from onehead.protocols.database import OneHeadDatabase, Operation
@@ -46,7 +47,6 @@ class Behaviour(Cog):
             return
 
         commender: str = ctx.author.display_name
-        commender_id: int = ctx.author.id
 
         radiant: tuple[str, ...]
         dire: tuple[str, ...]
@@ -54,40 +54,43 @@ class Behaviour(Cog):
 
         if commender not in radiant and commender not in dire:
             await ctx.send(
-                f"<@{commender_id}> did not participate in the previous game and therefore cannot commend another player."
+                f"{ctx.author.mention} did not participate in the previous game and therefore cannot commend another player."
             )
             return
 
         if commender == player_name:
-            await ctx.send(f"<@{commender_id}> you cannot commend yourself, nice try...")
+            await ctx.send(f"{ctx.author.mention} you cannot commend yourself, nice try...")
             return
 
-        player_id: int = get_discord_id_from_name(ctx, player_name)
+        member: Member | None = get_discord_member(ctx, player_name)
+        if member is None:
+            raise
+
         if player_name not in radiant and player_name not in dire:
-            await ctx.send(f"<@{player_id}> cannot be commended as they did not participate in the previous game.")
+            await ctx.send(f"{member.mention} cannot be commended as they did not participate in the previous game.")
             return
 
         if previous_game.has_been_previously_commended(commender, player_name):
-            await ctx.send(f"<@{player_id}> has already been commended by <@{commender_id}>.")
+            await ctx.send(f"{member.mention} has already been commended by {ctx.author.mention}.")
             return
 
-        player: Player | None = self.database.get(player_name)
+        player: Player | None = self.database.get(member.id)
         if player is None:
-            await ctx.send(f"<@{player_id}> could not be found in the database.")
+            await ctx.send(f"{member.mention} could not be found in the database.")
             return
 
         current_behaviour_score: int = player["behaviour"]
 
         new_score: int = min(current_behaviour_score + self.COMMEND_MODIFIER, self.MAX_BEHAVIOUR_SCORE)
 
-        self.database.modify(player_name, "behaviour", new_score)
-        self.database.modify(player_name, "commends", 1, operation=Operation.ADD)
+        self.database.modify(member.id, "behaviour", new_score)
+        self.database.modify(member.id, "commends", 1, operation=Operation.ADD)
 
         previous_game.add_commend(commender, player_name)
 
         log.info(f"{commender} commended {player_name}.")
 
-        await ctx.send(f"<@{player_id}> has been commended by <@{commender_id}>.")
+        await ctx.send(f"{member.mention} has been commended by {ctx.author.mention}.")
 
     @has_role(Roles.MEMBER)
     @command()
@@ -105,7 +108,6 @@ class Behaviour(Cog):
             return
 
         reporter: str = ctx.author.display_name
-        reporter_id: int = ctx.author.id
 
         radiant: tuple[str, ...]
         dire: tuple[str, ...]
@@ -113,39 +115,40 @@ class Behaviour(Cog):
 
         if reporter not in radiant and reporter not in dire:
             await ctx.send(
-                f"<@{reporter_id}> did not participate in the previous game and therefore cannot report another player."
+                f"{ctx.author.mention} did not participate in the previous game and therefore cannot report another player."
             )
             return
 
         if reporter == player_name:
             await ctx.send(
-                f"<@{reporter_id}> has brought dishonour upon themselves and has attempted to commit seppuku. OneHead will now allow it... UWU!"
+                f"{ctx.author.mention} has brought dishonour upon themselves and has attempted to commit seppuku. OneHead will now allow it... UWU!"
             )
             return
 
-        player_id: int = get_discord_id_from_name(player_name)
+        member: Member | None = get_discord_member(ctx, player_name)
+
         if player_name not in radiant and player_name not in dire:
-            await ctx.send(f"<@{player_id}> cannot be reported as they did not participate in the previous game.")
+            await ctx.send(f"{member.mention} cannot be reported as they did not participate in the previous game.")
             return
 
         if previous_game.has_been_previously_reported(reporter, player_name):
-            await ctx.send(f"<@{player_id}> has already been reported by <@{reporter_id}>.")
+            await ctx.send(f"{member.mention} has already been reported by {ctx.author.mention}.")
             return
 
-        player: Player | None = self.database.get(player_name)
+        player: Player | None = self.database.get(member.id)
         if player is None:
-            await ctx.send(f"<@{player_id}> could not be found in the database.")
+            await ctx.send(f"{member.mention} could not be found in the database.")
             return
 
         current_behaviour_score: int = player["behaviour"]
 
         new_score: int = max(current_behaviour_score + self.REPORT_MODIFIER, self.MIN_BEHAVIOUR_SCORE)
 
-        self.database.modify(player_name, "behaviour", new_score)
-        self.database.modify(player_name, "reports", 1, Operation.ADD)
+        self.database.modify(member.id, "behaviour", new_score)
+        self.database.modify(member.id, "reports", 1, Operation.ADD)
 
         previous_game.add_report(reporter, player_name)
 
         log.info(f"{reporter} reported {player_name} for the following reason: {reason}.")
 
-        await ctx.send(f"<@{player_id}> has been reported.")
+        await ctx.send(f"{member.mention} has been reported.")

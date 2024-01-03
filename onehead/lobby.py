@@ -24,7 +24,7 @@ from onehead.common import (
     Player,
     Roles,
     get_bot_instance,
-    get_discord_id_from_name,
+    get_discord_member,
 )
 from onehead.game import Game
 from onehead.protocols.database import OneHeadDatabase
@@ -110,7 +110,9 @@ class Lobby(Cog):
             players: list[Player] = []
 
             for signup in self._signups:
-                player: Player | None = self.database.get(signup)
+                member: Member | None = get_discord_member(ctx, signup)
+                print(f"{signup}: {member.id}")
+                player: Player | None = self.database.get(member.id)
 
                 if player is None:
                     raise OneHeadException(f"Unable to find {signup} in database.")
@@ -154,13 +156,13 @@ class Lobby(Cog):
             return
 
         name: str = ctx.author.display_name
-        player: Player | None = self.database.get(name)
+        player: Player | None = self.database.get(ctx.author.id)
         if player is None:
             await ctx.send("Please register first using the `!register` command.")
             return
 
         if name in self._signups:
-            await ctx.send(f"<@{ctx.author.id}> is already signed up.")
+            await ctx.send(f"{ctx.author.mention} is already signed up.")
             return
         else:
             self._signups.append(name)
@@ -187,7 +189,7 @@ class Lobby(Cog):
         name: str = ctx.author.display_name
 
         if name not in self._signups:
-            await ctx.send(f"<@{ctx.author.id}> is not currently signed up.")
+            await ctx.send(f"{ctx.author.mention} is not currently signed up.")
         else:
             self._signups.remove(name)
 
@@ -210,8 +212,8 @@ class Lobby(Cog):
 
         log.info(f"{name} has been removed from the signup pool by {ctx.author.display_name}.")
 
-        id: int = get_discord_id_from_name(ctx, name)
-        await ctx.send(f"<@{id}> has been removed from the signup pool.")
+        member: Member | None = get_discord_member(ctx, name)
+        await ctx.send(f"{member.mention} has been removed from the signup pool.")
 
     @has_role(Roles.MEMBER)
     @command(aliases=["r"])
@@ -223,7 +225,7 @@ class Lobby(Cog):
         id: int = ctx.author.id
 
         if name not in self._signups:
-            await ctx.send(f"<@{id}> needs to sign in first.")
+            await ctx.send(f"{ctx.author.mention} needs to sign in first.")
             return
 
         if self._ready_check_in_progress is False:
@@ -234,7 +236,7 @@ class Lobby(Cog):
 
         log.info(f"{name} is ready.")
 
-        await ctx.send(f"<@{id}> is ready.")
+        await ctx.send(f"{ctx.author.mention} is ready.")
 
     @has_role(Roles.MEMBER)
     @command(aliases=["rc"])
@@ -249,7 +251,7 @@ class Lobby(Cog):
             await sleep(30)
 
             players_not_ready: list[str] = [name for name in self._signups if name not in self._players_ready]
-            mentions_not_ready: list[str] = [f"<@{get_discord_id_from_name(ctx, name)}>" for name in players_not_ready]
+            mentions_not_ready: list[str] = [get_discord_member(ctx, name).mention for name in players_not_ready]
             if len(players_not_ready) == 0:
                 await ctx.send("Ready check complete.")
             else:
@@ -282,7 +284,7 @@ async def on_presence_update(before: "Member", after: "Member") -> None:
         reason: str = "Offline" if after.status == Status.offline else "Idle"
         log.info(f"{name} is now {reason}.")
         signups.remove(name)
-        await lobby._context.send(f"<@{id}> has been signed out due to being {reason}.")
+        await lobby._context.send(f"{after.mention} has been signed out due to being {reason}.")
 
 
 async def allow_message(message: Message, bot: Bot) -> bool:

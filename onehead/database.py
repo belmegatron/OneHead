@@ -1,4 +1,5 @@
 from typing import cast
+import time
 
 from discord.ext import commands
 from tinydb import Query, TinyDB
@@ -16,25 +17,30 @@ class Database(commands.Cog):
         self.db: TinyDB = TinyDB(config["tinydb"]["path"])
         self.players: Table = self.db.table("players")
         self.metadata: Table = self.db.table("metadata")
+        if self.metadata.contains(Query().name == "season") is False:
+            self.metadata.insert(
+                {"name": "season", "season": 1, "game_id": 1, "max_game_count": 100, "timestamp": time.time()}
+            )
 
-    def _get_document(self, name: str) -> Document | None:
+    def _get_document(self, id: int) -> Document | None:
         User: Query = Query()
-        result: Document | None = self.players.get(User.name == name)
+        result: Document | None = self.players.get(User.id == id)
         return result
 
-    def get(self, name: str) -> Player | None:
-        document: Document | None = self._get_document(name)
+    def get(self, id: int) -> Player | None:
+        document: Document | None = self._get_document(id)
         player: Player | None = cast(Player, document)
         return player
 
-    def add(self, name: str, mmr: int) -> None:
-        player: Player | None = self.get(name)
+    def add(self, id: int, name: str, mmr: int) -> None:
+        player: Player | None = self.get(id)
 
         if player:
-            raise OneHeadException(f"{name} is already registered.")
+            raise OneHeadException(f"{id} is already registered.")
 
         self.players.insert(
             {
+                "id": id,
                 "name": name,
                 "win": 0,
                 "loss": 0,
@@ -48,25 +54,25 @@ class Database(commands.Cog):
             }
         )
 
-    def remove(self, name: str) -> None:
-        player: Document | None = self._get_document(name)
+    def remove(self, id: int) -> None:
+        player: Document | None = self._get_document(id)
 
         if player is None:
-            raise OneHeadException(f"{name} does not exist in database.")
+            raise OneHeadException(f"{id} does not exist in database.")
 
         self.players.remove(doc_ids=[player.doc_id])
 
     def modify(
         self,
-        name: str,
+        id: int,
         key: str,
         value: str | int,
         operation: Operation = Operation.REPLACE,
     ) -> None:
-        document: Document | None = self._get_document(name)
+        document: Document | None = self._get_document(id)
 
         if document is None:
-            raise OneHeadException(f"{name} does not exist in database.")
+            raise OneHeadException(f"{id} does not exist in database.")
 
         if operation == Operation.REPLACE:
             self.players.update({key: value}, doc_ids=[document.doc_id])

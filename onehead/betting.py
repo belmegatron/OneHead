@@ -3,17 +3,12 @@ from logging import Logger
 from typing import Literal, TYPE_CHECKING, Any
 
 from discord import Embed, colour
+from discord.member import Member
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import (
-    Bet,
-    Player,
-    Roles,
-    Side,
-    get_bot_instance
-)
+from onehead.common import Bet, Player, Roles, Side, get_bot_instance, get_discord_member
 from onehead.protocols.database import OneHeadDatabase, Operation
 
 
@@ -95,24 +90,21 @@ class Betting(Cog):
             await ctx.send("Betting window closed.")
             return
 
-        name: str = ctx.author.display_name
-        id: int = ctx.author.id
-
         side = side.lower()
 
-        record: Player | None = self.database.get(name)
+        record: Player | None = self.database.get(ctx.author.id)
         if record is None:
-            await ctx.send(f"Unable to find <@{id}> in database.")
+            await ctx.send(f"Unable to find {ctx.author.mention} in database.")
             return
 
         available_balance: int = record.get("rbucks", 0)
 
         if available_balance == 0:
-            await ctx.send(f"<@{id}> cannot bet as they have no available RBUCKS.")
+            await ctx.send(f"{ctx.author.mention} cannot bet as they have no available RBUCKS.")
             return
 
         if side not in Side:
-            await ctx.send(f"<@{id}> - Cannot bet on `{side}` - must be either Radiant/Dire.")
+            await ctx.send(f"{ctx.author.mention} - Cannot bet on `{side}` - must be either Radiant/Dire.")
             return
 
         if amount == "all":
@@ -121,24 +113,26 @@ class Betting(Cog):
             try:
                 stake = int(amount)
             except ValueError:
-                await ctx.send(f"<@{id}> - `{amount}` is not a valid number of RBUCKS to place a bet with.")
+                await ctx.send(
+                    f"{ctx.author.mention} - `{amount}` is not a valid number of RBUCKS to place a bet with."
+                )
                 return
 
         if stake <= 0:
-            await ctx.send(f"<@{id}> - Bet stake must be greater than 0.")
+            await ctx.send(f"{ctx.author.mention} - Bet stake must be greater than 0.")
             return
 
         if stake > available_balance:
             await ctx.send(
-                f"Unable to place bet - <@{id}> tried to stake `{stake:.0f}` RBUCKS but only has `{available_balance:.0f}` RBUCKS available."
+                f"Unable to place bet - {ctx.author.mention} tried to stake `{stake:.0f}` RBUCKS but only has `{available_balance:.0f}` RBUCKS available."
             )
             return
 
-        bets.append(Bet(side, stake, name))
-        self.database.modify(name, "rbucks", stake, Operation.SUBTRACT)
+        bets.append(Bet(side, stake, ctx.author.display_name))
+        self.database.modify(ctx.author.id, "rbucks", stake, Operation.SUBTRACT)
 
-        log.info(f"{name} has placed a bet of {stake:.0f} RBUCKS on {side.title()}.")
-        await ctx.send(f"<@{id}> has placed a bet of `{stake:.0f}` RBUCKS on {side.title()}.")
+        log.info(f"{ctx.author.display_name} has placed a bet of {stake:.0f} RBUCKS on {side.title()}.")
+        await ctx.send(f"{ctx.author.mention} has placed a bet of `{stake:.0f}` RBUCKS on {side.title()}.")
 
     @has_role(Roles.MEMBER)
     @command()
@@ -195,7 +189,8 @@ class Betting(Cog):
             return
 
         for bet in active_bets:
-            self.database.modify(bet.player, "rbucks", bet.stake, Operation.ADD)
+            m: Member | None = get_discord_member(ctx, bet.player)
+            self.database.modify(m.id, "rbucks", bet.stake, Operation.ADD)
 
         log.info("Refunded all bets.")
 

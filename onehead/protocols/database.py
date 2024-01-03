@@ -11,13 +11,13 @@ class Operation(Enum):
 
 
 class OneHeadDatabase(Protocol):
-    def get(self, name: str) -> Player | None:
+    def get(self, id: int) -> Player | None:
         pass
 
-    def add(self, name: str, mmr: int) -> None:
+    def add(self, id: int, name: str, mmr: int) -> None:
         pass
 
-    def remove(self, name: str) -> None:
+    def remove(self, id: int) -> None:
         pass
 
     def get_all(self) -> list[Player]:
@@ -25,7 +25,7 @@ class OneHeadDatabase(Protocol):
 
     def modify(
         self,
-        name: str,
+        id: int,
         key: str,
         value: str | int,
         operation: Operation = Operation.REPLACE,
