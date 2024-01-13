@@ -13,7 +13,7 @@ from onehead.common import (
     Team,
     get_bot_instance,
     get_player_names,
-    get_discord_member,
+    get_discord_member_from_name,
 )
 from onehead.game import Game
 from onehead.lobby import Lobby
@@ -46,7 +46,7 @@ class Transfers(Cog):
             return
 
         for transfer in transfers:
-            m: Member | None = get_discord_member(ctx, transfer.buyer)
+            m: Member | None = get_discord_member_from_name(ctx, transfer.buyer)
             self.database.modify(m.id, "rbucks", transfer.amount, Operation.ADD)
 
         message: str = "All player transactions have been refunded."

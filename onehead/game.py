@@ -74,14 +74,14 @@ class Game:
         commends: list[str] | None = self._commends.get(commendee)
         return commends is not None and commender in commends
 
-    def has_been_previously_reported(self, reporter: str, reportee: str) -> bool:
-        reports: list[str] | None = self._reports.get(reportee)
+    def has_been_previously_reported(self, reporter: str, reported: str) -> bool:
+        reports: list[str] | None = self._reports.get(reported)
         return reports is not None and reporter in reports
 
-    def add_report(self, reporter: str, reportee: str) -> None:
-        updated_reports: list[str] | None = self._reports.get(reportee)
+    def add_report(self, reporter: str, reported: str) -> None:
+        updated_reports: list[str] | None = self._reports.get(reported)
         if updated_reports is None:
-            self._reports[reportee] = [reporter]
+            self._reports[reported] = [reporter]
         else:
             updated_reports.append(reporter)
 

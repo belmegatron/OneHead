@@ -24,7 +24,7 @@ from onehead.common import (
     Player,
     Roles,
     get_bot_instance,
-    get_discord_member,
+    get_discord_member_from_name,
 )
 from onehead.game import Game
 from onehead.protocols.database import OneHeadDatabase
@@ -110,8 +110,7 @@ class Lobby(Cog):
             players: list[Player] = []
 
             for signup in self._signups:
-                member: Member | None = get_discord_member(ctx, signup)
-                print(f"{signup}: {member.id}")
+                member: Member | None = get_discord_member_from_name(ctx, signup)
                 player: Player | None = self.database.get(member.id)
 
                 if player is None:
@@ -120,7 +119,6 @@ class Lobby(Cog):
                 players.append(player)
 
             # TODO: Need to handle the case where we have > 10 with the same behaviour score.
-
             top_10_players_by_behaviour_score: list[Player] = sorted(
                 players, key=lambda d: d["behaviour"], reverse=True
             )[:10]
@@ -212,7 +210,7 @@ class Lobby(Cog):
 
         log.info(f"{name} has been removed from the signup pool by {ctx.author.display_name}.")
 
-        member: Member | None = get_discord_member(ctx, name)
+        member: Member | None = get_discord_member_from_name(ctx, name)
         await ctx.send(f"{member.mention} has been removed from the signup pool.")
 
     @has_role(Roles.MEMBER)
@@ -251,7 +249,7 @@ class Lobby(Cog):
             await sleep(30)
 
             players_not_ready: list[str] = [name for name in self._signups if name not in self._players_ready]
-            mentions_not_ready: list[str] = [get_discord_member(ctx, name).mention for name in players_not_ready]
+            mentions_not_ready: list[str] = [get_discord_member_from_name(ctx, name).mention for name in players_not_ready]
             if len(players_not_ready) == 0:
                 await ctx.send("Ready check complete.")
             else:

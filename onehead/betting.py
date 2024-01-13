@@ -8,7 +8,7 @@ from discord.ext.commands import Bot, Cog, Context, command, has_role
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import Bet, Player, Roles, Side, get_bot_instance, get_discord_member
+from onehead.common import Bet, Player, Roles, Side, get_bot_instance, get_discord_member_from_name
 from onehead.protocols.database import OneHeadDatabase, Operation
 
 
@@ -73,11 +73,11 @@ class Betting(Cog):
 
     @has_role(Roles.MEMBER)
     @command(aliases=["bet"])
-    async def place_bet(self, ctx: Context, side: str, amount: str) -> None:
+    async def place_bet(self, ctx: Context, arg_0: str, arg_1: str) -> None:
         """
         Place a bet on the match that is about to happen.
 
-        e.g. !bet radiant 500 or !bet dire all
+        e.g. !bet radiant 500 or !bet dire all or !bet 500 radiant or bet all dire
         """
 
         bot: Bot = get_bot_instance()
@@ -90,6 +90,16 @@ class Betting(Cog):
             await ctx.send("Betting window closed.")
             return
 
+        side: str
+        amount: str
+        
+        if arg_0 in Side:
+            side = arg_0
+            amount = arg_1
+        else:
+            side = arg_1
+            amount = arg_0
+        
         side = side.lower()
 
         record: Player | None = self.database.get(ctx.author.id)
@@ -189,7 +199,7 @@ class Betting(Cog):
             return
 
         for bet in active_bets:
-            m: Member | None = get_discord_member(ctx, bet.player)
+            m: Member | None = get_discord_member_from_name(ctx, bet.player)
             self.database.modify(m.id, "rbucks", bet.stake, Operation.ADD)
 
         log.info("Refunded all bets.")

@@ -132,9 +132,16 @@ def update_config(updated_config: dict) -> None:
         raise OneHeadException(e)
 
 
-def get_discord_member(ctx: Context, name: str) -> Member | None:
+def get_discord_member_from_name(ctx: Context, name: str) -> Member | None:
     for member in ctx.guild.members:
         if member.display_name == name:
+            return member
+
+    return None
+
+def get_discord_member_from_id(ctx: Context, id: int) -> Member | None:
+    for member in ctx.guild.members:
+        if member.id == id:
             return member
 
     return None

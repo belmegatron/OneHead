@@ -3,7 +3,7 @@ import random
 from discord.member import Member
 from discord.ext.commands import Cog, Context, command, has_role
 
-from onehead.common import OneHeadException, Roles, get_discord_member
+from onehead.common import Roles, get_discord_member_from_name
 
 
 class MentalHealth(Cog):
@@ -127,7 +127,7 @@ class MentalHealth(Cog):
 
         quote: str = random.choice(self.quotes)
 
-        member: Member | None = get_discord_member(ctx, name)
+        member: Member | None = get_discord_member_from_name(ctx, name)
         if member:
             message: str = f"**{member.mention}**\n {quote}"
         else:

@@ -8,7 +8,7 @@ from discord.ext.commands import Cog, Context, command, has_role
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination, get_discord_member
+from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination, get_discord_member_from_name
 
 from onehead.lobby import Lobby
 from onehead.protocols.database import OneHeadDatabase
@@ -32,7 +32,7 @@ class Matchmaking(Cog):
 
         players: list[Player] = []
         for player_name in self.lobby._signups:
-            member: Member | None = get_discord_member(ctx, player_name)
+            member: Member | None = get_discord_member_from_name(ctx, player_name)
             player: Player | None = self.database.get(member.id)
             if player:
                 players.append(player)

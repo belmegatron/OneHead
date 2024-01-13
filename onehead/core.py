@@ -26,7 +26,7 @@ from onehead.common import (
     get_player_names,
     load_config,
     set_bot_instance,
-    get_discord_member,
+    get_discord_member_from_name,
     Metadata,
 )
 from onehead.database import Database
@@ -246,7 +246,7 @@ class Core(Cog):
         for name, bets in bet_results.items():
             for bet_result in bets:
                 if bet_result > 0:
-                    m: Member | None = get_discord_member(ctx, name)
+                    m: Member | None = get_discord_member_from_name(ctx, name)
                     self.database.modify(m.id, "rbucks", bet_result, Operation.ADD)
 
         report: Embed = self.betting.create_bet_report(bet_results)
@@ -269,13 +269,13 @@ class Core(Cog):
         if result == Side.RADIANT:
             await ctx.send("Radiant victory!")
             for player in radiant_names:
-                m: Member | None = get_discord_member(ctx, player)
+                m: Member | None = get_discord_member_from_name(ctx, player)
                 self.database.modify(m.id, "win", 1, Operation.ADD)
                 self.database.modify(m.id, "win_streak", 1, Operation.ADD)
                 self.database.modify(m.id, "loss_streak", 0)
                 self.database.modify(m.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
             for player in dire_names:
-                m: Member | None = get_discord_member(ctx, player)
+                m: Member | None = get_discord_member_from_name(ctx, player)
                 self.database.modify(m.id, "loss", 1, Operation.ADD)
                 self.database.modify(m.id, "loss_streak", 1, Operation.ADD)
                 self.database.modify(m.id, "win_streak", 0)
@@ -283,13 +283,13 @@ class Core(Cog):
         elif result == Side.DIRE:
             await ctx.send("Dire victory!")
             for player in radiant_names:
-                m: Member | None = get_discord_member(ctx, player)
+                m: Member | None = get_discord_member_from_name(ctx, player)
                 self.database.modify(m.id, "loss", 1, Operation.ADD)
                 self.database.modify(m.id, "loss_streak", 1, Operation.ADD)
                 self.database.modify(m.id, "win_streak", 0)
                 self.database.modify(m.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
             for player in dire_names:
-                m: Member | None = get_discord_member(ctx, player)
+                m: Member | None = get_discord_member_from_name(ctx, player)
                 self.database.modify(m.id, "win", 1, Operation.ADD)
                 self.database.modify(m.id, "win_streak", 1, Operation.ADD)
                 self.database.modify(m.id, "loss_streak", 0)

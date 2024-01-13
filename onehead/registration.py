@@ -4,7 +4,7 @@ from discord.member import Member
 from discord.ext.commands import Cog, Context, command, has_role
 from structlog import get_logger
 
-from onehead.common import Player, Roles, get_discord_member
+from onehead.common import Player, Roles, get_discord_member_from_name
 from onehead.protocols.database import OneHeadDatabase
 
 
@@ -57,7 +57,7 @@ class Registration(Cog):
         """
 
         player: Player | None = self.database.get(name)
-        member: Member | None = get_discord_member(ctx, name)
+        member: Member | None = get_discord_member_from_name(ctx, name)
 
         if player and member:
             self.database.remove(member.id)
