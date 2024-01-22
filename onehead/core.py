@@ -320,7 +320,7 @@ class Core(Cog):
             t1_names: tuple[str, ...]
             t2_names: tuple[str, ...]
             t1_names, t2_names = get_player_names(self.current_game.radiant, self.current_game.dire)
-
+            
             players: dict[Side, tuple[str, ...]] = {
                 Side.RADIANT: t1_names,
                 Side.DIRE: t2_names,

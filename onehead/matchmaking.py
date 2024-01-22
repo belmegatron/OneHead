@@ -114,8 +114,8 @@ class Matchmaking(Cog):
             unique_combinations_dict, key=lambda d: d["rating_difference"]
         )
 
-        # Take the top 5 that are closest in terms of rating and pick one at random.
-        balanced_teams: dict[str, Team] = random.choice(sorted_unique_combinations_dict[:5])
+        # Take the top 20 that are closest in terms of rating and pick one at random.
+        balanced_teams: dict[str, Team] = random.choice(sorted_unique_combinations_dict[:20])
 
         return balanced_teams
 

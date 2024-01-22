@@ -110,6 +110,7 @@ class Transfers(Cog):
             shuffled_teams[0], shuffled_teams[1]
         )
 
+        # TODO: Can we try and ensure at least 2 players have changed from the previous 2 shuffles?
         while current_teams_names_only == shuffled_teams_names_only:
             shuffled_teams = await matchmaking.balance(ctx)
             shuffled_teams_names_only = get_player_names(shuffled_teams[0], shuffled_teams[1])
