@@ -2,6 +2,8 @@ FROM python
 
 RUN apt update && apt upgrade -y && apt install ffmpeg -y
 
+WORKDIR /app
+
 COPY . .
 
 RUN pip install virtualenv
