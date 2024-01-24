@@ -28,6 +28,7 @@ from onehead.common import (
     set_bot_instance,
     get_discord_member_from_name,
     Metadata,
+    play_sound
 )
 from onehead.database import Database
 from onehead.game import Game
@@ -166,7 +167,8 @@ class Core(Cog):
         if signup_threshold_met is False:
             return
 
-        metadata: Metadata = self.database.get_metadata()
+        await play_sound(ctx, "start.mp3")
+        metadata: Metadata = self.database.get_metadata()       
         await ctx.send(f"Starting game: Season {metadata['season']}, Game {metadata['game_id']}.")
         await self.lobby.select_players(ctx)
 
@@ -266,6 +268,8 @@ class Core(Cog):
 
         radiant_names, dire_names = get_player_names(self.current_game.radiant, self.current_game.dire)
 
+        await play_sound(ctx, "result.mp3")
+        
         if result == Side.RADIANT:
             await ctx.send("Radiant victory!")
             for player in radiant_names:

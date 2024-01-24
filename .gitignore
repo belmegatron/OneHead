@@ -8,3 +8,5 @@ config.json
 .vscode/
 secrets/
 .coverage
+*.log
+onehead/sounds/

@@ -25,6 +25,7 @@ from onehead.common import (
     Roles,
     get_bot_instance,
     get_discord_member_from_name,
+    play_sound
 )
 from onehead.game import Game
 from onehead.protocols.database import OneHeadDatabase
@@ -242,7 +243,10 @@ class Lobby(Cog):
         """
         Initiates a ready check, after approx. 30s the result of the check will be displayed.
         """
+        
         if await self.signup_check(ctx):
+            await play_sound(ctx, "ready.mp3")
+            
             log.info(f"{ctx.author.display_name} initiated a ready check.")
             await ctx.send("Ready check started - `30s` remaining - type `!ready` to ready up.")
             self._ready_check_in_progress = True

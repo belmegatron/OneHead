@@ -4,8 +4,12 @@ from enum import EnumMeta, auto
 from pathlib import Path
 from typing import Any, Literal, Optional, TypedDict
 
+from discord.channel import VoiceChannel
 from discord.ext.commands import Bot, Context
 from discord.member import Member
+from discord.player import FFmpegPCMAudio
+from discord.voice_client import VoiceClient
+
 from strenum import LowercaseStrEnum, StrEnum
 
 Player = TypedDict(
@@ -145,3 +149,13 @@ def get_discord_member_from_id(ctx: Context, id: int) -> Member | None:
             return member
 
     return None
+
+async def play_sound(ctx: Context, file_name: str) -> None:
+    voice_client: VoiceClient | None = ctx.voice_client
+    if voice_client is None or voice_client.channel.name != ctx.author.voice.channel.name:
+        voice_channel: VoiceChannel | None = ctx.author.voice.channel
+        if voice_channel:
+            voice_client = await voice_channel.connect()
+    
+    if voice_client:
+        voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"))

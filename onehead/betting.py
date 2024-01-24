@@ -8,7 +8,7 @@ from discord.ext.commands import Bot, Cog, Context, command, has_role
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import Bet, Player, Roles, Side, get_bot_instance, get_discord_member_from_name
+from onehead.common import Bet, Player, Roles, Side, get_bot_instance, get_discord_member_from_name, play_sound
 from onehead.protocols.database import OneHeadDatabase, Operation
 
 
@@ -141,6 +141,7 @@ class Betting(Cog):
         bets.append(Bet(side, stake, ctx.author.display_name))
         self.database.modify(ctx.author.id, "rbucks", stake, Operation.SUBTRACT)
 
+        await play_sound(ctx, "bet.mp3")
         log.info(f"{ctx.author.display_name} has placed a bet of {stake:.0f} RBUCKS on {side.title()}.")
         await ctx.send(f"{ctx.author.mention} has placed a bet of `{stake:.0f}` RBUCKS on {side.title()}.")
 

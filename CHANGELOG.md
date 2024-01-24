@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.50.0] - 2024-01-22
 
+### Added
+- Bot now plays sounds when some commands are called.
+- Now logging discord.py output to separate log file.
+- Added ffmpeg requirement in Dockerfile in order to play mp3 files.
+
 ### Changed
 - When shuffling, now picks from the top 20 team combinations based on mmr instead of 5.
 - Can now use the !bet command and specify amount as either first or second argument.
