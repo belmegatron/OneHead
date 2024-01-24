@@ -1,6 +1,6 @@
 FROM python
 
-RUN RUN apt update && apt upgrade -y && apt install ffmpeg -y
+RUN apt update && apt upgrade -y && apt install ffmpeg -y
 
 COPY . .
 
