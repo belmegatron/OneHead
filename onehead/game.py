@@ -44,10 +44,10 @@ class Game:
     async def open_betting_window(self, ctx: Context) -> None:
         self._betting_window_open = True
 
-        await ctx.send("Bets are now open for `5` minutes!")
+        await ctx.send("Bets are now open for `3` minutes!")
 
         try:
-            await asyncio.wait_for(self._cancel_event.wait(), timeout=240)
+            await asyncio.wait_for(self._cancel_event.wait(), timeout=120)
         except asyncio.TimeoutError:
             await ctx.send("`1` minute remaining for bets!")
             try:
