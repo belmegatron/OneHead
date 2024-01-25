@@ -57,7 +57,7 @@ class TestStart:
         balance: AsyncMock = AsyncMock()
         balance.return_value = [], []
         core.matchmaking.balance = balance
-        core.setup_teams = AsyncMock()
+        core.setup_team_channels = AsyncMock()
         core.current_game.open_transfer_window = AsyncMock()
         core.current_game.open_betting_window = AsyncMock()
 

@@ -14,6 +14,7 @@ from onehead.common import (
     get_bot_instance,
     get_player_names,
     get_discord_member_from_name,
+    play_sound
 )
 from onehead.game import Game
 from onehead.lobby import Lobby
@@ -93,6 +94,7 @@ class Transfers(Cog):
             )
             return
 
+        await play_sound(ctx, "transfer.mp3")
         await ctx.send(f"{ctx.author.mention} has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!")
 
         self.database.modify(ctx.author.id, "rbucks", Transfers.SHUFFLE_COST, Operation.SUBTRACT)
@@ -117,4 +119,4 @@ class Transfers(Cog):
 
         current_game.radiant, current_game.dire = shuffled_teams
 
-        await core.setup_teams(ctx)
+        await core.show_teams(ctx)

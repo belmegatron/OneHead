@@ -1,3 +1,4 @@
+from asyncio import sleep
 from logging import Logger
 from datetime import datetime
 
@@ -129,9 +130,7 @@ class Core(Cog):
         ):
             raise OneHeadException("Unable to find cog(s)")
 
-    async def reset(self, ctx: Context, game_cancelled=False) -> None:
-        await self.channels.move_back_to_lobby(ctx)
-
+    async def reset(self, game_cancelled=False) -> None:
         if game_cancelled:
             self.previous_game = None
         else:
@@ -140,9 +139,11 @@ class Core(Cog):
         self.current_game = Game()
         self.lobby.clear_signups()
 
-    async def setup_teams(self, ctx: Context) -> None:
+    async def show_teams(self, ctx: Context) -> None:
         status: Command = self.bot.get_command("status")  # type: ignore[assignment]
         await Command.invoke(status, ctx)
+    
+    async def setup_team_channels(self, ctx: Context) -> None:        
         await self.channels.create_discord_channels(ctx)
 
         if self.current_game.radiant is None or self.current_game.dire is None:
@@ -150,7 +151,7 @@ class Core(Cog):
 
         await self.channels.move_discord_channels(ctx)
         await ctx.send("Create Dota 2 Lobby and join with the above teams.")
-
+    
     @has_role(Roles.ADMIN)
     @command()
     @max_concurrency(1, per=BucketType.default, wait=False)
@@ -170,6 +171,7 @@ class Core(Cog):
         await play_sound(ctx, "start.mp3")
         metadata: Metadata = self.database.get_metadata()       
         await ctx.send(f"Starting game: Season {metadata['season']}, Game {metadata['game_id']}.")
+        
         await self.lobby.select_players(ctx)
 
         self.current_game.start()
@@ -179,9 +181,11 @@ class Core(Cog):
             self.current_game.radiant,
             self.current_game.dire,
         ) = await self.matchmaking.balance(ctx)
-        await self.setup_teams(ctx)
+        
+        await self.show_teams(ctx)
         await self.current_game.open_transfer_window(ctx)
         await self.current_game.open_betting_window(ctx)
+        await self.setup_team_channels(ctx)
 
         if self.current_game.in_progress():
             await ctx.send("GLHF")
@@ -207,7 +211,8 @@ class Core(Cog):
             await ctx.send("Game cancelled.")
             await self.betting.refund_all_bets(ctx)
             await self.transfers.refund_transfers(ctx)
-            await self.reset(ctx, game_cancelled=True)
+            await self.channels.move_back_to_lobby(ctx)
+            await self.reset(game_cancelled=True)
         else:
             await ctx.send("No currently active game.")
 
@@ -241,20 +246,9 @@ class Core(Cog):
             await ctx.send(f"Must be either {Side.RADIANT} or {Side.DIRE}.")
             return
 
+        await self.channels.move_back_to_lobby(ctx)
+
         log.info(f"{ctx.author.display_name} entered a result of {result}.")
-
-        bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
-
-        for name, bets in bet_results.items():
-            for bet_result in bets:
-                if bet_result > 0:
-                    m: Member | None = get_discord_member_from_name(ctx, name)
-                    self.database.modify(m.id, "rbucks", bet_result, Operation.ADD)
-
-        report: Embed = self.betting.create_bet_report(bet_results)
-        await ctx.send(embed=report)
-
-        await ctx.send("Updating scores...")
 
         if self.current_game.radiant is None or self.current_game.dire is None:
             raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
@@ -267,11 +261,11 @@ class Core(Cog):
         dire_names: tuple[str, ...]
 
         radiant_names, dire_names = get_player_names(self.current_game.radiant, self.current_game.dire)
-
+       
         await play_sound(ctx, "result.mp3")
-        
+       
         if result == Side.RADIANT:
-            await ctx.send("Radiant victory!")
+            await ctx.send("`Radiant` victory!")
             for player in radiant_names:
                 m: Member | None = get_discord_member_from_name(ctx, player)
                 self.database.modify(m.id, "win", 1, Operation.ADD)
@@ -285,7 +279,7 @@ class Core(Cog):
                 self.database.modify(m.id, "win_streak", 0)
                 self.database.modify(m.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
         elif result == Side.DIRE:
-            await ctx.send("Dire victory!")
+            await ctx.send("`Dire` victory!")
             for player in radiant_names:
                 m: Member | None = get_discord_member_from_name(ctx, player)
                 self.database.modify(m.id, "loss", 1, Operation.ADD)
@@ -299,10 +293,24 @@ class Core(Cog):
                 self.database.modify(m.id, "loss_streak", 0)
                 self.database.modify(m.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
 
+        await ctx.send("Updating scores...")
         scoreboard: Command = self.bot.get_command("scoreboard")  # type: ignore[assignment]
         await Command.invoke(scoreboard, ctx)
-        await self.reset(ctx)
+        
+        bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
 
+        for name, bets in bet_results.items():
+            for bet_result in bets:
+                if bet_result > 0:
+                    m: Member | None = get_discord_member_from_name(ctx, name)
+                    self.database.modify(m.id, "rbucks", bet_result, Operation.ADD)
+
+        if len(bet_results) > 0:
+            report: Embed = self.betting.create_bet_report(bet_results)
+            await ctx.send(embed=report)
+            
+        await self.reset()
+        
         metadata["game_id"] += 1
         self.database.update_metadata(metadata)
 

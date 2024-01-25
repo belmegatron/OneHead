@@ -1,3 +1,4 @@
+from asyncio import sleep
 import json
 from dataclasses import dataclass
 from enum import EnumMeta, auto
@@ -6,6 +7,7 @@ from typing import Any, Literal, Optional, TypedDict
 
 from discord.channel import VoiceChannel
 from discord.ext.commands import Bot, Context
+from discord.errors import ClientException
 from discord.member import Member
 from discord.player import FFmpegPCMAudio
 from discord.voice_client import VoiceClient
@@ -151,11 +153,19 @@ def get_discord_member_from_id(ctx: Context, id: int) -> Member | None:
     return None
 
 async def play_sound(ctx: Context, file_name: str) -> None:
+    audio_played: bool = False
+    
     voice_client: VoiceClient | None = ctx.voice_client
-    if voice_client is None or voice_client.channel.name != ctx.author.voice.channel.name:
+    if voice_client is None:
         voice_channel: VoiceChannel | None = ctx.author.voice.channel
         if voice_channel:
             voice_client = await voice_channel.connect()
+    elif voice_client.channel.name != ctx.author.voice.channel.name:
+        await voice_client.move_to(ctx.author.voice.channel)
     
-    if voice_client:
-        voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"))
+    while audio_played is False:   
+        try:
+            voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"))
+            audio_played = True
+        except ClientException:
+            await sleep(1)

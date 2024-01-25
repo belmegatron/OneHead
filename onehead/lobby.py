@@ -12,6 +12,7 @@ from discord.ext.commands import (
     command,
     cooldown,
     has_role,
+    max_concurrency
 )
 from discord.guild import Guild
 from discord.message import Message
@@ -239,6 +240,7 @@ class Lobby(Cog):
 
     @has_role(Roles.MEMBER)
     @command(aliases=["rc"])
+    @max_concurrency(1, per=BucketType.default, wait=False)
     async def ready_check(self, ctx: Context) -> None:
         """
         Initiates a ready check, after approx. 30s the result of the check will be displayed.
@@ -257,7 +259,7 @@ class Lobby(Cog):
             if len(players_not_ready) == 0:
                 await ctx.send("Ready check complete.")
             else:
-                log.info(f"`{len(players_not_ready)}` not ready: {', '.join(players_not_ready)}.")
+                log.info(f"{len(players_not_ready)} not ready: {', '.join(players_not_ready)}.")
                 await ctx.send(f"Still waiting on `{len(players_not_ready)}` players: {', '.join(mentions_not_ready)}.")
 
         self._ready_check_in_progress = False
