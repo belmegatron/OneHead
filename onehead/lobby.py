@@ -222,7 +222,6 @@ class Lobby(Cog):
         Use this command in response to a ready check.
         """
         name: str = ctx.author.display_name
-        id: int = ctx.author.id
 
         if name not in self._signups:
             await ctx.send(f"{ctx.author.mention} needs to sign in first.")
@@ -282,7 +281,6 @@ async def on_presence_update(before: "Member", after: "Member") -> None:
     signups: list[str] = lobby.get_signups()
 
     name: str = after.display_name
-    id: int = after.id
 
     if after.status in (Status.offline, Status.idle) and name in signups:
         reason: str = "Offline" if after.status == Status.offline else "Idle"

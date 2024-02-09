@@ -1,4 +1,3 @@
-from asyncio import sleep
 from logging import Logger
 from datetime import datetime
 
@@ -130,7 +129,7 @@ class Core(Cog):
         ):
             raise OneHeadException("Unable to find cog(s)")
 
-    async def reset(self, game_cancelled=False) -> None:
+    async def reset(self, ctx: Context, game_cancelled=False) -> None:
         if game_cancelled:
             self.previous_game = None
         else:
@@ -138,6 +137,7 @@ class Core(Cog):
 
         self.current_game = Game()
         self.lobby.clear_signups()
+        ctx.voice_client.disconnect()
 
     async def show_teams(self, ctx: Context) -> None:
         status: Command = self.bot.get_command("status")  # type: ignore[assignment]
@@ -212,7 +212,7 @@ class Core(Cog):
             await self.betting.refund_all_bets(ctx)
             await self.transfers.refund_transfers(ctx)
             await self.channels.move_back_to_lobby(ctx)
-            await self.reset(game_cancelled=True)
+            await self.reset(ctx, game_cancelled=True)
         else:
             await ctx.send("No currently active game.")
 
@@ -309,7 +309,7 @@ class Core(Cog):
             report: Embed = self.betting.create_bet_report(bet_results)
             await ctx.send(embed=report)
             
-        await self.reset()
+        await self.reset(ctx)
         
         metadata["game_id"] += 1
         self.database.update_metadata(metadata)

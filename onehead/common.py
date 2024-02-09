@@ -167,5 +167,7 @@ async def play_sound(ctx: Context, file_name: str) -> None:
         try:
             voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"))
             audio_played = True
-        except ClientException:
+            
+        # TODO: Need to inspect exception and check if it happened due to another coroutine attempting to play a sound.
+        except ClientException as ex:
             await sleep(1)
