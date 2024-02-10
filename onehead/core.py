@@ -137,7 +137,7 @@ class Core(Cog):
 
         self.current_game = Game()
         self.lobby.clear_signups()
-        ctx.voice_client.disconnect()
+        await ctx.voice_client.disconnect()
 
     async def show_teams(self, ctx: Context) -> None:
         status: Command = self.bot.get_command("status")  # type: ignore[assignment]
