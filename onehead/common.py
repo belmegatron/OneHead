@@ -1,4 +1,4 @@
-from asyncio import sleep
+from asyncio import Event, sleep
 import json
 from dataclasses import dataclass
 from enum import EnumMeta, auto
@@ -152,8 +152,12 @@ def get_discord_member_from_id(ctx: Context, id: int) -> Member | None:
 
     return None
 
-async def play_sound(ctx: Context, file_name: str) -> None:
-    audio_played: bool = False
+async def play_sound(ctx: Context, file_name: str, wait: bool = False) -> None:
+    
+    e: Event = Event()
+    
+    def sound_complete_callback(ex: Exception) -> None:
+        e.set()
     
     voice_client: VoiceClient | None = ctx.voice_client
     if voice_client is None:
@@ -163,11 +167,12 @@ async def play_sound(ctx: Context, file_name: str) -> None:
     elif voice_client.channel.name != ctx.author.voice.channel.name:
         await voice_client.move_to(ctx.author.voice.channel)
     
-    while audio_played is False:   
+    while e.is_set() is False:   
         try:
-            voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"))
-            audio_played = True
-            
-        # TODO: Need to inspect exception and check if it happened due to another coroutine attempting to play a sound.
-        except ClientException as ex:
+            voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"), after=sound_complete_callback)
+            if wait:
+                await e.wait()
+            else:
+                e.set()
+        except ClientException:
             await sleep(1)

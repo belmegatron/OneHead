@@ -262,7 +262,7 @@ class Core(Cog):
 
         radiant_names, dire_names = get_player_names(self.current_game.radiant, self.current_game.dire)
        
-        await play_sound(ctx, "result.mp3")
+        await play_sound(ctx, "result.mp3", wait=True)
        
         if result == Side.RADIANT:
             await ctx.send("`Radiant` victory!")
