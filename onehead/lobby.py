@@ -293,6 +293,9 @@ async def on_presence_update(before: "Member", after: "Member") -> None:
 
     core: Cog = bot.get_cog("Core")  # type: ignore[assignment]
     game: Game = core.current_game  # type: ignore[attr-defined]
+    
+    # Added this to try and diagnose why some players are not removed from signup pool via this callback.
+    log.debug(f"status change: name: {before.display_name}, before: {before.status}, after: {after.status}")
 
     if game.in_progress():
         return
