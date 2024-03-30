@@ -1,4 +1,5 @@
-from asyncio import sleep
+from asyncio import create_task, sleep
+from datetime import datetime, timedelta
 from logging import Logger
 from typing import TYPE_CHECKING, Any
 
@@ -41,21 +42,22 @@ log: Logger = get_logger()
 class Lobby(Cog):
     def __init__(self, database: OneHeadDatabase) -> None:
         self.database: OneHeadDatabase = database
-        self._signups: list[str] = []
+        self._signups: dict[str, datetime] = {}
         self._players_ready: list[str] = []
         self._ready_check_in_progress: bool = False
         self._context: Context | None = None
         self._signups_disabled: bool = False
-
+        self._cleanup_is_running: bool = False
+        
     def disable_signups(self) -> None:
         self._signups_disabled = True
 
     def clear_signups(self) -> None:
-        self._signups = []
+        self._signups = {}
         self._signups_disabled = False
 
     def get_signups(self) -> list[str]:
-        return self._signups
+        return list(self._signups.keys())
 
     @has_role(Roles.ADMIN)
     @command()
@@ -107,11 +109,11 @@ class Lobby(Cog):
                 "More than `10` signups identified, selecting the top `10` players with the highest behaviour score."
             )
 
-            original_signups: list[str] = self._signups
+            original_signups: list[str] = self.get_signups()
 
             players: list[Player] = []
 
-            for signup in self._signups:
+            for signup in original_signups:
                 member: Member | None = get_discord_member_from_name(ctx, signup)
                 player: Player | None = self.database.get(member.id)
 
@@ -120,10 +122,10 @@ class Lobby(Cog):
 
                 players.append(player)
 
-            # TODO: Need to handle the case where we have > 10 with the same behaviour score.
             top_10_players_by_behaviour_score: list[Player] = sorted(
                 players, key=lambda d: d["behaviour"], reverse=True
             )[:10]
+            
             self._signups = [player["name"] for player in top_10_players_by_behaviour_score]
             benched_players: list[str] = [x for x in original_signups if x not in self._signups]
 
@@ -165,12 +167,15 @@ class Lobby(Cog):
             await ctx.send(f"{ctx.author.mention} is already signed up.")
             return
         else:
-            self._signups.append(name)
+            self._signups[name] = datetime.now()
 
         if self._context is None:
             self._context = ctx
 
         log.info(f"{name} has signed up.")
+        
+        if self._cleanup_is_running is False:
+            await create_task(self.cleanup_inactive_players(ctx))
 
         await Command.invoke(self.who, ctx)
 
@@ -191,7 +196,7 @@ class Lobby(Cog):
         if name not in self._signups:
             await ctx.send(f"{ctx.author.mention} is not currently signed up.")
         else:
-            self._signups.remove(name)
+            del self._signups[name]
 
         log.info(f"{name} has signed out.")
 
@@ -208,7 +213,7 @@ class Lobby(Cog):
             await ctx.send(f"{name} is not currently signed up.")
             return
 
-        self._signups.remove(name)
+        del self._signups[name]
 
         log.info(f"{name} has been removed from the signup pool by {ctx.author.display_name}.")
 
@@ -263,8 +268,26 @@ class Lobby(Cog):
 
         self._ready_check_in_progress = False
         self._players_ready = []
-
-
+    
+    async def cleanup_inactive_players(self, ctx: Context) -> None:
+        """
+        This task runs periodically to check for if there are any 'stale' signups in the lobby.
+        Some players never seem to trigger an 'Idle' or 'Offline' status change and therefore
+        the `on_presence_update` callback never gets called for them.
+        """
+        max_signup_period: timedelta = timedelta(hours=8)
+        self._cleanup_is_running = True
+        
+        while True:
+            for name, signup_time in self._signups.items():
+                if signup_time + max_signup_period >= datetime.now():
+                    del self._signups[name]
+                    member: Member = get_discord_member_from_name(ctx, name)
+                    log.debug(f"{name} was removed from the signup pool by {ctx.bot.user.name} due to being inactive for over {max_signup_period}.")
+                    await ctx.send(f"{member.mention} has been removed from the signup pool by {ctx.bot.user.mention} due to being inactive for over `{max_signup_period}`.")
+            
+            await sleep(3600)
+        
 async def on_presence_update(before: "Member", after: "Member") -> None:
     bot: Bot = get_bot_instance()
 
