@@ -31,7 +31,7 @@ class Matchmaking(Cog):
         """
 
         players: list[Player] = []
-        for player_name in self.lobby._signups:
+        for player_name in self.lobby.get_signups():
             member: Member | None = get_discord_member_from_name(ctx, player_name)
             player: Player | None = self.database.get(member.id)
             if player:
@@ -127,7 +127,7 @@ class Matchmaking(Cog):
         :return: Balanced teams.
         """
 
-        signup_count: int = len(self.lobby._signups)
+        signup_count: int = len(self.lobby.get_signups())
         await ctx.send("Balancing teams...")
         if signup_count != 10:
             err: str = f"Only `{signup_count}` Signups, require `{10 - signup_count}` more."

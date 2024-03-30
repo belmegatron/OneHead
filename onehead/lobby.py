@@ -275,22 +275,31 @@ class Lobby(Cog):
         Some players never seem to trigger an 'Idle' or 'Offline' status change and therefore
         the `on_presence_update` callback never gets called for them.
         """
-        max_signup_period: timedelta = timedelta(hours=8)
+        bot: Bot = get_bot_instance()
+        core: Cog = bot.get_cog("Core")  # type: ignore[assignment]
+        game: Game = core.current_game  # type: ignore[attr-defined]
+        
+        max_signup_period: timedelta = timedelta(hours=4)
         self._cleanup_is_running = True
         
         while True:
-            for name, signup_time in self._signups.items():
-                if signup_time + max_signup_period >= datetime.now():
-                    del self._signups[name]
-                    member: Member = get_discord_member_from_name(ctx, name)
-                    log.debug(f"{name} was removed from the signup pool by {ctx.bot.user.name} due to being inactive for over {max_signup_period}.")
-                    await ctx.send(f"{member.mention} has been removed from the signup pool by {ctx.bot.user.mention} due to being inactive for over `{max_signup_period}`.")
+            to_remove: list[str] = []
             
+            if game.in_progress() is False:
+                for name, signup_time in self._signups.items():
+                    if signup_time + max_signup_period >= datetime.now():
+                        to_remove.append(name)
+            
+            for name in to_remove:
+                del self._signups[name]
+                member: Member = get_discord_member_from_name(ctx, name)
+                log.debug(f"{name} was removed from the signup pool by {ctx.bot.user.name} due to being inactive for over {max_signup_period}.")
+                await ctx.send(f"{member.mention} has been removed from the signup pool by {ctx.bot.user.mention} due to being inactive for over `{max_signup_period}`.")
+                
             await sleep(3600)
         
 async def on_presence_update(before: "Member", after: "Member") -> None:
     bot: Bot = get_bot_instance()
-
     core: Cog = bot.get_cog("Core")  # type: ignore[assignment]
     game: Game = core.current_game  # type: ignore[attr-defined]
     

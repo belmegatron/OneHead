@@ -170,7 +170,7 @@ class Core(Cog):
 
         await play_sound(ctx, "start.mp3")
         metadata: Metadata = self.database.get_metadata()       
-        await ctx.send(f"Starting game: Season {metadata['season']}, Game {metadata['game_id']}.")
+        await ctx.send(f"Starting game: `Season {metadata['season']}`, Game `{metadata['game_id']}`.")
         
         await self.lobby.select_players(ctx)
 
@@ -385,15 +385,18 @@ class Core(Cog):
         """
         For testing purposes.
         """
-        self.lobby._signups += [
-            "ERIC",
-            "GEE",
-            "JEFFERIES",
-            "ZEED",
-            "PECRO",
-            "LAURENCE",
-            "TOCCO",
-            "JAMES",
-            "LUKE",
-            "ZEE",
-        ]
+        
+        now: datetime = datetime.now()
+        
+        self.lobby._signups.update({
+            "ERIC": now,
+            "GEE": now,
+            "JEFFERIES": now,
+            "ZEED": now,
+            "PECRO": now,
+            "LAURENCE": now,
+            "TOCCO": now,
+            "JAMES": now,
+            "LUKE": now,
+            "ZEE": now,
+        })
