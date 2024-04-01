@@ -287,7 +287,7 @@ class Lobby(Cog):
             
             if game.in_progress() is False:
                 for name, signup_time in self._signups.items():
-                    if signup_time + max_signup_period >= datetime.now():
+                    if datetime.now() >= (signup_time + max_signup_period):
                         to_remove.append(name)
             
             for name in to_remove:
