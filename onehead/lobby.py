@@ -58,6 +58,9 @@ class Lobby(Cog):
 
     def get_signups(self) -> list[str]:
         return list(self._signups.keys())
+    
+    def remove_player_from_signups(self, name: str) -> None:
+        del self._signups[name]
 
     @has_role(Roles.ADMIN)
     @command()
@@ -196,7 +199,8 @@ class Lobby(Cog):
         if name not in self._signups:
             await ctx.send(f"{ctx.author.mention} is not currently signed up.")
         else:
-            del self._signups[name]
+            self.remove_player_from_signups(name)
+
 
         log.info(f"{name} has signed out.")
 
@@ -213,7 +217,7 @@ class Lobby(Cog):
             await ctx.send(f"{name} is not currently signed up.")
             return
 
-        del self._signups[name]
+        self.remove_player_from_signups(name)
 
         log.info(f"{name} has been removed from the signup pool by {ctx.author.display_name}.")
 
@@ -291,7 +295,7 @@ class Lobby(Cog):
                         to_remove.append(name)
             
             for name in to_remove:
-                del self._signups[name]
+                self.remove_player_from_signups(name)
                 member: Member = get_discord_member_from_name(ctx, name)
                 log.debug(f"{name} was removed from the signup pool by {ctx.bot.user.name} due to being inactive for over {max_signup_period}.")
                 await ctx.send(f"{member.mention} has been removed from the signup pool by {ctx.bot.user.mention} due to being inactive for over `{max_signup_period}`.")
@@ -320,7 +324,7 @@ async def on_presence_update(before: "Member", after: "Member") -> None:
     if after.status in (Status.offline, Status.idle) and name in signups:
         reason: str = "Offline" if after.status == Status.offline else "Idle"
         log.info(f"{name} is now {reason}.")
-        signups.remove(name)
+        lobby.remove_player_from_signups(name)
         await lobby._context.send(f"{after.mention} has been signed out due to being {reason}.")
 
 
