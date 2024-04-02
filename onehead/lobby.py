@@ -178,7 +178,7 @@ class Lobby(Cog):
         log.info(f"{name} has signed up.")
         
         if self._cleanup_is_running is False:
-            await create_task(self.cleanup_inactive_players(ctx))
+            create_task(self.cleanup_inactive_players(ctx))
 
         await Command.invoke(self.who, ctx)
 
