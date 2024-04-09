@@ -152,6 +152,17 @@ def get_discord_member_from_id(ctx: Context, id: int) -> Member | None:
 
     return None
 
+def is_mention(s: str) -> bool:
+    return s[:2] == "<@" and len(s) > 3
+
+def get_discord_id_from_mention(mention: str) -> int:
+    try:
+        player_id: int = int(mention[2:-1])
+    except ValueError:
+        raise OneHeadException(f"Failed to extract discord id from mention: {mention}")
+    
+    return player_id
+
 async def play_sound(ctx: Context, file_name: str, wait: bool = False) -> None:
     
     e: Event = Event()

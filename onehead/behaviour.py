@@ -12,7 +12,8 @@ from onehead.common import (
     get_player_names,
     get_discord_member_from_name,
     get_discord_member_from_id,
-    OneHeadException
+    get_discord_id_from_mention,
+    is_mention,
 )
 from onehead.game import Game
 from onehead.protocols.database import OneHeadDatabase, Operation
@@ -32,18 +33,7 @@ class Behaviour(Cog):
 
     def __init__(self, database: OneHeadDatabase) -> None:
         self.database: OneHeadDatabase = database
-        
-    def is_mention(self, s: str) -> bool:
-        return s[:2] == "<@" and len(s) > 3
-    
-    def get_discord_id_from_mention(self, mention: str) -> int:
-        try:
-            player_id: int = int(mention[2:-1])
-        except ValueError:
-            raise OneHeadException(f"Failed to extract discord id from mention: {mention}")
-        
-        return player_id
-        
+              
     @has_role(Roles.MEMBER)
     @command()
     async def commend(self, ctx: Context, target: str) -> None:
@@ -73,8 +63,8 @@ class Behaviour(Cog):
 
         commendee: Member
         
-        if self.is_mention(target):
-            commendee_id: int = self.get_discord_id_from_mention(target)
+        if is_mention(target):
+            commendee_id: int = get_discord_id_from_mention(target)
             commendee = get_discord_member_from_id(ctx, commendee_id)
         else:
             commendee = get_discord_member_from_name(ctx, target)
@@ -138,8 +128,8 @@ class Behaviour(Cog):
         
         reported: Member
         
-        if self.is_mention(target):
-            reported_id: int = self.get_discord_id_from_mention(target)
+        if is_mention(target):
+            reported_id: int = get_discord_id_from_mention(target)
             reported = get_discord_member_from_id(ctx, reported_id)
         else:
             reported = get_discord_member_from_name(ctx, target)
