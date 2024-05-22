@@ -1,5 +1,5 @@
 from logging import Logger
-from datetime import datetime
+from datetime import datetime, UTC
 
 from discord.member import Member
 from discord import Embed, Intents
@@ -184,8 +184,8 @@ class Core(Cog):
         
         await self.show_teams(ctx)
         await self.current_game.open_transfer_window(ctx)
-        await self.current_game.open_betting_window(ctx)
         await self.setup_team_channels(ctx)
+        await self.current_game.open_betting_window(ctx)
 
         if self.current_game.in_progress():
             await ctx.send("GLHF")
@@ -371,7 +371,7 @@ class Core(Cog):
         Display info on the current IHL season.
         """
         metadata: Metadata = self.database.get_metadata()
-        dt: datetime = datetime.utcfromtimestamp(metadata["timestamp"])
+        dt: datetime = datetime.fromtimestamp(metadata["timestamp"], UTC)
 
         await ctx.send(f"Season `{metadata['season']}` started on: `{dt}`")
 
@@ -381,7 +381,7 @@ class Core(Cog):
 
     @has_role(Roles.ADMIN)
     @command(aliases=["sim"])
-    async def simulate_signups(self, ctx: Context) -> None:
+    async def simulate_signups(self, _: Context) -> None:
         """
         For testing purposes.
         """

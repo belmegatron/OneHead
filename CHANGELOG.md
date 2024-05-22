@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [1.54.0] - 2024-05-22
+
+### Changed
+- Betting window shortened from 3 to 2 minutes.
+- The `!who` command no longer attempts to print current signups if there are none.
+- Players will be moved channels after the Transfer phase instead of after the Betting phase.
+
 ## [1.53.0] - 2024-04-09
 
 ### Added
@@ -12,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.52.3] - 2024-04-02
 
 ### Changed
-- Fixed bug in `signup` command where the first call would not send a message to be displayed in Discord.
+- Fixed bug in `!signup` command where the first call would not send a message to be displayed in Discord.
 
 ## [1.52.2] - 2024-04-01
 

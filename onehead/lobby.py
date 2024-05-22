@@ -143,10 +143,10 @@ class Lobby(Cog):
         """
 
         await ctx.send(f"There are currently `{len(self._signups)}` players signed up.")
-        signups_dict: list[dict[str, Any]] = [{"#": i, "name": name} for i, name in enumerate(self._signups, start=1)]
-        signups: str = tabulate(signups_dict, headers="keys", tablefmt="simple")
-
-        await ctx.send(f"**Current Signups** ```\n{signups}```")
+        signups: list[dict[str, Any]] = [{"#": i, "name": name} for i, name in enumerate(self._signups, start=1)]
+        if len(signups) > 0:
+            signups_table: str = tabulate(signups, headers="keys", tablefmt="simple")
+            await ctx.send(f"**Current Signups** ```\n{signups_table}```")
 
     @cooldown(1, 10, BucketType.user)
     @has_role(Roles.MEMBER)
@@ -307,9 +307,6 @@ async def on_presence_update(before: "Member", after: "Member") -> None:
     core: Cog = bot.get_cog("Core")  # type: ignore[assignment]
     game: Game = core.current_game  # type: ignore[attr-defined]
     
-    # Added this to try and diagnose why some players are not removed from signup pool via this callback.
-    log.debug(f"status change: name: {before.display_name}, before: {before.status}, after: {after.status}")
-
     if game.in_progress():
         return
 
