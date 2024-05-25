@@ -56,8 +56,8 @@ class Registration(Cog):
         Removes a player from the internal IHL database.
         """
 
-        player: Player | None = self.database.get(name)
         member: Member | None = get_discord_member_from_name(ctx, name)
+        player: Player | None = self.database.get(member.id)
 
         if player and member:
             self.database.remove(member.id)

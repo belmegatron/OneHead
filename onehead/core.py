@@ -150,7 +150,6 @@ class Core(Cog):
             raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
 
         await self.channels.move_discord_channels(ctx)
-        await ctx.send("Create Dota 2 Lobby and join with the above teams.")
     
     @has_role(Roles.ADMIN)
     @command()
@@ -184,8 +183,12 @@ class Core(Cog):
         
         await self.show_teams(ctx)
         await self.current_game.open_transfer_window(ctx)
-        await self.setup_team_channels(ctx)
         await self.current_game.open_betting_window(ctx)
+        
+        # We have to set up team channels after the transfer/betting windows as the bot plays sounds for certain commands.
+        # This requires everyone to be in the same channel.
+        await self.setup_team_channels(ctx)
+        await ctx.send("Create Dota 2 Lobby and join with the above teams.")
 
         if self.current_game.in_progress():
             await ctx.send("GLHF")

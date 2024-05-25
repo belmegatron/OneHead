@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.54.1] - 2024-05-25
+
+### Changed
+- Fixed deregister command, was attempting to obtain Player record from database via name instead of id.
+- Reverted back to players being moved channels after Betting phase.
 
 ## [1.54.0] - 2024-05-22
 
