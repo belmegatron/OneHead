@@ -55,7 +55,13 @@ class TestStart:
 
         core: Core = bot.get_cog("Core")
         balance: AsyncMock = AsyncMock()
-        balance.return_value = [{"name":"foo"}, {"name":"foo"}, {"name":"foo"}, {"name":"foo"}, {"name":"foo"}], [{"name":"foo"}, {"name":"foo"}, {"name":"foo"}, {"name":"foo"}, {"name":"foo"}]
+        balance.return_value = [{"name": "foo"}, {"name": "foo"}, {"name": "foo"}, {"name": "foo"}, {"name": "foo"}], [
+            {"name": "foo"},
+            {"name": "foo"},
+            {"name": "foo"},
+            {"name": "foo"},
+            {"name": "foo"},
+        ]
         core.matchmaking.balance = balance
         core.setup_team_channels = AsyncMock()
         core.current_game.open_transfer_window = AsyncMock()
@@ -63,7 +69,7 @@ class TestStart:
 
         with patch("onehead.core.play_sound"):
             await dpytest.message("!start")
-        
+
         assert dpytest.verify().message().content("Starting game:").contains()
         assert dpytest.verify().message().content("**Current Game**").contains()
         assert dpytest.verify().message().content("Create Dota 2 Lobby and join with the above teams.")
@@ -124,9 +130,8 @@ class TestResult:
         assert (
             dpytest.verify()
             .message()
-            .content(
-                "Cannot enter result as the transfer window for the game is currently open"
-            ).contains()
+            .content("Cannot enter result as the transfer window for the game is currently open")
+            .contains()
         )
 
     @pytest.mark.asyncio
@@ -141,9 +146,8 @@ class TestResult:
         assert (
             dpytest.verify()
             .message()
-            .content(
-                "Cannot enter result as the betting window for the game is currently open"
-            ).contains()
+            .content("Cannot enter result as the betting window for the game is currently open")
+            .contains()
         )
 
     @pytest.mark.asyncio
@@ -152,18 +156,14 @@ class TestResult:
         core: Core = bot.get_cog("Core")
         core.current_game._in_progress = True
         await dpytest.message("!result derp")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(f"Must be either {Side.RADIANT} or {Side.DIRE}.")
-        )
+        assert dpytest.verify().message().content(f"Must be either {Side.RADIANT} or {Side.DIRE}.")
 
     @pytest.mark.asyncio
     async def test_invalid_team(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
         core: Core = bot.get_cog("Core")
         core.current_game._in_progress = True
-        
+
         core.channels.move_back_to_lobby = AsyncMock()
 
         with pytest.raises(OneHeadException):
@@ -229,10 +229,4 @@ class TestStatus:
         ]
 
         await dpytest.message("!status")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(
-                "**Current Game**"
-            ).contains()
-        )
+        assert dpytest.verify().message().content("**Current Game**").contains()

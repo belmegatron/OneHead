@@ -19,37 +19,19 @@ class TestRegister:
         await add_ihl_role(bot, "IHL")
 
         await dpytest.message("!register derp")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(
-                f"the command you are looking for is"
-            ).contains()
-        )
+        assert dpytest.verify().message().content(f"the command you are looking for is").contains()
 
     @pytest.mark.asyncio
     async def test_mmr_less_than_min(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         await dpytest.message(f"!register {Registration.MIN_MMR - 100}")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(
-                "MMR is too low"
-            ).contains()
-        )
+        assert dpytest.verify().message().content("MMR is too low").contains()
 
     @pytest.mark.asyncio
     async def test_mmr_greater_than_max(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         await dpytest.message(f"!register {Registration.MAX_MMR + 100}")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(
-                "MMR is too high"
-            ).contains()
-        )
+        assert dpytest.verify().message().content("MMR is too high").contains()
 
     @pytest.mark.asyncio
     async def test_already_registered(self, bot: Bot) -> None:
@@ -72,9 +54,7 @@ class TestRegister:
         registration.database.add = Mock()
 
         await dpytest.message(f"!register {Registration.MIN_MMR + 100}")
-        assert (
-            dpytest.verify().message().content("successfully registered.").contains()
-        )
+        assert dpytest.verify().message().content("successfully registered.").contains()
 
 
 class TestDeregister:
@@ -82,7 +62,7 @@ class TestDeregister:
     async def test_no_ihl_admin_role(self, bot: Bot) -> None:
         with pytest.raises(errors.MissingRole):
             await dpytest.message("!deregister RBEEZAY")
-            
+
     @pytest.mark.asyncio
     async def test_user_not_in_guild(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
@@ -92,11 +72,7 @@ class TestDeregister:
         registration.database.get.return_value = None
 
         await dpytest.message("!deregister RBEEZAY")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("could not be found").contains()
-        )
+        assert dpytest.verify().message().content("could not be found").contains()
 
     @pytest.mark.asyncio
     async def test_user_not_in_database(self, bot: Bot) -> None:
@@ -108,11 +84,7 @@ class TestDeregister:
         registration.database.get.return_value = None
 
         await dpytest.message("!deregister RBEEZAY")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("could not be found in the database.").contains()
-        )
+        assert dpytest.verify().message().content("could not be found in the database.").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -125,8 +97,4 @@ class TestDeregister:
         registration.database.remove = Mock()
 
         await dpytest.message("!deregister RBEEZAY")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("has been deregistered").contains()
-        )
+        assert dpytest.verify().message().content("has been deregistered").contains()

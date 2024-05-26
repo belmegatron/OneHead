@@ -25,11 +25,7 @@ class TestShuffle:
         current_game._transfer_window_open = False
 
         await dpytest.message("!shuffle")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Unable to shuffle as player transfer window is closed.")
-        )
+        assert dpytest.verify().message().content("Unable to shuffle as player transfer window is closed.")
 
     @pytest.mark.asyncio
     async def test_invalid_teams(self, bot: Bot) -> None:
@@ -56,7 +52,8 @@ class TestShuffle:
         assert (
             dpytest.verify()
             .message()
-            .content(f"is unable to shuffle as they are not participating in the current game.").contains()
+            .content(f"is unable to shuffle as they are not participating in the current game.")
+            .contains()
         )
 
     @pytest.mark.asyncio
@@ -77,13 +74,7 @@ class TestShuffle:
         core.database.get.return_value = {"rbucks": 0}
 
         await dpytest.message("!shuffle")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(
-                "cannot shuffle as they only have 0 RBUCKS"
-            ).contains()
-        )
+        assert dpytest.verify().message().content("cannot shuffle as they only have 0 RBUCKS").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -111,7 +102,6 @@ class TestShuffle:
             assert (
                 dpytest.verify()
                 .message()
-                .content(
-                    f"has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!"
-                ).contains()
+                .content(f"has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!")
+                .contains()
             )

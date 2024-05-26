@@ -33,7 +33,7 @@ class Behaviour(Cog):
 
     def __init__(self, database: OneHeadDatabase) -> None:
         self.database: OneHeadDatabase = database
-              
+
     @has_role(Roles.MEMBER)
     @command()
     async def commend(self, ctx: Context, target: str) -> None:
@@ -62,17 +62,17 @@ class Behaviour(Cog):
             return
 
         commendee: Member
-        
+
         if is_mention(target):
             commendee_id: int = get_discord_id_from_mention(target)
             commendee = get_discord_member_from_id(ctx, commendee_id)
         else:
             commendee = get_discord_member_from_name(ctx, target)
-        
+
         if commendee is None:
             await ctx.send(f"Unable to commend {target} as they do not exist in the {ctx.guild.name} guild.")
             return
-        
+
         if commender.id == commendee.id:
             await ctx.send(f"{commender.mention} you cannot commend yourself, nice try...")
             return
@@ -129,9 +129,9 @@ class Behaviour(Cog):
                 f"{reporter.mention} did not participate in the previous game and therefore cannot report another player."
             )
             return
-        
+
         reported: Member
-        
+
         if is_mention(target):
             reported_id: int = get_discord_id_from_mention(target)
             reported = get_discord_member_from_id(ctx, reported_id)

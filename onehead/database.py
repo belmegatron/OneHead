@@ -15,7 +15,7 @@ from onehead.protocols.database import Operation
 
 class Database(commands.Cog):
     def __init__(self, config: dict) -> None:
-        
+
         db_path: Path = Path(ROOT_DIR, config["tinydb"]["path"])
         self.db: TinyDB = TinyDB(db_path)
         self.players: Table = self.db.table("players")

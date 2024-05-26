@@ -29,11 +29,7 @@ class TestSummon:
         ihl_role: Role = [x for x in roles if x.name == "IHL"][0]
 
         await dpytest.message("!summon")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(f"IHL DOTA - LET'S GO! {ihl_role.mention}")
-        )
+        assert dpytest.verify().message().content(f"IHL DOTA - LET'S GO! {ihl_role.mention}")
 
 
 class TestSignup:
@@ -50,11 +46,7 @@ class TestSignup:
         lobby._signups_disabled = True
 
         await dpytest.message("!su")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Game in progress").contains()
-        )
+        assert dpytest.verify().message().content("Game in progress").contains()
 
     @pytest.mark.asyncio
     async def test_player_not_registered(self, bot: Bot) -> None:
@@ -64,11 +56,7 @@ class TestSignup:
         lobby._signups_disabled = False
 
         await dpytest.message("!su")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Please register first using the `!register` command.")
-        )
+        assert dpytest.verify().message().content("Please register first using the `!register` command.")
 
     @pytest.mark.asyncio
     async def test_player_already_signed_up(self, bot: Bot) -> None:
@@ -110,21 +98,13 @@ class TestSignout:
         lobby: Lobby = bot.get_cog("Lobby")
         lobby._signups_disabled = True
         await dpytest.message("!so")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Game in progress").contains()
-        )
+        assert dpytest.verify().message().content("Game in progress").contains()
 
     @pytest.mark.asyncio
     async def test_not_signed_in(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!so")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(f"is not currently signed up.").contains()
-        )
+        assert dpytest.verify().message().content(f"is not currently signed up.").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -154,11 +134,7 @@ class TestRemove:
         lobby: Lobby = bot.get_cog("Lobby")
         lobby._signups["RBEEZAY"] = datetime.now()
         await dpytest.message("!rm RBEEZAY")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("has been removed from the signup pool.").contains()
-        )
+        assert dpytest.verify().message().content("has been removed from the signup pool.").contains()
 
 
 class TestReady:
@@ -171,9 +147,7 @@ class TestReady:
     async def test_not_signed_in(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!ready")
-        assert (
-            dpytest.verify().message().content(f"needs to sign in first.").contains()
-        )
+        assert dpytest.verify().message().content(f"needs to sign in first.").contains()
 
     @pytest.mark.asyncio
     async def test_ready_check_not_in_progress(self, bot: Bot) -> None:
@@ -214,23 +188,15 @@ class TestReadyCheck:
         lobby._signups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]
         lobby._players_ready = ["A", "B", "C", "D"]
         onehead.lobby.sleep = AsyncMock()
-        
+
         for signup in lobby._signups:
             await dpytest.member_join(name=signup)
 
         with patch("onehead.lobby.play_sound"):
             await dpytest.message("!ready_check")
-            
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Ready check started").contains()
-        )
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Still waiting on `7` players").contains()
-        )
+
+        assert dpytest.verify().message().content("Ready check started").contains()
+        assert dpytest.verify().message().content("Still waiting on `7` players").contains()
         assert lobby._ready_check_in_progress is False
         assert lobby._players_ready == []
 
@@ -241,22 +207,14 @@ class TestReadyCheck:
         lobby._signups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
         lobby._players_ready = lobby._signups
         onehead.lobby.sleep = AsyncMock()
-        
+
         for signup in lobby._signups:
             await dpytest.member_join(name=signup)
 
         with patch("onehead.lobby.play_sound"):
             await dpytest.message("!ready_check")
 
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Ready check started").contains()
-        )
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Ready check complete.").contains()
-        )
+        assert dpytest.verify().message().content("Ready check started").contains()
+        assert dpytest.verify().message().content("Ready check complete.").contains()
         assert lobby._ready_check_in_progress is False
         assert lobby._players_ready == []

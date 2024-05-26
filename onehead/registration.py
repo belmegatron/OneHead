@@ -4,7 +4,14 @@ from discord.member import Member
 from discord.ext.commands import Cog, Context, command, has_role
 from structlog import get_logger
 
-from onehead.common import Player, Roles, get_discord_member_from_name, is_mention, get_discord_id_from_mention, get_discord_member_from_id
+from onehead.common import (
+    Player,
+    Roles,
+    get_discord_member_from_name,
+    is_mention,
+    get_discord_id_from_mention,
+    get_discord_member_from_id,
+)
 from onehead.protocols.database import OneHeadDatabase
 
 
@@ -60,7 +67,7 @@ class Registration(Cog):
         if member is None:
             await ctx.send(f"{name} could not be found in the {ctx.guild.name} guild.")
             return
-            
+
         player: Player | None = self.database.get(member.id)
 
         if player and member:
@@ -77,21 +84,21 @@ class Registration(Cog):
         Update a player's in-house MMR to reflect a recent change in Dota 2 MMR.
         """
         member: Member | None = None
-        
+
         if is_mention(name):
             member = get_discord_member_from_id(ctx, get_discord_id_from_mention(name))
         else:
             member = get_discord_member_from_name(ctx, name)
-        
+
         if member is None:
             await ctx.send(f"{name} is not a registered member.")
             return
-        
+
         player: Player | None = self.database.get(member.id)
         if player is None:
             await ctx.send(f"Unable to recalibrate {member.mention} as they do not exist in the database.")
             return
-        
+
         self.database.modify(member.id, "mmr", new_mmr)
         log.info(f"{name} has had their MMR changed to {new_mmr} by {ctx.author.name}.")
         await ctx.send(f"{member.mention} has had their MMR changed to `{new_mmr}` by {ctx.author.mention}.")

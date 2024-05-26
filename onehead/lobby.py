@@ -4,31 +4,14 @@ from logging import Logger
 from typing import TYPE_CHECKING, Any
 
 from discord import Status
-from discord.ext.commands import (
-    Bot,
-    BucketType,
-    Cog,
-    Command,
-    Context,
-    command,
-    cooldown,
-    has_role,
-    max_concurrency
-)
+from discord.ext.commands import Bot, BucketType, Cog, Command, Context, command, cooldown, has_role, max_concurrency
 from discord.guild import Guild
 from discord.message import Message
 from discord.role import Role
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import (
-    OneHeadException,
-    Player,
-    Roles,
-    get_bot_instance,
-    get_discord_member_from_name,
-    play_sound
-)
+from onehead.common import OneHeadException, Player, Roles, get_bot_instance, get_discord_member_from_name, play_sound
 from onehead.game import Game
 from onehead.protocols.database import OneHeadDatabase
 
@@ -48,7 +31,7 @@ class Lobby(Cog):
         self._context: Context | None = None
         self._signups_disabled: bool = False
         self._cleanup_is_running: bool = False
-        
+
     def disable_signups(self) -> None:
         self._signups_disabled = True
 
@@ -58,7 +41,7 @@ class Lobby(Cog):
 
     def get_signups(self) -> list[str]:
         return list(self._signups.keys())
-    
+
     def remove_player_from_signups(self, name: str) -> None:
         del self._signups[name]
 
@@ -128,7 +111,7 @@ class Lobby(Cog):
             top_10_players_by_behaviour_score: list[Player] = sorted(
                 players, key=lambda d: d["behaviour"], reverse=True
             )[:10]
-            
+
             self._signups = [player["name"] for player in top_10_players_by_behaviour_score]
             benched_players: list[str] = [x for x in original_signups if x not in self._signups]
 
@@ -176,7 +159,7 @@ class Lobby(Cog):
             self._context = ctx
 
         log.info(f"{name} has signed up.")
-        
+
         if self._cleanup_is_running is False:
             create_task(self.cleanup_inactive_players(ctx))
 
@@ -201,7 +184,6 @@ class Lobby(Cog):
         else:
             self.remove_player_from_signups(name)
 
-
         log.info(f"{name} has signed out.")
 
         await Command.invoke(self.who, ctx)
@@ -225,7 +207,7 @@ class Lobby(Cog):
         if member is None:
             await ctx.send(f"{name} could not be found in the {ctx.guild.name} guild.")
             return
-        
+
         await ctx.send(f"{member.mention} has been removed from the signup pool.")
 
     @has_role(Roles.MEMBER)
@@ -257,17 +239,19 @@ class Lobby(Cog):
         """
         Initiates a ready check, after approx. 30s the result of the check will be displayed.
         """
-        
+
         if await self.signup_check(ctx):
             await play_sound(ctx, "ready.mp3")
-            
+
             log.info(f"{ctx.author.display_name} initiated a ready check.")
             await ctx.send("Ready check started - `30s` remaining - type `!ready` to ready up.")
             self._ready_check_in_progress = True
             await sleep(30)
 
             players_not_ready: list[str] = [name for name in self._signups if name not in self._players_ready]
-            mentions_not_ready: list[str] = [get_discord_member_from_name(ctx, name).mention for name in players_not_ready]
+            mentions_not_ready: list[str] = [
+                get_discord_member_from_name(ctx, name).mention for name in players_not_ready
+            ]
             if len(players_not_ready) == 0:
                 await ctx.send("Ready check complete.")
             else:
@@ -276,7 +260,7 @@ class Lobby(Cog):
 
         self._ready_check_in_progress = False
         self._players_ready = []
-    
+
     async def cleanup_inactive_players(self, ctx: Context) -> None:
         """
         This task runs periodically to check for if there are any 'stale' signups in the lobby.
@@ -286,31 +270,36 @@ class Lobby(Cog):
         bot: Bot = get_bot_instance()
         core: Cog = bot.get_cog("Core")  # type: ignore[assignment]
         game: Game = core.current_game  # type: ignore[attr-defined]
-        
+
         max_signup_period: timedelta = timedelta(hours=4)
         self._cleanup_is_running = True
-        
+
         while True:
             to_remove: list[str] = []
-            
+
             if game.in_progress() is False:
                 for name, signup_time in self._signups.items():
                     if datetime.now() >= (signup_time + max_signup_period):
                         to_remove.append(name)
-            
+
             for name in to_remove:
                 self.remove_player_from_signups(name)
                 member: Member = get_discord_member_from_name(ctx, name)
-                log.debug(f"{name} was removed from the signup pool by {ctx.bot.user.name} due to being inactive for over {max_signup_period}.")
-                await ctx.send(f"{member.mention} has been removed from the signup pool by {ctx.bot.user.mention} due to being inactive for over `{max_signup_period}`.")
-                
+                log.debug(
+                    f"{name} was removed from the signup pool by {ctx.bot.user.name} due to being inactive for over {max_signup_period}."
+                )
+                await ctx.send(
+                    f"{member.mention} has been removed from the signup pool by {ctx.bot.user.mention} due to being inactive for over `{max_signup_period}`."
+                )
+
             await sleep(3600)
-        
+
+
 async def on_presence_update(before: "Member", after: "Member") -> None:
     bot: Bot = get_bot_instance()
     core: Cog = bot.get_cog("Core")  # type: ignore[assignment]
     game: Game = core.current_game  # type: ignore[attr-defined]
-    
+
     if game.in_progress():
         return
 

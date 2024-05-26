@@ -7,7 +7,7 @@ from discord.utils import setup_logging
 from onehead.core import Core, bot_factory
 
 
-handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler = logging.FileHandler(filename="discord.log", encoding="utf-8", mode="w")
 
 
 async def main() -> None:

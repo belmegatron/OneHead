@@ -28,7 +28,7 @@ from onehead.common import (
     set_bot_instance,
     get_discord_member_from_name,
     Metadata,
-    play_sound
+    play_sound,
 )
 from onehead.database import Database
 from onehead.game import Game
@@ -142,15 +142,15 @@ class Core(Cog):
     async def show_teams(self, ctx: Context) -> None:
         status: Command = self.bot.get_command("status")  # type: ignore[assignment]
         await Command.invoke(status, ctx)
-    
-    async def setup_team_channels(self, ctx: Context) -> None:        
+
+    async def setup_team_channels(self, ctx: Context) -> None:
         await self.channels.create_discord_channels(ctx)
 
         if self.current_game.radiant is None or self.current_game.dire is None:
             raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
 
         await self.channels.move_discord_channels(ctx)
-    
+
     @has_role(Roles.ADMIN)
     @command()
     @max_concurrency(1, per=BucketType.default, wait=False)
@@ -168,9 +168,9 @@ class Core(Cog):
             return
 
         await play_sound(ctx, "start.mp3")
-        metadata: Metadata = self.database.get_metadata()       
+        metadata: Metadata = self.database.get_metadata()
         await ctx.send(f"Starting game: `Season {metadata['season']}`, Game `{metadata['game_id']}`.")
-        
+
         await self.lobby.select_players(ctx)
 
         self.current_game.start()
@@ -180,11 +180,11 @@ class Core(Cog):
             self.current_game.radiant,
             self.current_game.dire,
         ) = await self.matchmaking.balance(ctx)
-        
+
         await self.show_teams(ctx)
         await self.current_game.open_transfer_window(ctx)
         await self.current_game.open_betting_window(ctx)
-        
+
         # We have to set up team channels after the transfer/betting windows as the bot plays sounds for certain commands.
         # This requires everyone to be in the same channel.
         await self.setup_team_channels(ctx)
@@ -264,9 +264,9 @@ class Core(Cog):
         dire_names: tuple[str, ...]
 
         radiant_names, dire_names = get_player_names(self.current_game.radiant, self.current_game.dire)
-       
+
         await play_sound(ctx, "result.mp3", wait=True)
-       
+
         if result == Side.RADIANT:
             await ctx.send("`Radiant` victory!")
             for player in radiant_names:
@@ -299,7 +299,7 @@ class Core(Cog):
         await ctx.send("Updating scores...")
         scoreboard: Command = self.bot.get_command("scoreboard")  # type: ignore[assignment]
         await Command.invoke(scoreboard, ctx)
-        
+
         bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
 
         for name, bets in bet_results.items():
@@ -311,9 +311,9 @@ class Core(Cog):
         if len(bet_results) > 0:
             report: Embed = self.betting.create_bet_report(bet_results)
             await ctx.send(embed=report)
-            
+
         await self.reset(ctx)
-        
+
         metadata["game_id"] += 1
         self.database.update_metadata(metadata)
 
@@ -335,7 +335,7 @@ class Core(Cog):
             t1_names: tuple[str, ...]
             t2_names: tuple[str, ...]
             t1_names, t2_names = get_player_names(self.current_game.radiant, self.current_game.dire)
-            
+
             players: dict[Side, tuple[str, ...]] = {
                 Side.RADIANT: t1_names,
                 Side.DIRE: t2_names,
@@ -388,18 +388,20 @@ class Core(Cog):
         """
         For testing purposes.
         """
-        
+
         now: datetime = datetime.now()
-        
-        self.lobby._signups.update({
-            "ERIC": now,
-            "GEE": now,
-            "JEFFERIES": now,
-            "ZEED": now,
-            "PECRO": now,
-            "LAURENCE": now,
-            "TOCCO": now,
-            "JAMES": now,
-            "LUKE": now,
-            "ZEE": now,
-        })
+
+        self.lobby._signups.update(
+            {
+                "ERIC": now,
+                "GEE": now,
+                "JEFFERIES": now,
+                "ZEED": now,
+                "PECRO": now,
+                "LAURENCE": now,
+                "TOCCO": now,
+                "JAMES": now,
+                "LUKE": now,
+                "ZEE": now,
+            }
+        )

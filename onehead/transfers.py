@@ -14,7 +14,7 @@ from onehead.common import (
     get_bot_instance,
     get_player_names,
     get_discord_member_from_name,
-    play_sound
+    play_sound,
 )
 from onehead.game import Game
 from onehead.lobby import Lobby
@@ -77,7 +77,9 @@ class Transfers(Cog):
         name: str = ctx.author.display_name
 
         if name not in self.lobby.get_signups():
-            await ctx.send(f"{ctx.author.mention} is unable to shuffle as they are not participating in the current game.")
+            await ctx.send(
+                f"{ctx.author.mention} is unable to shuffle as they are not participating in the current game."
+            )
             return
 
         profile: Player | None = self.database.get(ctx.author.id)

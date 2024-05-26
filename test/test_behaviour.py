@@ -19,11 +19,7 @@ class TestCommend:
     async def test_no_previous_game(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!commend RBEEZAY")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Unable to commend as a game is yet to be played.")
-        )
+        assert dpytest.verify().message().content("Unable to commend as a game is yet to be played.")
 
     @pytest.mark.asyncio
     async def test_commender_did_not_play(self, bot: Bot) -> None:
@@ -37,9 +33,8 @@ class TestCommend:
         assert (
             dpytest.verify()
             .message()
-            .content(
-                f"did not participate in the previous game and therefore cannot commend another player."
-            ).contains()
+            .content(f"did not participate in the previous game and therefore cannot commend another player.")
+            .contains()
         )
 
     @pytest.mark.asyncio
@@ -51,29 +46,24 @@ class TestCommend:
 
         await add_ihl_role(bot, "IHL")
         await dpytest.message(f"!commend {TEST_USER}")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(f"you cannot commend yourself, nice try...").contains()
-        )
-        
+        assert dpytest.verify().message().content(f"you cannot commend yourself, nice try...").contains()
+
     @pytest.mark.asyncio
     async def test_commendee_did_not_play(self, bot: Bot) -> None:
         core: Core = bot.get_cog("Core")
         core.previous_game = Game()
         core.previous_game.radiant = [{"name": TEST_USER}]
         core.previous_game.dire = []
-        
+
         await dpytest.member_join(name="RBEEZAY")
-        
+
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!commend RBEEZAY")
         assert (
             dpytest.verify()
             .message()
-            .content(
-                "cannot be commended as they did not participate in the previous game."
-            ).contains()
+            .content("cannot be commended as they did not participate in the previous game.")
+            .contains()
         )
 
     @pytest.mark.asyncio
@@ -88,11 +78,7 @@ class TestCommend:
 
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!commend RBEEZAY")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(f"has already been commended by").contains()
-        )
+        assert dpytest.verify().message().content(f"has already been commended by").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -107,7 +93,7 @@ class TestCommend:
 
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
-        
+
         await dpytest.message("!commend RBEEZAY")
         assert dpytest.verify().message().content("has been commended").contains()
 
@@ -129,11 +115,7 @@ class TestReport:
     async def test_no_previous_game(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!report RBEEZAY abandon")
-        assert (
-            dpytest.verify()
-            .message()
-            .content("Unable to report as a game is yet to be played.")
-        )
+        assert dpytest.verify().message().content("Unable to report as a game is yet to be played.")
 
     @pytest.mark.asyncio
     async def test_reporter_did_not_play(self, bot: Bot) -> None:
@@ -148,9 +130,8 @@ class TestReport:
         assert (
             dpytest.verify()
             .message()
-            .content(
-                "did not participate in the previous game and therefore cannot report another player."
-            ).contains()
+            .content("did not participate in the previous game and therefore cannot report another player.")
+            .contains()
         )
 
     @pytest.mark.asyncio
@@ -163,13 +144,7 @@ class TestReport:
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
         await dpytest.message(f"!report {TEST_USER} abandon")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(
-                "has brought dishonour upon themselves"
-            ).contains()
-        )
+        assert dpytest.verify().message().content("has brought dishonour upon themselves").contains()
 
     @pytest.mark.asyncio
     async def test_reportee_did_not_play(self, bot: Bot) -> None:
@@ -184,9 +159,8 @@ class TestReport:
         assert (
             dpytest.verify()
             .message()
-            .content(
-                "cannot be reported as they did not participate in the previous game."
-            ).contains()
+            .content("cannot be reported as they did not participate in the previous game.")
+            .contains()
         )
 
     @pytest.mark.asyncio
@@ -200,11 +174,7 @@ class TestReport:
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!report RBEEZAY abandon")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(f"has already been reported by").contains()
-        )
+        assert dpytest.verify().message().content(f"has already been reported by").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:

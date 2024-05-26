@@ -92,14 +92,14 @@ class Betting(Cog):
 
         side: str
         amount: str
-        
+
         if arg_0 in Side:
             side = arg_0
             amount = arg_1
         else:
             side = arg_1
             amount = arg_0
-        
+
         side = side.lower()
 
         record: Player | None = self.database.get(ctx.author.id)

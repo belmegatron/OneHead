@@ -145,6 +145,7 @@ def get_discord_member_from_name(ctx: Context, name: str) -> Member | None:
 
     return None
 
+
 def get_discord_member_from_id(ctx: Context, id: int) -> Member | None:
     for member in ctx.guild.members:
         if member.id == id:
@@ -152,24 +153,27 @@ def get_discord_member_from_id(ctx: Context, id: int) -> Member | None:
 
     return None
 
+
 def is_mention(s: str) -> bool:
     return s[:2] == "<@" and len(s) > 3
+
 
 def get_discord_id_from_mention(mention: str) -> int:
     try:
         player_id: int = int(mention[2:-1])
     except ValueError:
         raise OneHeadException(f"Failed to extract discord id from mention: {mention}")
-    
+
     return player_id
 
+
 async def play_sound(ctx: Context, file_name: str, wait: bool = False) -> None:
-    
+
     e: Event = Event()
-    
+
     def sound_complete_callback(ex: Exception) -> None:
         e.set()
-    
+
     voice_client: VoiceClient | None = ctx.voice_client
     if voice_client is None:
         voice_channel: VoiceChannel | None = ctx.author.voice.channel
@@ -177,8 +181,8 @@ async def play_sound(ctx: Context, file_name: str, wait: bool = False) -> None:
             voice_client = await voice_channel.connect()
     elif voice_client.channel.name != ctx.author.voice.channel.name:
         await voice_client.move_to(ctx.author.voice.channel)
-    
-    while e.is_set() is False:   
+
+    while e.is_set() is False:
         try:
             voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"), after=sound_complete_callback)
             if wait:
