@@ -222,6 +222,10 @@ class Lobby(Cog):
         log.info(f"{name} has been removed from the signup pool by {ctx.author.display_name}.")
 
         member: Member | None = get_discord_member_from_name(ctx, name)
+        if member is None:
+            await ctx.send(f"{name} could not be found in the {ctx.guild.name} guild.")
+            return
+        
         await ctx.send(f"{member.mention} has been removed from the signup pool.")
 
     @has_role(Roles.MEMBER)

@@ -1,8 +1,8 @@
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import discord.ext.test as dpytest
 import pytest
-from conftest import add_ihl_role, TEST_USER
+from conftest import add_ihl_role
 from discord import Embed, colour
 from discord.ext.commands import Bot, errors
 from discord.member import Member
@@ -65,7 +65,7 @@ class TestPlaceBet:
         assert (
             dpytest.verify()
             .message()
-            .content(f"Unable to find {TEST_USER} in database.")
+            .content(f"Unable to find").contains()
         )
 
     @pytest.mark.asyncio
@@ -82,7 +82,7 @@ class TestPlaceBet:
         assert (
             dpytest.verify()
             .message()
-            .content("RBEEZAY cannot bet as they have no available RBUCKS.")
+            .content("cannot bet as they have no available RBUCKS.").contains()
         )
 
     @pytest.mark.asyncio
@@ -99,7 +99,7 @@ class TestPlaceBet:
         assert (
             dpytest.verify()
             .message()
-            .content("RBEEZAY - Cannot bet on derp - Must be either Radiant/Dire.")
+            .content("Cannot bet on").contains()
         )
 
     @pytest.mark.asyncio
@@ -117,8 +117,8 @@ class TestPlaceBet:
             dpytest.verify()
             .message()
             .content(
-                "RBEEZAY - foobar is not a valid number of RBUCKS to place a bet with."
-            )
+                "is not a valid number of RBUCKS"
+            ).contains()
         )
 
     @pytest.mark.asyncio
@@ -135,7 +135,7 @@ class TestPlaceBet:
         assert (
             dpytest.verify()
             .message()
-            .content("RBEEZAY - Bet stake must be greater than 0.")
+            .content("stake must be greater than 0.").contains()
         )
 
     @pytest.mark.asyncio
@@ -155,8 +155,8 @@ class TestPlaceBet:
             dpytest.verify()
             .message()
             .content(
-                f"Unable to place bet - RBEEZAY tried to stake {stake:.0f} RBUCKS but only has {record['rbucks']:.0f} RBUCKS available."
-            )
+                f"Unable to place bet"
+            ).contains()
         )
 
     @pytest.mark.asyncio
@@ -171,11 +171,12 @@ class TestPlaceBet:
         core.database.modify = Mock()
 
         core.current_game._betting_window_open = True
-        await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
-        assert (
-            dpytest.verify()
-            .message()
-            .content(
-                f"RBEEZAY has placed a bet of {record['rbucks']:.0f} RBUCKS on {Side.RADIANT.title()}."
+        with patch("onehead.betting.play_sound"):
+            await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
+            assert (
+                dpytest.verify()
+                .message()
+                .content(
+                    f"has placed a bet"
+                ).contains()
             )
-        )

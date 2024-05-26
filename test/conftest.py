@@ -1,4 +1,4 @@
-from typing import Generator, Sequence
+from typing import AsyncGenerator, Sequence
 
 import discord.ext.test as dpytest
 import pytest_asyncio
@@ -27,9 +27,9 @@ async def bot() -> Bot:
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def cleanup() -> Generator[None, None, None]:
-    yield
+async def cleanup() -> AsyncGenerator[None, None]:
     await dpytest.empty_queue()
+    yield
 
 
 async def add_ihl_role(bot: Bot, role: str, name: str = None) -> None:

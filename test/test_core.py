@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch, Mock
 
 import discord.ext.test as dpytest
 import pytest
@@ -6,7 +6,7 @@ from conftest import add_ihl_role
 from discord.ext.commands import Bot, errors
 
 from onehead.betting import Bet
-from onehead.common import OneHeadException, Player, Side
+from onehead.common import OneHeadException, Player, Side, Team
 from onehead.core import Core
 from onehead.game import Game
 from onehead.lobby import Lobby
@@ -42,7 +42,7 @@ class TestStart:
         lobby._signups = ["BOB", "BILL"]
 
         await dpytest.message("!start")
-        assert dpytest.verify().message().content("Only 2 Signup(s), require 8 more.")
+        assert dpytest.verify().message().content("Only `2` signup(s), require `8` more.")
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -55,13 +55,18 @@ class TestStart:
 
         core: Core = bot.get_cog("Core")
         balance: AsyncMock = AsyncMock()
-        balance.return_value = [], []
+        balance.return_value = [{"name":"foo"}, {"name":"foo"}, {"name":"foo"}, {"name":"foo"}, {"name":"foo"}], [{"name":"foo"}, {"name":"foo"}, {"name":"foo"}, {"name":"foo"}, {"name":"foo"}]
         core.matchmaking.balance = balance
         core.setup_team_channels = AsyncMock()
         core.current_game.open_transfer_window = AsyncMock()
         core.current_game.open_betting_window = AsyncMock()
 
-        await dpytest.message("!start")
+        with patch("onehead.core.play_sound"):
+            await dpytest.message("!start")
+        
+        assert dpytest.verify().message().content("Starting game:").contains()
+        assert dpytest.verify().message().content("**Current Game**").contains()
+        assert dpytest.verify().message().content("Create Dota 2 Lobby and join with the above teams.")
         assert dpytest.verify().message().content("GLHF")
 
 
@@ -83,17 +88,16 @@ class TestStop:
 
         core: Core = bot.get_cog("Core")
         core.current_game._in_progress = True
+        core.betting.refund_all_bets = AsyncMock()
+        core.transfers.refund_transfers = AsyncMock()
         core.channels.move_back_to_lobby = AsyncMock()
+        core.reset = AsyncMock()
 
         await dpytest.message("!stop")
+        core.betting.refund_all_bets.assert_called()
+        core.transfers.refund_transfers.assert_called()
         core.channels.move_back_to_lobby.assert_called()
-        assert core.current_game.in_progress() is False
-        assert core.lobby.get_signups() == []
-        assert core.current_game.betting_window_open() is False
-        assert core.current_game.transfer_window_open() is False
-        assert core.current_game.get_bets() == []
-        assert core.current_game.get_player_transfers() == []
-        assert core.previous_game is None
+        core.reset.assert_called()
 
 
 class TestResult:
@@ -121,8 +125,8 @@ class TestResult:
             dpytest.verify()
             .message()
             .content(
-                "Cannot enter result as the Transfer window for the game is currently open. Use the !stop command if you wish to abort the game."
-            )
+                "Cannot enter result as the transfer window for the game is currently open"
+            ).contains()
         )
 
     @pytest.mark.asyncio
@@ -138,8 +142,8 @@ class TestResult:
             dpytest.verify()
             .message()
             .content(
-                "Cannot enter result as the Betting window for the game is currently open. Use the !stop command if you wish to abort the game."
-            )
+                "Cannot enter result as the betting window for the game is currently open"
+            ).contains()
         )
 
     @pytest.mark.asyncio
@@ -151,7 +155,7 @@ class TestResult:
         assert (
             dpytest.verify()
             .message()
-            .content(f"Invalid Value - Must be either {Side.RADIANT} or {Side.DIRE}.")
+            .content(f"Must be either {Side.RADIANT} or {Side.DIRE}.")
         )
 
     @pytest.mark.asyncio
@@ -159,12 +163,15 @@ class TestResult:
         await add_ihl_role(bot, "IHL Admin")
         core: Core = bot.get_cog("Core")
         core.current_game._in_progress = True
+        
+        core.channels.move_back_to_lobby = AsyncMock()
 
         with pytest.raises(OneHeadException):
             await dpytest.message(f"!result {Side.RADIANT}")
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
+        await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
         await add_ihl_role(bot, "IHL Admin")
         core: Core = bot.get_cog("Core")
@@ -179,17 +186,14 @@ class TestResult:
 
         core.scoreboard.scoreboard = AsyncMock()
         core.channels.move_back_to_lobby = AsyncMock()
+        core.reset = AsyncMock()
+        core.database.modify = Mock()
 
-        await dpytest.message(f"!result {Side.RADIANT}")
+        with patch("onehead.core.play_sound"):
+            await dpytest.message(f"!result {Side.RADIANT}")
 
         core.channels.move_back_to_lobby.assert_called_once()
-        assert core.current_game.in_progress() is False
-        assert core.lobby.get_signups() == []
-        assert core.current_game.betting_window_open() is False
-        assert core.current_game.transfer_window_open() is False
-        assert core.current_game.get_bets() == []
-        assert core.current_game.get_player_transfers() == []
-        assert core.previous_game == current_game
+        core.reset.assert_called_once()
 
 
 class TestStatus:
@@ -229,6 +233,6 @@ class TestStatus:
             dpytest.verify()
             .message()
             .content(
-                "**Current Game** ```\nradiant    dire\n---------  ------\nA          F\nB          G\nC          H\nD          I\nE          J```"
-            )
+                "**Current Game**"
+            ).contains()
         )

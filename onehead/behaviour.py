@@ -69,6 +69,10 @@ class Behaviour(Cog):
         else:
             commendee = get_discord_member_from_name(ctx, target)
         
+        if commendee is None:
+            await ctx.send(f"Unable to commend {target} as they do not exist in the {ctx.guild.name} guild.")
+            return
+        
         if commender.id == commendee.id:
             await ctx.send(f"{commender.mention} you cannot commend yourself, nice try...")
             return

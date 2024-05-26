@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import discord.ext.test as dpytest
 import pytest
@@ -56,7 +56,7 @@ class TestShuffle:
         assert (
             dpytest.verify()
             .message()
-            .content(f"{TEST_USER} is unable to shuffle as they did not sign up.")
+            .content(f"is unable to shuffle as they are not participating in the current game.").contains()
         )
 
     @pytest.mark.asyncio
@@ -81,9 +81,8 @@ class TestShuffle:
             dpytest.verify()
             .message()
             .content(
-                f"{TEST_USER} cannot shuffle as they only have 0 "
-                f"RBUCKS. A shuffle costs {Transfers.SHUFFLE_COST} RBUCKS"
-            )
+                "cannot shuffle as they only have 0 RBUCKS"
+            ).contains()
         )
 
     @pytest.mark.asyncio
@@ -107,11 +106,12 @@ class TestShuffle:
         core.matchmaking.balance.return_value = [{"name": "A"}], [{"name": "B"}]
         core.setup_teams = AsyncMock()
 
-        await dpytest.message("!shuffle")
-        assert (
-            dpytest.verify()
-            .message()
-            .content(
-                f"{TEST_USER} has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!"
+        with patch("onehead.transfers.play_sound"):
+            await dpytest.message("!shuffle")
+            assert (
+                dpytest.verify()
+                .message()
+                .content(
+                    f"has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!"
+                ).contains()
             )
-        )

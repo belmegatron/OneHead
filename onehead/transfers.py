@@ -77,7 +77,7 @@ class Transfers(Cog):
         name: str = ctx.author.display_name
 
         if name not in self.lobby.get_signups():
-            await ctx.send(f"{ctx.author.mention} is unable to shuffle are not participating in the current game.")
+            await ctx.send(f"{ctx.author.mention} is unable to shuffle as they are not participating in the current game.")
             return
 
         profile: Player | None = self.database.get(ctx.author.id)

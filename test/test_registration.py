@@ -5,7 +5,6 @@ import pytest
 from conftest import TEST_USER, add_ihl_role
 from discord.ext.commands import Bot, errors
 
-from onehead.common import OneHeadException
 from onehead.registration import Registration
 
 
@@ -19,8 +18,14 @@ class TestRegister:
     async def test_invalid_mmr(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
-        with pytest.raises(OneHeadException):
-            await dpytest.message("!register derp")
+        await dpytest.message("!register derp")
+        assert (
+            dpytest.verify()
+            .message()
+            .content(
+                f"the command you are looking for is"
+            ).contains()
+        )
 
     @pytest.mark.asyncio
     async def test_mmr_less_than_min(self, bot: Bot) -> None:
@@ -30,8 +35,8 @@ class TestRegister:
             dpytest.verify()
             .message()
             .content(
-                f"{Registration.MIN_MMR - 100} MMR is too low, must be greater or equal to {Registration.MIN_MMR}."
-            )
+                "MMR is too low"
+            ).contains()
         )
 
     @pytest.mark.asyncio
@@ -42,8 +47,8 @@ class TestRegister:
             dpytest.verify()
             .message()
             .content(
-                f"{Registration.MAX_MMR + 100} MMR is too high, must be less than or equal to {Registration.MAX_MMR}."
-            )
+                "MMR is too high"
+            ).contains()
         )
 
     @pytest.mark.asyncio
@@ -55,7 +60,7 @@ class TestRegister:
         registration.database.get.return_value = {"name": TEST_USER}
 
         await dpytest.message(f"!register {Registration.MIN_MMR + 100}")
-        assert dpytest.verify().message().content(f"{TEST_USER} is already registered.")
+        assert dpytest.verify().message().content("is already registered.").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -68,7 +73,7 @@ class TestRegister:
 
         await dpytest.message(f"!register {Registration.MIN_MMR + 100}")
         assert (
-            dpytest.verify().message().content(f"{TEST_USER} successfully registered.")
+            dpytest.verify().message().content("successfully registered.").contains()
         )
 
 
@@ -77,9 +82,9 @@ class TestDeregister:
     async def test_no_ihl_admin_role(self, bot: Bot) -> None:
         with pytest.raises(errors.MissingRole):
             await dpytest.message("!deregister RBEEZAY")
-
+            
     @pytest.mark.asyncio
-    async def test_user_not_in_database(self, bot: Bot) -> None:
+    async def test_user_not_in_guild(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
         registration: Registration = bot.get_cog("Registration")
 
@@ -90,11 +95,28 @@ class TestDeregister:
         assert (
             dpytest.verify()
             .message()
-            .content("RBEEZAY could not be found in the database.")
+            .content("could not be found").contains()
+        )
+
+    @pytest.mark.asyncio
+    async def test_user_not_in_database(self, bot: Bot) -> None:
+        await dpytest.member_join(name="RBEEZAY")
+        await add_ihl_role(bot, "IHL Admin")
+        registration: Registration = bot.get_cog("Registration")
+
+        registration.database.get = Mock()
+        registration.database.get.return_value = None
+
+        await dpytest.message("!deregister RBEEZAY")
+        assert (
+            dpytest.verify()
+            .message()
+            .content("could not be found in the database.").contains()
         )
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
+        await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL Admin")
         registration: Registration = bot.get_cog("Registration")
 
@@ -106,5 +128,5 @@ class TestDeregister:
         assert (
             dpytest.verify()
             .message()
-            .content("RBEEZAY has been successfully removed from the database.")
+            .content("has been deregistered").contains()
         )

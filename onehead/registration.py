@@ -57,6 +57,10 @@ class Registration(Cog):
         """
 
         member: Member | None = get_discord_member_from_name(ctx, name)
+        if member is None:
+            await ctx.send(f"{name} could not be found in the {ctx.guild.name} guild.")
+            return
+            
         player: Player | None = self.database.get(member.id)
 
         if player and member:

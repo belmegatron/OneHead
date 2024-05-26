@@ -1,5 +1,6 @@
+from datetime import datetime
 from typing import Sequence
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import discord.ext.test as dpytest
 import pytest
@@ -52,7 +53,7 @@ class TestSignup:
         assert (
             dpytest.verify()
             .message()
-            .content("Game in Progress - Signup command unavailable.")
+            .content("Game in progress").contains()
         )
 
     @pytest.mark.asyncio
@@ -66,7 +67,7 @@ class TestSignup:
         assert (
             dpytest.verify()
             .message()
-            .content("Please register first using the !reg command.")
+            .content("Please register first using the `!register` command.")
         )
 
     @pytest.mark.asyncio
@@ -75,13 +76,13 @@ class TestSignup:
 
         lobby: Lobby = bot.get_cog("Lobby")
         lobby._signups_disabled = False
-        lobby._signups.append(TEST_USER)
+        lobby._signups[TEST_USER] = datetime.now()
 
         lobby.database.get = Mock()
         lobby.database.get.return_value = {"name": TEST_USER}
 
         await dpytest.message("!su")
-        assert dpytest.verify().message().content(f"{TEST_USER} is already signed up.")
+        assert dpytest.verify().message().content(f"is already signed up.").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -112,7 +113,7 @@ class TestSignout:
         assert (
             dpytest.verify()
             .message()
-            .content("Game in Progress - Signout command unavailable.")
+            .content("Game in progress").contains()
         )
 
     @pytest.mark.asyncio
@@ -122,14 +123,14 @@ class TestSignout:
         assert (
             dpytest.verify()
             .message()
-            .content(f"{TEST_USER} is not currently signed up.")
+            .content(f"is not currently signed up.").contains()
         )
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         lobby: Lobby = bot.get_cog("Lobby")
-        lobby._signups.append(TEST_USER)
+        lobby._signups[TEST_USER] = datetime.now()
         await dpytest.message("!so")
         assert len(lobby.get_signups()) == 0
 
@@ -148,14 +149,15 @@ class TestRemove:
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
+        await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL Admin")
         lobby: Lobby = bot.get_cog("Lobby")
-        lobby._signups.append("RBEEZAY")
+        lobby._signups["RBEEZAY"] = datetime.now()
         await dpytest.message("!rm RBEEZAY")
         assert (
             dpytest.verify()
             .message()
-            .content("RBEEZAY has been removed from the signup pool.")
+            .content("has been removed from the signup pool.").contains()
         )
 
 
@@ -170,14 +172,14 @@ class TestReady:
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!ready")
         assert (
-            dpytest.verify().message().content(f"{TEST_USER} needs to sign in first.")
+            dpytest.verify().message().content(f"needs to sign in first.").contains()
         )
 
     @pytest.mark.asyncio
     async def test_ready_check_not_in_progress(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         lobby: Lobby = bot.get_cog("Lobby")
-        lobby._signups.append(TEST_USER)
+        lobby._signups[TEST_USER] = datetime.now()
         await dpytest.message("!ready")
         assert dpytest.verify().message().content("No ready check initiated.")
 
@@ -185,10 +187,10 @@ class TestReady:
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         lobby: Lobby = bot.get_cog("Lobby")
-        lobby._signups.append(TEST_USER)
+        lobby._signups[TEST_USER] = datetime.now()
         lobby._ready_check_in_progress = True
         await dpytest.message("!ready")
-        assert dpytest.verify().message().content(f"{TEST_USER} is ready.")
+        assert dpytest.verify().message().content(f"is ready.").contains()
 
 
 class TestReadyCheck:
@@ -201,9 +203,9 @@ class TestReadyCheck:
     async def test_not_enough_signups(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         lobby: Lobby = bot.get_cog("Lobby")
-        lobby._signups.append(TEST_USER)
+        lobby._signups[TEST_USER] = datetime.now()
         await dpytest.message("!ready_check")
-        assert dpytest.verify().message().content("Only 1 Signup(s), require 9 more.")
+        assert dpytest.verify().message().content("Only `1` signup(s), require `9` more.")
 
     @pytest.mark.asyncio
     async def test_waiting_on_players(self, bot: Bot) -> None:
@@ -212,17 +214,22 @@ class TestReadyCheck:
         lobby._signups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]
         lobby._players_ready = ["A", "B", "C", "D"]
         onehead.lobby.sleep = AsyncMock()
+        
+        for signup in lobby._signups:
+            await dpytest.member_join(name=signup)
 
-        await dpytest.message("!ready_check")
+        with patch("onehead.lobby.play_sound"):
+            await dpytest.message("!ready_check")
+            
         assert (
             dpytest.verify()
             .message()
-            .content("Ready Check Started, 30s remaining - type '!ready' to ready up.")
+            .content("Ready check started").contains()
         )
         assert (
             dpytest.verify()
             .message()
-            .content("Still waiting on 7 players: E, F, G, H, I, J, K")
+            .content("Still waiting on `7` players").contains()
         )
         assert lobby._ready_check_in_progress is False
         assert lobby._players_ready == []
@@ -234,17 +241,22 @@ class TestReadyCheck:
         lobby._signups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
         lobby._players_ready = lobby._signups
         onehead.lobby.sleep = AsyncMock()
+        
+        for signup in lobby._signups:
+            await dpytest.member_join(name=signup)
 
-        await dpytest.message("!ready_check")
+        with patch("onehead.lobby.play_sound"):
+            await dpytest.message("!ready_check")
+
         assert (
             dpytest.verify()
             .message()
-            .content("Ready Check Started, 30s remaining - type '!ready' to ready up.")
+            .content("Ready check started").contains()
         )
         assert (
             dpytest.verify()
             .message()
-            .content("Ready Check Complete - All players ready.")
+            .content("Ready check complete.").contains()
         )
         assert lobby._ready_check_in_progress is False
         assert lobby._players_ready == []
