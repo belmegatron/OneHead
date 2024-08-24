@@ -1,9 +1,11 @@
-from asyncio import Event, sleep
-import json
+from asyncio import sleep
 from dataclasses import dataclass
 from enum import EnumMeta, auto
+from logging import Logger
+import json
 from pathlib import Path
 from typing import Any, Literal, Optional, TypedDict
+from structlog import get_logger
 
 from discord.channel import VoiceChannel
 from discord.ext.commands import Bot, Context
@@ -13,6 +15,9 @@ from discord.player import FFmpegPCMAudio
 from discord.voice_client import VoiceClient
 
 from strenum import LowercaseStrEnum, StrEnum
+
+
+log: Logger = get_logger()
 
 Player = TypedDict(
     "Player",
@@ -167,13 +172,7 @@ def get_discord_id_from_mention(mention: str) -> int:
     return player_id
 
 
-async def play_sound(ctx: Context, file_name: str, wait: bool = False) -> None:
-
-    e: Event = Event()
-
-    def sound_complete_callback(ex: Exception) -> None:
-        e.set()
-
+async def play_sound(ctx: Context, file_name: str) -> None:
     voice_client: VoiceClient | None = ctx.voice_client
     if voice_client is None:
         voice_channel: VoiceChannel | None = ctx.author.voice.channel
@@ -182,12 +181,17 @@ async def play_sound(ctx: Context, file_name: str, wait: bool = False) -> None:
     elif voice_client.channel.name != ctx.author.voice.channel.name:
         await voice_client.move_to(ctx.author.voice.channel)
 
-    while e.is_set() is False:
-        try:
-            voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"), after=sound_complete_callback)
-            if wait:
-                await e.wait()
-            else:
-                e.set()
-        except ClientException:
-            await sleep(1)
+    try:
+        voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"))
+    except ClientException as ex:
+        log.error(f"Failed to play sound '{file_name}' due to {ex}.")
+
+
+async def voice_client_disconnect(ctx: Context) -> None:
+    while True:
+        voice_client: VoiceClient | None = ctx.voice_client
+        if voice_client and voice_client.is_playing() is False:
+            await voice_client.disconnect()
+            break
+        else:
+            await sleep(5)

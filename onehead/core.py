@@ -1,3 +1,4 @@
+from asyncio import create_task
 from logging import Logger
 from datetime import datetime, UTC
 
@@ -29,6 +30,7 @@ from onehead.common import (
     get_discord_member_from_name,
     Metadata,
     play_sound,
+    voice_client_disconnect
 )
 from onehead.database import Database
 from onehead.game import Game
@@ -137,7 +139,7 @@ class Core(Cog):
 
         self.current_game = Game()
         self.lobby.clear_signups()
-        await ctx.voice_client.disconnect()
+        create_task(voice_client_disconnect(ctx))
 
     async def show_teams(self, ctx: Context) -> None:
         status: Command = self.bot.get_command("status")  # type: ignore[assignment]
@@ -265,7 +267,7 @@ class Core(Cog):
 
         radiant_names, dire_names = get_player_names(self.current_game.radiant, self.current_game.dire)
 
-        await play_sound(ctx, "result.mp3", wait=True)
+        await play_sound(ctx, "result.mp3")
 
         if result == Side.RADIANT:
             await ctx.send("`Radiant` victory!")
@@ -380,7 +382,7 @@ class Core(Cog):
 
     def is_end_of_season(self) -> bool:
         metadata: Metadata = self.database.get_metadata()
-        return (metadata["game_id"] < metadata["max_game_count"]) is False
+        return metadata["game_id"] >= metadata["max_game_count"]
 
     @has_role(Roles.ADMIN)
     @command(aliases=["sim"])

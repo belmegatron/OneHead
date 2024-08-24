@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.55.1] - 2024-08-24
+
+### Changed
+- Fixed bug in `play_sound` function which would, on occasion, sit forking `ffmpeg` forever more. 
+- Fixed bug where game would hang if more than 10 players signed up and players would have to be benched.
+
 ## [1.55.0] - 2024-08-07
 
 ### Changed

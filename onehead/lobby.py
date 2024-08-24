@@ -98,9 +98,12 @@ class Lobby(Cog):
             original_signups: list[str] = self.get_signups()
 
             players: list[Player] = []
+            members: list[Member] = []
 
             for signup in original_signups:
                 member: Member | None = get_discord_member_from_name(ctx, signup)
+                members.append(member)
+                
                 player: Player | None = self.database.get(member.id)
 
                 if player is None:
@@ -112,11 +115,14 @@ class Lobby(Cog):
                 players, key=lambda d: d["behaviour"], reverse=True
             )[:10]
 
-            self._signups = [player["name"] for player in top_10_players_by_behaviour_score]
-            benched_players: list[str] = [x for x in original_signups if x not in self._signups]
+            top_10_names_by_behaviour_score = [player["name"] for player in top_10_players_by_behaviour_score]
+            self._signups = {name:ts for name, ts in self._signups.items() if name in top_10_names_by_behaviour_score}
+            
+            benched_players: list[str] = [member.mention for member in members if member.display_name not in self._signups]
+            selected_players: list[str] = [member.mention for member in members if member.display_name in self._signups]
 
-        await ctx.send(f"**Benched Players:** ```\n{benched_players}```")
-        await ctx.send(f"**Selected Players:** ```\n{self._signups}```")
+        await ctx.send(f"**Benched Players:** \n{', '.join(benched_players)}")
+        await ctx.send(f"**Selected Players:** \n{', '.join(selected_players)}")
 
     @has_role(Roles.MEMBER)
     @command()
