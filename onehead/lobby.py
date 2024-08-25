@@ -1,4 +1,5 @@
 from asyncio import create_task, sleep
+from functools import cache
 from datetime import datetime, timedelta
 from logging import Logger
 from typing import TYPE_CHECKING, Any
@@ -121,8 +122,8 @@ class Lobby(Cog):
             benched_players: list[str] = [member.mention for member in members if member.display_name not in self._signups]
             selected_players: list[str] = [member.mention for member in members if member.display_name in self._signups]
 
-        await ctx.send(f"**Benched Players:** \n{', '.join(benched_players)}")
-        await ctx.send(f"**Selected Players:** \n{', '.join(selected_players)}")
+            await ctx.send(f"**Benched Players:** \n{', '.join(benched_players)}")
+            await ctx.send(f"**Selected Players:** \n{', '.join(selected_players)}")
 
     @has_role(Roles.MEMBER)
     @command()
@@ -323,15 +324,16 @@ async def on_presence_update(before: "Member", after: "Member") -> None:
         lobby.remove_player_from_signups(name)
         await lobby._context.send(f"{after.mention} has been signed out due to being {reason}.")
 
-
-async def allow_message(message: Message, bot: Bot) -> bool:
-    if message.author.display_name not in ("ERIC", "SCOUT"):
-        return True
-
+@cache
+def get_supported_bot_commands(bot: Bot) -> list[str]:
     commands: list[str] = [command.name for command in bot.commands]
     command_aliases: list[str] = []
     for cmd in bot.commands:
         command_aliases += cmd.aliases
+    
+    return commands + command_aliases    
+
+async def allow_message(message: Message, bot: Bot) -> bool:
 
     split_message: list[str] = message.content.split()
     user_command: str = split_message[0]
@@ -340,8 +342,9 @@ async def allow_message(message: Message, bot: Bot) -> bool:
     if prefix != bot.command_prefix:
         return True
 
+    supported_commands: list[str] = get_supported_bot_commands(bot)
     user_command = user_command[1:]
-    if user_command not in commands and user_command not in command_aliases:
+    if user_command not in supported_commands:
         return False
 
     return True

@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest.mock import AsyncMock, patch, Mock
 
 import discord.ext.test as dpytest
@@ -39,11 +40,11 @@ class TestStart:
         await add_ihl_role(bot, "IHL Admin")
 
         lobby: Lobby = bot.get_cog("Lobby")
-        lobby._signups = ["BOB", "BILL"]
+        lobby._signups = {"BOB": datetime.now(), "BILL": datetime.now()}
 
         await dpytest.message("!start")
         assert dpytest.verify().message().content("Only `2` signup(s), require `8` more.")
-
+    
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
@@ -51,7 +52,7 @@ class TestStart:
 
         lobby: Lobby = bot.get_cog("Lobby")
         players: list[Player] = lobby.database.get_all()[:10]
-        lobby._signups = [player["name"] for player in players]
+        lobby._signups = {player["name"]: datetime.now() for player in players}
 
         core: Core = bot.get_cog("Core")
         balance: AsyncMock = AsyncMock()
