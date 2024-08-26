@@ -22,7 +22,7 @@ class Database(commands.Cog):
         self.metadata: Table = self.db.table("metadata")
         if self.metadata.contains(Query().name == "season") is False:
             self.metadata.insert(
-                {"name": "season", "season": 1, "game_id": 1, "max_game_count": 100, "timestamp": time.time()}
+                {"name": "season", "season": 1, "game_id": 1, "max_game_count": 50, "timestamp": time.time()}
             )
 
     def _get_document(self, id: int) -> Document | None:

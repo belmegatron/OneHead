@@ -1,64 +1,164 @@
-from datetime import datetime
+from asyncio import create_task, sleep
+from datetime import datetime, timedelta
 from dataclasses import dataclass
+import itertools
+from logging import Logger
+from structlog import get_logger
+from typing import Any
 
 from discord.member import Member
 from discord.ext.commands import Cog, Context, command, has_role
+from tabulate import tabulate
 
-from onehead.common import Roles, get_discord_member_from_name, play_sound, is_mention
+from onehead.common import Player, Roles, get_discord_member_from_name, play_sound, is_mention, get_discord_member_from_id, get_discord_id_from_mention
 from onehead.protocols.database import OneHeadDatabase
+
+
+log: Logger = get_logger()
 
 
 @dataclass
 class Challenge:
+    id: int
     expires: datetime
+    challenger: Member
+    opponent: Member
     in_progress: bool = False
-    challenger_id: int
-    opponent_id: int
+    complete: bool = False
 
 
 class OneHeadChallenge(Cog):
     
+    MAX_RATING_DIFFERENCE: int = 2000
+    MAX_CHALLENGES_ISSUED: int = 1
+    MAX_CHALLENGED_RECEIVED: int = 1
+    EXPIRATION: timedelta = timedelta(hours=24)
+    
+    counter = itertools.count()
+    
     def __init__(self, database: OneHeadDatabase) -> None:
         self.database: OneHeadDatabase = database
-        self.challenges: dict[int, Challenge]
+        self.challenges: list[Challenge]
 
-    
     @has_role(Roles.MEMBER)
     @command()
-    async def challenge(self, ctx: Context, opponent: str) -> None:
-        
+    async def challenge(self, ctx: Context, opponent_name: str) -> None:
         challenger: Member = ctx.author
-        challengee: Member
+        opponent: Member
         
-        if is_mention(opponent):
-            challengee = opponent
+        if is_mention(opponent_name):
+            opponent_id: int | None = get_discord_id_from_mention(opponent_name)
+            if opponent_id:
+                opponent = get_discord_member_from_id(opponent_id)
         else:
-            challengee = get_discord_member_from_name(opponent)
+            opponent = get_discord_member_from_name(opponent_name)
         
-        # TODO: Check if challenger already has an active challenge. Limit them to only making 1 challenge at a time.
+        for challenge in self.challenges:
+            if challenge.challenger.id == challenger.id:
+                opponent = get_discord_member_from_id(challenge.opponent.id)
+                ctx.send(f"{challenger.mention} has already issued a challenge to {opponent.mention}!")
+                return
+            elif challenge.opponent.id == opponent.id:
+                other_challenger: Member = get_discord_member_from_id(challenge.challenger.id)
+                ctx.send(f"{opponent.mention} has already been challenged by {other_challenger.mention}!")
+                return
+        
+        challenger_record: Player | None = self.database.get(challenger.id)
+        opponent_record: Player | None = self.database.get(opponent.id)
+        
+        if challenger_record is None or opponent_record is None:
+            raise
+        
         # TODO: Compare IHL ratings and/or MMR to see if it's a suitable challenge.
-        # TODO: Limit the number of challenges that any one person can receive to 3. active_challenges field in db profile?
+        if abs(challenger_record["mmr"] - opponent_record["mmr"]) > self.MAX_RATING_DIFFERENCE:
+            ctx.send(f"{challenger.mention}, pick on someone your own size punk!")
+            return
+        
         # TODO: Persist challenges to database.
-        # TODO: Calculate RBUCKS reward based on some base rate and then scaled based on difference in rating/MMR.
         
         await play_sound("gong.mp3")
-        ctx.send(f"{challenger.mention} has challenged {challengee.mention} to a 1v1 Shadowfiend mid!")
-        ctx.send(f"{challengee.mention} has 24 hours to accept this challenge, if they wish to accept, type `!accept {challenger.mention}`")
-        # TODO: Start new task to handle expiration.
-    
-    
+        challenge: Challenge = Challenge(next(self.counter), datetime.now() + self.EXPIRATION, challenger_id=challenger.id, opponent_id=opponent.id)
+        self.challenges.append(challenge)
+        
+        ctx.send(f"{challenger.mention} has challenged {opponent.mention} to a 1v1 Shadowfiend mid!")
+        ctx.send(f"{opponent.mention} has {self.EXPIRATION.seconds / 3600} hours to accept this challenge, if they wish to accept, type `!accept {challenger.mention}`")
+        
+        create_task(self.handle_expired_challenge(ctx, challenge))
+                
     @has_role(Roles.MEMBER)
     @command(aliases=["challenges"])
     async def list_active_challenges(self, ctx: Context) -> None:
-        pass
+        challenges: list[dict[str, Any]] = []
+        for challenge in self.challenges:
+            sorted_challenge: dict[str, Any] = {
+                "challenger": challenge.challenger.display_name,
+                "opponent": challenge.opponent.display_name,
+                "in_progress": challenge.in_progress,
+                "expires": challenge.expires.strftime("%d/%m/%Y, %H:%M:%S")
+                }
+            challenges.append(sorted_challenge)
+         
+        sorted: str = tabulate(challenges, headers="keys", tablefmt="simple")
+        await ctx.send(f"**Challenges** ```\n{sorted}```")
         
-    
     @has_role(Roles.MEMBER)
     @command(aliases=["accept"])
-    async def accept_challenge(self, ctx: Context, opponent: str) -> None:
-        pass
-    
+    async def accept_challenge(self, ctx: Context, name: str) -> None:
+        challenge: Challenge | None = self.find_issued_challenge(ctx, name)
+        
+        if challenge:
+            self.start_challenge(ctx, challenge)
+        else:
+            ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
+
     @has_role(Roles.MEMBER)
     @command(aliases=["reject"])
-    async def reject_challenge(self, ctx: Context, opponent: str) -> None:
+    async def reject_challenge(self, ctx: Context, name: str) -> None:
+        challenge: Challenge | None = self.find_issued_challenge(ctx, name)
+        
+        if challenge:
+            ctx.send(f"{challenge.opponent.mention} has rejected the challenge issued by {challenge.challenger.mention}.")
+            play_sound("pussy.mp3")
+            self.challenges.remove(challenge)
+        else:
+            ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
+    
+    @has_role(Roles.MEMBER)
+    @command(aliases=["challenge_result"])
+    async def enter_challenge_result(self, ctx: Context, opponent: str) -> None:
+        pass
+    
+    async def find_issued_challenge(self, ctx: Context, name: str) -> Challenge | None:
+        challenged: Member = ctx.author
+        challenger: Member
+
+        if is_mention(name):
+            challenger_id: int | None = get_discord_id_from_mention(name)
+            challenger = get_discord_member_from_id(challenger_id)
+        else:
+            challenger = get_discord_member_from_name(challenger)
+
+        for challenge in self.challenges:
+            if challenge.opponent.id == challenged.id and challenge.challenger.id == challenger_id:
+                return challenge
+        
+        return None        
+    
+    async def start_challenge(self, ctx: Context, challenge: Challenge) -> None:
+        # TODO: Calculate RBUCKS reward based on some base rate and then scaled based on difference in rating/MMR.
+        odds: float = self.calculate_odds(challenger, opponent)
+
+    async def handle_expired_challenge(self, ctx: Context, challenge: Challenge):
+        to_wait: timedelta = challenge.expires - datetime.now()
+        sleep(to_wait.total_seconds())
+        
+        if challenge.complete is False:
+            ctx.send(f"{challenge.opponent.mention} has failed to accept {challenge.challenger.mention}'s request to duel.")
+
+        try:
+            self.challenges.remove(challenge)
+        except ValueError:
+            pass
+    
+    def calculate_odds(self, challenger: Member, opponent: Member) -> float:
         pass
