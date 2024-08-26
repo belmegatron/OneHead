@@ -41,6 +41,7 @@ from onehead.protocols.database import OneHeadDatabase, Operation
 from onehead.registration import Registration
 from onehead.scoreboard import ScoreBoard
 from onehead.transfers import Transfers
+from onehead.challenge import ChallengeMode
 from version import __changelog__, __version__
 
 
@@ -71,6 +72,7 @@ async def bot_factory() -> Bot:
     betting: Betting = Betting(database, lobby)
     behaviour: Behaviour = Behaviour(database)
     transfers: Transfers = Transfers(database, lobby)
+    challenge_mode: ChallengeMode = ChallengeMode(database) 
 
     await bot.add_cog(database)
     await bot.add_cog(lobby)
@@ -82,6 +84,7 @@ async def bot_factory() -> Bot:
     await bot.add_cog(betting)
     await bot.add_cog(behaviour)
     await bot.add_cog(transfers)
+    await bot.add_cog(challenge_mode)
 
     # Add cogs first, then instantiate Core as we reference them as instance variables
     token: str = config["discord"]["token"]
@@ -117,6 +120,8 @@ class Core(Cog):
         self.registration: Registration = bot.get_cog("Registration")  # type: ignore[assignment]
         self.betting: Betting = bot.get_cog("Betting")  # type: ignore[assignment]
         self.transfers: Transfers = bot.get_cog("Transfers")  # type: ignore[assignment]
+        self.challenge_mode: ChallengeMode = bot.get_cog("ChallengeMode") # type: ignore[assignment]
+
 
         if None in (
             self.database,
@@ -128,6 +133,7 @@ class Core(Cog):
             self.betting,
             self.transfers,
             self.behaviour,
+            self.challenge_mode
         ):
             raise OneHeadException("Unable to find cog(s)")
 

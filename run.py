@@ -25,4 +25,4 @@ def global_exception_handler(_: asyncio.AbstractEventLoop, context: dict) -> Non
         print_exception(ex)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main(), debug=True)
