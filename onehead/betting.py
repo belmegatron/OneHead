@@ -65,11 +65,7 @@ class Betting(Cog):
 
         table_of_bets: str = tabulate(bets, headers="keys", tablefmt="simple")
 
-        # TODO: Can we make Radiant bets green and Dire bets red?
-        embed: Embed = Embed(colour=colour.Colour.green())
-        embed.add_field(name="Active Bets", value=f"```{table_of_bets}```")
-
-        await ctx.send(embed=embed)
+        await ctx.send(f"**Bets** ```\n{table_of_bets}```")
 
     @has_role(Roles.MEMBER)
     @command(aliases=["bet"])
@@ -163,10 +159,7 @@ class Betting(Cog):
 
         bucks_board: str = tabulate(subset, headers="keys", tablefmt="simple")
 
-        embed: Embed = Embed(title="**RBUCKS**", colour=colour.Colour.green())
-        embed.add_field(name="Leaderboard", value=f"```{bucks_board}```")
-
-        await ctx.send(embed=embed)
+        await ctx.send(f"**RBUCKS** ```\n{bucks_board}```")
 
     @staticmethod
     def create_bet_report(bet_results: dict[str, list[float]]) -> Embed:

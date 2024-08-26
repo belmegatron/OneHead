@@ -90,6 +90,7 @@ class Bet:
     side: str
     stake: int
     player: str
+    price: float = 2.0
 
 
 class OneHeadException(BaseException):

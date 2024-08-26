@@ -95,3 +95,10 @@ class Game:
             self._commends[commendee] = [commender]
         else:
             updated_commends.append(commender)
+
+
+class ClassicGame(Game):
+    pass
+
+class Duel(Game):
+    pass
