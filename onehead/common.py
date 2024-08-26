@@ -34,9 +34,7 @@ Player = TypedDict(
         "%": float,
         "commends": int,
         "reports": int,
-        "behaviour": int,
-        "challenges_sent": int,
-        "challenges_received": int
+        "behaviour": int
     },
 )
 

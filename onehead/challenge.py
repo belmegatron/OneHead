@@ -52,6 +52,9 @@ class ChallengeMode(Cog):
     @has_role(Roles.MEMBER)
     @command()
     async def challenge(self, ctx: Context, opponent_name: str) -> None:
+        """
+        Challenge an opponent to a 1v1 mid duel e.g. `!challenge ERIC`        
+        """
         challenger: Member = ctx.author
         opponent: Member
 
@@ -106,8 +109,12 @@ class ChallengeMode(Cog):
         create_task(self.handle_expired_challenge(ctx, challenge))
 
     @has_role(Roles.MEMBER)
-    @command(aliases=["challenges"])
-    async def list_active_challenges(self, ctx: Context) -> None:
+    @command()
+    async def challenges(self, ctx: Context) -> None:
+        """
+        Lists all active challenges.
+        """
+        
         challenges: list[dict[str, Any]] = []
         for challenge in self.challenges:
             sorted_challenge: dict[str, Any] = {
@@ -125,8 +132,11 @@ class ChallengeMode(Cog):
             await ctx.send(f"**Challenges** ```\n{sorted}```")
 
     @has_role(Roles.MEMBER)
-    @command(aliases=["accept"])
-    async def accept_challenge(self, ctx: Context, name: str) -> None:
+    @command()
+    async def accept(self, ctx: Context, name: str) -> None:
+        """
+        Accept a duel issued by a challenger e.g. `!accept BOBBY`
+        """
         challenge: Challenge | None = self.find_issued_challenge(ctx, name)
 
         if challenge:
@@ -135,8 +145,11 @@ class ChallengeMode(Cog):
             await ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
 
     @has_role(Roles.MEMBER)
-    @command(aliases=["reject"])
-    async def reject_challenge(self, ctx: Context, name: str) -> None:
+    @command()
+    async def reject(self, ctx: Context, name: str) -> None:
+        """
+        Reject a duel issued by a challenger e.g. `!reject BOBBY`
+        """
         challenge: Challenge | None = self.find_issued_challenge(ctx, name)
 
         if challenge:
@@ -148,9 +161,8 @@ class ChallengeMode(Cog):
         else:
             await ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
 
-    @has_role(Roles.MEMBER)
-    @command(aliases=["challenge_result"])
-    async def enter_challenge_result(self, ctx: Context, opponent: str) -> None:
+    async def result(self, ctx: Context, opponent: str) -> None:
+        # TODO: Allow the user to use the !result command to also enter results for duels.
         pass
 
     def find_issued_challenge(self, ctx: Context, name: str) -> Challenge | None:
@@ -170,18 +182,23 @@ class ChallengeMode(Cog):
         return None
 
     async def start_challenge(self, ctx: Context, challenge: Challenge) -> None:
-        # TODO: Calculate RBUCKS reward based on some base rate and then scaled based on difference in rating/MMR.
-        # odds: float = self.calculate_odds(challenger, opponent)
         await play_sound(ctx, "gong.mp3")
-        pass
-
+        
+        challenger_odds: float
+        opponent_odds: float
+        
+        challenger_odds, opponent_odds = self.calculate_odds(challenge)
+        await ctx.send(f"{challenge.challenger.mention} price: {challenger_odds}, {challenge.opponent.mention} price: {opponent_odds}")
+        
     async def handle_expired_challenge(self, ctx: Context, challenge: Challenge):
         to_wait: timedelta = challenge.expires - datetime.now(UTC)
+
+        # TODO: Maybe break this up and add reminder messages.
         await sleep(to_wait.total_seconds())
 
         if challenge.complete is False:
             await ctx.send(
-                f"{challenge.opponent.mention} has failed to accept {challenge.challenger.mention}'s request to duel."
+                f"{challenge.opponent.mention} has failed to accept {challenge.challenger.mention}'s request to duel due to it expiring."
             )
 
         try:
@@ -189,5 +206,39 @@ class ChallengeMode(Cog):
         except ValueError:
             pass
 
-    def calculate_odds(self, challenger: Member, opponent: Member) -> float:
-        pass
+    @staticmethod
+    def convert_decimal_odds_to_percentage_odds(decimal_odds: float) -> float:
+        return (1.0 / decimal_odds) * 100
+    
+    @staticmethod
+    def convert_percentage_odds_to_decimal(percentage_odds: float) -> float:
+        return 1.0 / (percentage_odds / 100.0)
+
+    def calculate_odds(self, challenge: Challenge) -> tuple[float, float]:
+        challenger: Player | None = self.database.get(challenge.challenger.id)
+        opponent: Player | None = self.database.get(challenge.opponent.id)
+        
+        if challenger is None or opponent is None:
+            raise
+        
+        mmr_difference: int = challenger["adjusted_mmr"] - opponent["adjusted_mmr"]
+        
+        challenger_decimal_odds: float = 2.0
+        opponent_decimal_odds: float = 2.0
+        scaled_difference: float = abs(float(mmr_difference / self.MAX_RATING_DIFFERENCE))
+        
+        # Challenger is favoured
+        if mmr_difference > 0:
+            challenger_decimal_odds -= scaled_difference
+            challenger_percentage_odds = self.convert_decimal_odds_to_percentage_odds(challenger_decimal_odds)
+            opponent_percentage_odds = 100 - challenger_percentage_odds
+            opponent_decimal_odds: float = self.convert_percentage_odds_to_decimal(opponent_percentage_odds)
+            
+        # Opponent is favoured.
+        elif mmr_difference < 0:
+            opponent_decimal_odds -= scaled_difference
+            opponent_percentage_odds = self.convert_decimal_odds_to_percentage_odds(opponent_decimal_odds)
+            challenger_percentage_odds = 100 - opponent_percentage_odds
+            challenger_decimal_odds: float = self.convert_percentage_odds_to_decimal(challenger_percentage_odds)
+            
+        return round(challenger_decimal_odds, 2), round(opponent_decimal_odds, 2)
