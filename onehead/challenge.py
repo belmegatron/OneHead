@@ -36,6 +36,7 @@ class Challenge:
     opponent: Member
     in_progress: bool = False
     complete: bool = False
+    # TODO: We need to store the bet prices in here too as they will be accessed by the Betting cog.
 
 
 class ChallengeMode(Cog):
