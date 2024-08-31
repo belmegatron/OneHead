@@ -110,6 +110,7 @@ class ChallengeMode(Cog):
 
         create_task(self.handle_expired_challenge(ctx, challenge))
     
+    # TODO: Remove this.
     @has_role(Roles.ADMIN)
     @command()
     async def sim_challenge(self, ctx: Context) -> None:
