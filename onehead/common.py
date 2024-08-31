@@ -87,9 +87,9 @@ class PlayerTransfer:
 
 @dataclass
 class Bet:
-    side: str
+    bettor: str
+    selection: Side | Member
     stake: int
-    player: str
     price: float = 2.0
 
 

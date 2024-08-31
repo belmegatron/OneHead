@@ -1,4 +1,4 @@
-from asyncio import create_task, sleep
+from asyncio import create_task, sleep, wait_for
 from datetime import datetime, timedelta, UTC
 from dataclasses import dataclass
 import itertools
@@ -7,6 +7,7 @@ from structlog import get_logger
 from typing import Any
 
 from discord.member import Member
+from discord.user import User
 from discord.ext.commands import Cog, Context, command, has_role
 from pytz import timezone
 from tabulate import tabulate
@@ -21,6 +22,7 @@ from onehead.common import (
     get_discord_id_from_mention,
 )
 from onehead.protocols.database import OneHeadDatabase
+from onehead.betting import Betting
 
 
 log: Logger = get_logger()
@@ -45,9 +47,11 @@ class ChallengeMode(Cog):
 
     counter = itertools.count()
 
-    def __init__(self, database: OneHeadDatabase) -> None:
+    def __init__(self, database: OneHeadDatabase, betting: Betting) -> None:
         self.database: OneHeadDatabase = database
+        self.betting: Betting = betting
         self.challenges: list[Challenge] = []
+        self._active: bool = False
 
     @has_role(Roles.MEMBER)
     @command()
@@ -55,8 +59,8 @@ class ChallengeMode(Cog):
         """
         Challenge an opponent to a 1v1 mid duel e.g. `!challenge ERIC`        
         """
-        challenger: Member = ctx.author
-        opponent: Member
+        challenger: Member | User = ctx.author
+        opponent: Member | None = None
 
         if is_mention(opponent_name):
             opponent_id: int | None = get_discord_id_from_mention(opponent_name)
@@ -75,7 +79,7 @@ class ChallengeMode(Cog):
                 await ctx.send(f"{challenger.mention} has already issued a challenge to {opponent.mention}!")
                 return
             elif challenge.opponent.id == opponent.id:
-                other_challenger: Member = get_discord_member_from_id(ctx, challenge.challenger.id)
+                other_challenger: Member | None = get_discord_member_from_id(ctx, challenge.challenger.id)
                 await ctx.send(f"{opponent.mention} has already been challenged by {other_challenger.mention}!")
                 return
 
@@ -85,7 +89,6 @@ class ChallengeMode(Cog):
         if challenger_record is None or opponent_record is None:
             raise
 
-        # TODO: Compare IHL ratings and/or MMR to see if it's a suitable challenge.
         if challenger_record["mmr"] - opponent_record["mmr"] > self.MAX_RATING_DIFFERENCE:
             await play_sound(ctx, "bully.mp3")
             await ctx.send(
@@ -94,7 +97,6 @@ class ChallengeMode(Cog):
             return
 
         # TODO: Persist challenges to database.
-
         await play_sound(ctx, "challenger.mp3")
         challenge: Challenge = Challenge(
             next(self.counter), datetime.now(UTC) + self.EXPIRATION, challenger=challenger, opponent=opponent
@@ -107,10 +109,18 @@ class ChallengeMode(Cog):
         )
 
         create_task(self.handle_expired_challenge(ctx, challenge))
+    
+    @has_role(Roles.ADMIN)
+    @command()
+    async def sim_challenge(self, ctx: Context) -> None:
+        challenge: Challenge = Challenge(
+            next(self.counter), datetime.now(UTC) + self.EXPIRATION, challenger=get_discord_member_from_name(ctx, "GEE"), opponent=get_discord_member_from_name(ctx, "RBEEZAY")
+        )
+        self.challenges.append(challenge)
 
     @has_role(Roles.MEMBER)
-    @command()
-    async def challenges(self, ctx: Context) -> None:
+    @command(aliases=["challenges"])
+    async def list_challenges(self, ctx: Context) -> None:
         """
         Lists all active challenges.
         """
@@ -140,7 +150,11 @@ class ChallengeMode(Cog):
         challenge: Challenge | None = self.find_issued_challenge(ctx, name)
 
         if challenge:
-            self.start_challenge(ctx, challenge)
+            if challenge.in_progress is False:
+                await self.start_challenge(ctx, challenge)
+                challenge.in_progress = True
+            else:
+                await ctx.send(f"{challenge.opponent} has already accepted their duel vs. {challenge.challenger}!")
         else:
             await ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
 
@@ -165,18 +179,18 @@ class ChallengeMode(Cog):
         # TODO: Allow the user to use the !result command to also enter results for duels.
         pass
 
-    def find_issued_challenge(self, ctx: Context, name: str) -> Challenge | None:
-        challenged: Member = ctx.author
-        challenger: Member
+    def find_issued_challenge(self, ctx: Context, challenger_name: str) -> Challenge | None:
+        challenged: Member | User = ctx.author
+        challenger: Member | None = None
 
-        if is_mention(name):
-            challenger_id: int | None = get_discord_id_from_mention(name)
+        if is_mention(challenger_name):
+            challenger_id: int | None = get_discord_id_from_mention(challenger_name)
             challenger = get_discord_member_from_id(ctx, challenger_id)
         else:
-            challenger = get_discord_member_from_name(ctx, challenger)
+            challenger = get_discord_member_from_name(ctx, challenger_name)
 
         for challenge in self.challenges:
-            if challenge.opponent.id == challenged.id and challenge.challenger.id == challenger_id:
+            if challenge.opponent.id == challenged.id and challenge.challenger.id == challenger.id:
                 return challenge
 
         return None
@@ -187,10 +201,15 @@ class ChallengeMode(Cog):
         challenger_odds: float
         opponent_odds: float
         
-        challenger_odds, opponent_odds = self.calculate_odds(challenge)
+        challenger_odds, opponent_odds = self.betting.calculate_challenge_odds(challenge)
         await ctx.send(f"{challenge.challenger.mention} price: {challenger_odds}, {challenge.opponent.mention} price: {opponent_odds}")
+        # TODO: Open betting window.
+        # TODO: Close betting window.
         
-    async def handle_expired_challenge(self, ctx: Context, challenge: Challenge):
+        await play_sound(ctx, "fight.mp3")
+        
+        
+    async def handle_expired_challenge(self, ctx: Context, challenge: Challenge) -> None:
         to_wait: timedelta = challenge.expires - datetime.now(UTC)
 
         # TODO: Maybe break this up and add reminder messages.
@@ -205,40 +224,3 @@ class ChallengeMode(Cog):
             self.challenges.remove(challenge)
         except ValueError:
             pass
-
-    @staticmethod
-    def convert_decimal_odds_to_percentage_odds(decimal_odds: float) -> float:
-        return (1.0 / decimal_odds) * 100
-    
-    @staticmethod
-    def convert_percentage_odds_to_decimal(percentage_odds: float) -> float:
-        return 1.0 / (percentage_odds / 100.0)
-
-    def calculate_odds(self, challenge: Challenge) -> tuple[float, float]:
-        challenger: Player | None = self.database.get(challenge.challenger.id)
-        opponent: Player | None = self.database.get(challenge.opponent.id)
-        
-        if challenger is None or opponent is None:
-            raise
-        
-        mmr_difference: int = challenger["adjusted_mmr"] - opponent["adjusted_mmr"]
-        
-        challenger_decimal_odds: float = 2.0
-        opponent_decimal_odds: float = 2.0
-        scaled_difference: float = abs(float(mmr_difference / self.MAX_RATING_DIFFERENCE))
-        
-        # Challenger is favoured
-        if mmr_difference > 0:
-            challenger_decimal_odds -= scaled_difference
-            challenger_percentage_odds = self.convert_decimal_odds_to_percentage_odds(challenger_decimal_odds)
-            opponent_percentage_odds = 100 - challenger_percentage_odds
-            opponent_decimal_odds: float = self.convert_percentage_odds_to_decimal(opponent_percentage_odds)
-            
-        # Opponent is favoured.
-        elif mmr_difference < 0:
-            opponent_decimal_odds -= scaled_difference
-            opponent_percentage_odds = self.convert_decimal_odds_to_percentage_odds(opponent_decimal_odds)
-            challenger_percentage_odds = 100 - opponent_percentage_odds
-            challenger_decimal_odds: float = self.convert_percentage_odds_to_decimal(challenger_percentage_odds)
-            
-        return round(challenger_decimal_odds, 2), round(opponent_decimal_odds, 2)

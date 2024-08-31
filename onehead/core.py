@@ -72,7 +72,7 @@ async def bot_factory() -> Bot:
     betting: Betting = Betting(database, lobby)
     behaviour: Behaviour = Behaviour(database)
     transfers: Transfers = Transfers(database, lobby)
-    challenge_mode: ChallengeMode = ChallengeMode(database) 
+    challenge_mode: ChallengeMode = ChallengeMode(database, betting) 
 
     await bot.add_cog(database)
     await bot.add_cog(lobby)
@@ -121,7 +121,6 @@ class Core(Cog):
         self.betting: Betting = bot.get_cog("Betting")  # type: ignore[assignment]
         self.transfers: Transfers = bot.get_cog("Transfers")  # type: ignore[assignment]
         self.challenge_mode: ChallengeMode = bot.get_cog("ChallengeMode") # type: ignore[assignment]
-
 
         if None in (
             self.database,
