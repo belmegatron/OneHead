@@ -291,13 +291,14 @@ class Lobby(Cog):
 
             for name in to_remove:
                 self.remove_player_from_signups(name)
-                member: Member = get_discord_member_from_name(ctx, name)
+                member: Member | None = get_discord_member_from_name(ctx, name)
                 log.debug(
                     f"{name} was removed from the signup pool by {ctx.bot.user.name} due to being inactive for over {max_signup_period}."
                 )
-                await ctx.send(
-                    f"{member.mention} has been removed from the signup pool by {ctx.bot.user.mention} due to being inactive for over `{max_signup_period}`."
-                )
+                if member:
+                    await ctx.send(
+                        f"{member.mention} has been removed from the signup pool by {ctx.bot.user.mention} due to being inactive for over `{max_signup_period}`."
+                    )
 
             await sleep(3600)
 
@@ -334,7 +335,6 @@ def get_supported_bot_commands(bot: Bot) -> list[str]:
     return commands + command_aliases    
 
 async def allow_message(message: Message, bot: Bot) -> bool:
-
     split_message: list[str] = message.content.split()
     user_command: str = split_message[0]
 

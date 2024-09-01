@@ -1,6 +1,7 @@
 from asyncio import create_task
 from logging import Logger
 from datetime import datetime, UTC
+from typing import cast
 
 from discord.member import Member
 from discord import Embed, Intents
@@ -30,10 +31,13 @@ from onehead.common import (
     get_discord_member_from_name,
     Metadata,
     play_sound,
-    voice_client_disconnect
+    voice_client_disconnect,
+    is_mention,
+    get_discord_id_from_mention,
+    get_discord_member_from_id
 )
 from onehead.database import Database
-from onehead.game import Game
+from onehead.game import Game, ClassicGame, Challenge
 from onehead.lobby import Lobby, on_presence_update, on_message
 from onehead.matchmaking import Matchmaking
 from onehead.mental_health import MentalHealth
@@ -72,7 +76,7 @@ async def bot_factory() -> Bot:
     betting: Betting = Betting(database, lobby)
     behaviour: Behaviour = Behaviour(database)
     transfers: Transfers = Transfers(database, lobby)
-    challenge_mode: ChallengeMode = ChallengeMode(database, betting) 
+    challenge_mode: ChallengeMode = ChallengeMode(database) 
 
     await bot.add_cog(database)
     await bot.add_cog(lobby)
@@ -104,7 +108,7 @@ async def bot_factory() -> Bot:
 
 class Core(Cog):
     def __init__(self, bot: Bot, token: str) -> None:
-        self.current_game: Game = Game()
+        self.current_game: Game | None = None
         self.previous_game: Game | None = None
 
         self.bot: Bot = bot
@@ -142,7 +146,7 @@ class Core(Cog):
         else:
             self.previous_game = self.current_game
 
-        self.current_game = Game()
+        self.current_game = None
         self.lobby.clear_signups()
         create_task(voice_client_disconnect(ctx))
 
@@ -151,35 +155,44 @@ class Core(Cog):
         await Command.invoke(status, ctx)
 
     async def setup_team_channels(self, ctx: Context) -> None:
-        await self.channels.create_discord_channels(ctx)
+        if self.current_game is None:
+            return
+        
+        if isinstance(self.current_game, ClassicGame):
+            self.current_game = cast(ClassicGame, self.current_game)
+        
+            await self.channels.create_discord_channels(ctx)
 
-        if self.current_game.radiant is None or self.current_game.dire is None:
-            raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
+            if self.current_game.radiant is None or self.current_game.dire is None:
+                raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
 
-        await self.channels.move_discord_channels(ctx)
-
+            await self.channels.move_discord_channels(ctx)
+        
     @has_role(Roles.ADMIN)
     @command()
     @max_concurrency(1, per=BucketType.default, wait=False)
-    async def start(self, ctx: Context) -> None:
+    async def start(self, ctx: Context, duel_id: str = "") -> None:
         """
         Starts an IHL game.
         """
-
-        if self.current_game.in_progress():
+        if self.current_game and self.current_game.in_progress():
             await ctx.send("Game already in progress...")
             return
+        
+        if duel_id:
+            
 
         signup_threshold_met: bool = await self.lobby.signup_check(ctx)
         if signup_threshold_met is False:
             return
-
+        
         await play_sound(ctx, "start.mp3")
         metadata: Metadata = self.database.get_metadata()
-        await ctx.send(f"Starting game: `Season {metadata['season']}`, Game `{metadata['game_id']}`.")
+        await ctx.send(f"Starting game: `Season {metadata.get('season')}`, Game `{metadata.get('game_id')}`.")
 
         await self.lobby.select_players(ctx)
 
+        self.current_game = ClassicGame()
         self.current_game.start()
         self.lobby.disable_signups()
 
@@ -215,7 +228,7 @@ class Core(Cog):
         Cancels an IHL game.
         """
 
-        if self.current_game.in_progress():
+        if self.current_game and self.current_game.in_progress():
             self.current_game.cancel()
             log.info(f"Game was cancelled by {ctx.author.display_name}.")
             await ctx.send("Game cancelled.")
@@ -225,28 +238,13 @@ class Core(Cog):
             await self.reset(ctx, game_cancelled=True)
         else:
             await ctx.send("No currently active game.")
-
-    @has_role(Roles.ADMIN)
-    @command()
-    @max_concurrency(1, per=BucketType.default, wait=False)
-    async def result(self, ctx: Context, result: str) -> None:
-        """
-        Provide the result of game that has finished.
-        """
-
-        if self.current_game.in_progress() is False:
-            await ctx.send("No currently active game.")
-            return
-
+            
+    async def handle_classic_game_result(self, ctx: Context, result: str) -> None:
+        self.current_game = cast(ClassicGame, self.current_game)
+    
         if self.current_game.transfer_window_open():
             await ctx.send(
                 "Cannot enter result as the transfer window for the game is currently open. Use the `!stop` command if you wish to abort the game."
-            )
-            return
-
-        if self.current_game.betting_window_open():
-            await ctx.send(
-                "Cannot enter result as the betting window for the game is currently open. Use the `!stop` command if you wish to abort the game."
             )
             return
 
@@ -306,8 +304,59 @@ class Core(Cog):
         await ctx.send("Updating scores...")
         scoreboard: Command = self.bot.get_command("scoreboard")  # type: ignore[assignment]
         await Command.invoke(scoreboard, ctx)
+        
+        metadata["game_id"] += 1
+        self.database.update_metadata(metadata)
 
-        bet_results: dict = self.betting.get_bet_results(result == Side.RADIANT)
+        if self.is_end_of_season():
+            await ctx.send(f"Season `{metadata['season']}` has ended!")
+            metadata["season"] += 1
+            metadata["game_id"] = 1
+            self.database.update_metadata(metadata)
+            # TODO: Make a big song and dance about the end of an IHL season, present winners, go crazy.
+
+
+    @has_role(Roles.ADMIN)
+    @command()
+    @max_concurrency(1, per=BucketType.default, wait=False)
+    async def result(self, ctx: Context, result: str) -> None:
+        """
+        Provide the result of game that has finished.
+        """
+        
+        if self.current_game is None:
+            return
+
+        if self.current_game.in_progress() is False:
+            await ctx.send("No currently active game.")
+            return
+
+        if self.current_game.betting_window_open():
+            await ctx.send(
+                "Cannot enter result as the betting window for the game is currently open. Use the `!stop` command if you wish to abort the game."
+            )
+            return
+
+        if isinstance(self.current_game, ClassicGame):
+            await self.handle_classic_game_result(ctx, result)
+            result = cast(Side, result)
+            bet_results: dict = self.betting.get_bet_results(result)
+        else:
+            self.current_game = cast(Challenge, self.current_game)
+            await ctx.send("")
+            
+            winner: Member | None = None
+            if is_mention(result):
+                id: int = get_discord_id_from_mention(result)
+                winner = get_discord_member_from_id(ctx, id)
+            else:
+                winner = get_discord_member_from_name(ctx, result)
+                
+            if winner not in (self.current_game.challenger, self.current_game.opponent):
+                await ctx.send(f"Must specify either {self.current_game.challenger.mention} or {self.current_game.opponent.mention} as the winner when entering a result.")
+                return
+            
+            bet_results: dict = self.betting.get_bet_results(winner)
 
         for name, bets in bet_results.items():
             for bet_result in bets:
@@ -321,41 +370,38 @@ class Core(Cog):
 
         await self.reset(ctx)
 
-        metadata["game_id"] += 1
-        self.database.update_metadata(metadata)
-
-        if self.is_end_of_season():
-            await ctx.send(f"Season `{metadata['season']}` has ended!")
-            metadata["season"] += 1
-            metadata["game_id"] = 1
-            self.database.update_metadata(metadata)
-            # TODO: Make a big song and dance about the end of an IHL season, present winners, go crazy.
-
     @has_role(Roles.MEMBER)
     @command()
     async def status(self, ctx: Context) -> None:
         """
         If a game is active, displays the teams and their respective players.
         """
-
-        if self.current_game.in_progress() and self.current_game.radiant and self.current_game.dire:
-            t1_names: tuple[str, ...]
-            t2_names: tuple[str, ...]
-            t1_names, t2_names = get_player_names(self.current_game.radiant, self.current_game.dire)
-
-            players: dict[Side, tuple[str, ...]] = {
-                Side.RADIANT: t1_names,
-                Side.DIRE: t2_names,
-            }
-            in_game_players: str = tabulate(players, headers="keys", tablefmt="simple")
-            metadata: Metadata = self.database.get_metadata()
-
-            await ctx.send(
-                f"**Current Game** - Season `{metadata['season']}`, Game `{metadata['game_id']}` ```\n"
-                f"{in_game_players}```"
-            )
-        else:
+        
+        if self.current_game is None:
             await ctx.send("No currently active game.")
+            return
+
+        if self.current_game.in_progress():
+            if isinstance(self.current_game, ClassicGame):
+                if self.current_game.radiant and self.current_game.dire:
+                    t1_names: tuple[str, ...]
+                    t2_names: tuple[str, ...]
+                    t1_names, t2_names = get_player_names(self.current_game.radiant, self.current_game.dire)
+
+                    players: dict[Side, tuple[str, ...]] = {
+                        Side.RADIANT: t1_names,
+                        Side.DIRE: t2_names,
+                    }
+                    in_game_players: str = tabulate(players, headers="keys", tablefmt="simple")
+                    metadata: Metadata = self.database.get_metadata()
+
+                    await ctx.send(
+                        f"**Current Game** - Season `{metadata['season']}`, Game `{metadata['game_id']}` ```\n"
+                        f"{in_game_players}```"
+                    )
+            elif isinstance(self.current_game, Challenge):
+                await ctx.send(f"**Current Duel** - {self.current_game.challenger.mention} vs. {self.current_game.opponent.mention}")
+                
 
     @has_role(Roles.MEMBER)
     @command()

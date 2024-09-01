@@ -1,6 +1,5 @@
-from asyncio import create_task, sleep, wait_for
+from asyncio import create_task, sleep
 from datetime import datetime, timedelta, UTC
-from dataclasses import dataclass
 import itertools
 from logging import Logger
 from structlog import get_logger
@@ -21,22 +20,11 @@ from onehead.common import (
     get_discord_member_from_id,
     get_discord_id_from_mention,
 )
+from onehead.game import Challenge
 from onehead.protocols.database import OneHeadDatabase
-from onehead.betting import Betting
 
 
 log: Logger = get_logger()
-
-
-@dataclass
-class Challenge:
-    id: int
-    expires: datetime
-    challenger: Member
-    opponent: Member
-    in_progress: bool = False
-    complete: bool = False
-    # TODO: We need to store the bet prices in here too as they will be accessed by the Betting cog.
 
 
 class ChallengeMode(Cog):
@@ -44,13 +32,11 @@ class ChallengeMode(Cog):
     MAX_RATING_DIFFERENCE: int = 2000
     MAX_CHALLENGES_ISSUED: int = 1
     MAX_CHALLENGED_RECEIVED: int = 1
-    EXPIRATION: timedelta = timedelta(hours=24)
 
     counter = itertools.count()
 
-    def __init__(self, database: OneHeadDatabase, betting: Betting) -> None:
+    def __init__(self, database: OneHeadDatabase) -> None:
         self.database: OneHeadDatabase = database
-        self.betting: Betting = betting
         self.challenges: list[Challenge] = []
         self._active: bool = False
 
@@ -61,7 +47,7 @@ class ChallengeMode(Cog):
         Challenge an opponent to a 1v1 mid duel e.g. `!challenge ERIC`        
         """
         challenger: Member | User = ctx.author
-        opponent: Member | None = None
+        opponent: Member | User |  None = None
 
         if is_mention(opponent_name):
             opponent_id: int | None = get_discord_id_from_mention(opponent_name)
@@ -70,6 +56,9 @@ class ChallengeMode(Cog):
         else:
             opponent = get_discord_member_from_name(ctx, opponent_name)
 
+        if opponent is None:
+            return
+        
         if challenger == opponent:
             await ctx.send("You cannot challenge yourself...")
             return
@@ -77,11 +66,13 @@ class ChallengeMode(Cog):
         for challenge in self.challenges:
             if challenge.challenger.id == challenger.id:
                 opponent = get_discord_member_from_id(ctx, challenge.opponent.id)
-                await ctx.send(f"{challenger.mention} has already issued a challenge to {opponent.mention}!")
+                if opponent:
+                    await ctx.send(f"{challenger.mention} has already issued a challenge to {opponent.mention}!")
                 return
             elif challenge.opponent.id == opponent.id:
                 other_challenger: Member | None = get_discord_member_from_id(ctx, challenge.challenger.id)
-                await ctx.send(f"{opponent.mention} has already been challenged by {other_challenger.mention}!")
+                if other_challenger:
+                    await ctx.send(f"{opponent.mention} has already been challenged by {other_challenger.mention}!")
                 return
 
         challenger_record: Player | None = self.database.get(challenger.id)
@@ -99,9 +90,7 @@ class ChallengeMode(Cog):
 
         # TODO: Persist challenges to database.
         await play_sound(ctx, "challenger.mp3")
-        challenge: Challenge = Challenge(
-            next(self.counter), datetime.now(UTC) + self.EXPIRATION, challenger=challenger, opponent=opponent
-        )
+        challenge: Challenge = Challenge(next(self.counter), challenger=challenger, opponent=opponent)
         self.challenges.append(challenge)
 
         await ctx.send(f"{challenger.mention} has challenged {opponent.mention} to a 1v1 mid!")
@@ -111,15 +100,6 @@ class ChallengeMode(Cog):
 
         create_task(self.handle_expired_challenge(ctx, challenge))
     
-    # TODO: Remove this.
-    @has_role(Roles.ADMIN)
-    @command()
-    async def sim_challenge(self, ctx: Context) -> None:
-        challenge: Challenge = Challenge(
-            next(self.counter), datetime.now(UTC) + self.EXPIRATION, challenger=get_discord_member_from_name(ctx, "GEE"), opponent=get_discord_member_from_name(ctx, "RBEEZAY")
-        )
-        self.challenges.append(challenge)
-
     @has_role(Roles.MEMBER)
     @command(aliases=["challenges"])
     async def list_challenges(self, ctx: Context) -> None:
@@ -152,9 +132,8 @@ class ChallengeMode(Cog):
         challenge: Challenge | None = self.find_issued_challenge(ctx, name)
 
         if challenge:
-            if challenge.in_progress is False:
-                await self.start_challenge(ctx, challenge)
-                challenge.in_progress = True
+            if challenge.in_progress() is False:
+                challenge.start()
             else:
                 await ctx.send(f"{challenge.opponent} has already accepted their duel vs. {challenge.challenger}!")
         else:
@@ -195,21 +174,7 @@ class ChallengeMode(Cog):
             if challenge.opponent.id == challenged.id and challenge.challenger.id == challenger.id:
                 return challenge
 
-        return None
-
-    async def start_challenge(self, ctx: Context, challenge: Challenge) -> None:
-        await play_sound(ctx, "gong.mp3")
-        
-        challenger_odds: float
-        opponent_odds: float
-        
-        challenger_odds, opponent_odds = self.betting.calculate_challenge_odds(challenge)
-        await ctx.send(f"{challenge.challenger.mention} price: {challenger_odds}, {challenge.opponent.mention} price: {opponent_odds}")
-        # TODO: Open betting window.
-        # TODO: Close betting window.
-        
-        await play_sound(ctx, "fight.mp3")
-        
+        return None      
         
     async def handle_expired_challenge(self, ctx: Context, challenge: Challenge) -> None:
         to_wait: timedelta = challenge.expires - datetime.now(UTC)

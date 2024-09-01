@@ -9,13 +9,13 @@ from structlog import get_logger
 from tabulate import tabulate
 
 from onehead.common import Bet, Player, Roles, Side, get_bot_instance, get_discord_member_from_name, play_sound
+from onehead.game import Game, Challenge
 from onehead.protocols.database import OneHeadDatabase, Operation
-from onehead.challenge import Challenge, ChallengeMode
+from onehead.challenge import ChallengeMode
 
 
 if TYPE_CHECKING:
     from onehead.core import Core
-    from onehead.game import Game
     from onehead.lobby import Lobby
 
 
@@ -31,21 +31,25 @@ class Betting(Cog):
         self.database: OneHeadDatabase = database
         self.lobby: Lobby = lobby
 
-    def get_bet_results(self, radiant_won: bool) -> dict[str, list[float]]:
+    def get_bet_results(self, winner: Side | Member) -> dict[str, list[float]]:
         bot: Bot = get_bot_instance()
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
-        current_game: Game = core.current_game
+        current_game: Game | None = core.current_game
+        
+        bet_results: dict[str, list[float]] = {}
+        
+        if current_game is None:
+            return bet_results
 
         active_bets: list[Bet] = current_game.get_bets()
-
-        bet_results: dict[str, list[float]] = {}
 
         for bet in active_bets:
             if bet_results.get(bet.bettor) is None:
                 bet_results[bet.bettor] = []
 
-            if (radiant_won and bet.selection == Side.RADIANT) or (radiant_won is False and bet.selection == Side.DIRE):
-                bet_results[bet.bettor].append(bet.stake * bet.price)
+            if (bet.selection == winner):
+                winnings: float = (bet.stake * bet.price) - bet.stake
+                bet_results[bet.bettor].append(winnings)
             else:
                 bet_results[bet.bettor].append(-1 * bet.stake)
 
@@ -59,7 +63,9 @@ class Betting(Cog):
         """
         bot: Bot = get_bot_instance()
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
-        current_game: Game = core.current_game
+        current_game: Game | None = core.current_game
+        if current_game is None:
+            return
 
         active_bets: list[Bet] = current_game.get_bets()
         bets: list[dict[str, Any]] = [asdict(bet) for bet in active_bets]
@@ -79,17 +85,16 @@ class Betting(Cog):
 
         bot: Bot = get_bot_instance()
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
-        current_game: Game = core.current_game
+        current_game: Game | None = core.current_game
+        
+        if current_game is None:
+            await ctx.send("Unable to bet as there is currently no game being played.")
+            return
 
         if current_game.betting_window_open() is False:
             await ctx.send("Betting window closed.")
             return
         
-        # TODO: Determine if match bet/challenge bet.
-        # TODO: Find the challenge the bet relates to.
-        # TODO: Check if betting window is open for that challengew
-        # TODO: Check that the challenger/opponent cannot participate in the bet.
-
         record: Player | None = self.database.get(ctx.author.id)
         if record is None:
             await ctx.send(f"Unable to find {ctx.author.mention} in database.")
@@ -110,7 +115,18 @@ class Betting(Cog):
             )
             return
 
-        # TODO: If it's a challenge bet, we need to grab the prices from somewhere before appending it to bets.
+        if isinstance(current_game, Challenge):
+            if ctx.author in (current_game.challenger, current_game.opponent):
+                await ctx.send(f"{ctx.author.mention} cannot place a bet on this duel as they are participating in it!")
+                return
+            
+            challenger_price, opponent_price = self.calculate_challenge_odds(current_game)
+            selection = cast(Member, bet.selection)
+            if selection == current_game.challenger:
+                bet.price = challenger_price
+            else:
+                bet.price = opponent_price
+        
         bets: list[Bet] = current_game.get_bets()
         bets.append(bet)
         self.database.modify(ctx.author.id, "rbucks", bet.stake, Operation.SUBTRACT)
@@ -121,8 +137,8 @@ class Betting(Cog):
             log.info(f"{ctx.author.display_name} has placed a bet of {bet.stake:.0f} RBUCKS on {bet.selection.title()}.")
             await ctx.send(f"{ctx.author.mention} has placed a bet of `{bet.stake:.0f}` RBUCKS on {bet.selection.title()}.")
         elif isinstance(bet.selection, Member):
-            log.info(f"{ctx.author.display_name} has placed a bet of {bet.stake:.0f} RBUCKS on {bet.selection.display_name}.")
-            await ctx.send(f"{ctx.author.mention} has placed a bet of `{bet.stake:.0f}` RBUCKS on {bet.selection.mention}.")
+            log.info(f"{ctx.author.display_name} has placed a bet of {bet.stake:.0f} RBUCKS on {bet.selection.display_name} at a price of {bet.price}.")
+            await ctx.send(f"{ctx.author.mention} has placed a bet of `{bet.stake:.0f}` RBUCKS on {bet.selection.mention} at a price of {bet.price}.")
             
     @has_role(Roles.MEMBER)
     @command()
@@ -148,11 +164,7 @@ class Betting(Cog):
         for name, deltas in bet_results.items():
             for delta in deltas:
                 won_or_lost: str = "won" if delta >= 0 else "lost"
-
-                # All bets are at an assumed price of 2.0, therefore need to divide by 2 to ignore the stake.
-                corrected_delta: int = int(delta) if delta <= 0 else int(delta / 2)
-
-                line: str = f"{name} {won_or_lost} {abs(corrected_delta)} RBUCKS!"
+                line: str = f"{name} {won_or_lost} {abs(delta)} RBUCKS!"
                 log.info(line)
                 contents += line
                 contents += "\n"
@@ -165,7 +177,10 @@ class Betting(Cog):
     async def refund_all_bets(self, ctx: Context) -> None:
         bot: Bot = get_bot_instance()
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
-        current_game: Game = core.current_game
+        current_game: Game | None = core.current_game
+
+        if current_game is None:
+            return
 
         active_bets: list[Bet] = current_game.get_bets()
 
@@ -184,7 +199,7 @@ class Betting(Cog):
         selection: Side | Member | None = None
         amount: str = ""
 
-        # Is it a match bet?
+        # Is it a classic bet?
         if first in Side:
             selection = cast(Side, first)
             amount = second
@@ -192,7 +207,7 @@ class Betting(Cog):
             selection = cast(Side, second)
             amount = first
         
-        # If it isn't a match bet, is it a challenge bet?
+        # If it isn't a classic bet, is it a challenge bet?
         if not selection:
             member: Member | None = None
             member = get_discord_member_from_name(ctx, first)

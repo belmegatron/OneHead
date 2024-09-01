@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, cast
 
 from discord.member import Member
 from discord.ext.commands import Bot, Cog, Context, command, has_role
@@ -16,7 +16,7 @@ from onehead.common import (
     get_discord_member_from_name,
     play_sound,
 )
-from onehead.game import Game
+from onehead.game import ClassicGame
 from onehead.lobby import Lobby
 from onehead.protocols.database import OneHeadDatabase, Operation
 
@@ -39,7 +39,11 @@ class Transfers(Cog):
     async def refund_transfers(self, ctx: Context) -> None:
         bot: Bot = get_bot_instance()
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
-        current_game: Game = core.current_game
+        
+        if isinstance(core.current_game, ClassicGame) is False:
+            return
+        
+        current_game: ClassicGame = cast(ClassicGame, core.current_game)
 
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
 
@@ -48,7 +52,8 @@ class Transfers(Cog):
 
         for transfer in transfers:
             m: Member | None = get_discord_member_from_name(ctx, transfer.buyer)
-            self.database.modify(m.id, "rbucks", transfer.amount, Operation.ADD)
+            if m:
+                self.database.modify(m.id, "rbucks", transfer.amount, Operation.ADD)
 
         message: str = "All player transactions have been refunded."
         log.info(message)
@@ -63,7 +68,10 @@ class Transfers(Cog):
 
         bot: Bot = get_bot_instance()
         core: Core = bot.get_cog("Core")  # type: ignore[assignment]
-        current_game: Game = core.current_game
+        if isinstance(core.current_game, ClassicGame) is False:
+            return
+        
+        current_game: ClassicGame = cast(ClassicGame, core.current_game)
 
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
 

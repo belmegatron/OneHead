@@ -1,6 +1,9 @@
 import asyncio
+from datetime import datetime, timedelta
 
 from discord.ext.commands import Context
+from discord.member import Member
+from discord.user import User
 
 from onehead.common import Bet, PlayerTransfer, Team
 
@@ -9,15 +12,9 @@ class Game:
     def __init__(self) -> None:
         self._in_progress: bool = False
         self._cancel_event: asyncio.Event = asyncio.Event()
-        self._transfer_window_open: bool = False
+
         self._betting_window_open: bool = False
         self._bets: list[Bet] = []
-        self._player_transfers: list[PlayerTransfer] = []
-        self._commends: dict[str, list[str]] = {}
-        self._reports: dict[str, list[str]] = {}
-
-        self.radiant: Team | None = None
-        self.dire: Team | None = None
 
     def in_progress(self) -> bool:
         return self._in_progress
@@ -28,22 +25,6 @@ class Game:
     def cancel(self) -> None:
         self._cancel_event.set()
         self._in_progress: bool = False
-
-    async def open_transfer_window(self, ctx: Context) -> None:
-        self._transfer_window_open = True
-        await ctx.send("Player transfer window is now open for `1` minute!")
-
-        try:
-            await asyncio.wait_for(self._cancel_event.wait(), timeout=30)
-        except asyncio.TimeoutError:
-            await ctx.send("`30` seconds remaining for transfers!")
-            try:
-                await asyncio.wait_for(self._cancel_event.wait(), timeout=30)
-            except asyncio.TimeoutError:
-                pass
-        finally:
-            self._transfer_window_open = False
-            await ctx.send("Player transfer window has now closed!")
 
     async def open_betting_window(self, ctx: Context) -> None:
         self._betting_window_open = True
@@ -65,12 +46,40 @@ class Game:
     def betting_window_open(self) -> bool:
         return self._betting_window_open
 
-    def transfer_window_open(self) -> bool:
-        return self._transfer_window_open
-
     def get_bets(self) -> list[Bet]:
         return self._bets
 
+  
+class ClassicGame(Game):
+    def __init__(self) -> None:
+        super().__init__()
+        self._transfer_window_open: bool = False
+        self._player_transfers: list[PlayerTransfer] = []
+        self._commends: dict[str, list[str]] = {}
+        self._reports: dict[str, list[str]] = {}
+
+        self.radiant: Team | None = None
+        self.dire: Team | None = None
+
+    async def open_transfer_window(self, ctx: Context) -> None:
+        self._transfer_window_open = True
+        await ctx.send("Player transfer window is now open for `1` minute!")
+
+        try:
+            await asyncio.wait_for(self._cancel_event.wait(), timeout=30)
+        except asyncio.TimeoutError:
+            await ctx.send("`30` seconds remaining for transfers!")
+            try:
+                await asyncio.wait_for(self._cancel_event.wait(), timeout=30)
+            except asyncio.TimeoutError:
+                pass
+        finally:
+            self._transfer_window_open = False
+            await ctx.send("Player transfer window has now closed!")
+        
+    def transfer_window_open(self) -> bool:
+        return self._transfer_window_open
+    
     def get_player_transfers(self) -> list[PlayerTransfer]:
         return self._player_transfers
 
@@ -97,8 +106,11 @@ class Game:
             updated_commends.append(commender)
 
 
-class ClassicGame(Game):
-    pass
-
-class Duel(Game):
-    pass
+class Challenge(Game):
+    def __init__(self, id: int, challenger: Member | User, opponent: Member | User) -> None:
+        super().__init__()
+        self.id: int = id
+        self.challenger: Member | User = challenger
+        self.opponent: Member | User = opponent
+        self.expires: datetime = datetime.now() + timedelta(hours=24)
+        self.complete: bool = False
