@@ -13,7 +13,6 @@ from onehead.common import (
     get_player_names,
     get_discord_member_from_name,
     get_discord_member_from_id,
-    get_discord_id_from_mention,
     is_mention,
 )
 from onehead.game import Game, ClassicGame
@@ -68,13 +67,7 @@ class Behaviour(Cog):
                 )
                 return
 
-            commendee: Member
-
-            if is_mention(target):
-                commendee_id: int = get_discord_id_from_mention(target)
-                commendee = get_discord_member_from_id(ctx, commendee_id)
-            else:
-                commendee = get_discord_member_from_name(ctx, target)
+            commendee: Member | None = get_discord_member_from_name(ctx, target)
 
             if commendee is None:
                 await ctx.send(f"Unable to commend {target} as they do not exist in the {ctx.guild.name} guild.")
@@ -143,13 +136,7 @@ class Behaviour(Cog):
                 )
                 return
 
-            reported: Member
-
-            if is_mention(target):
-                reported_id: int = get_discord_id_from_mention(target)
-                reported = get_discord_member_from_id(ctx, reported_id)
-            else:
-                reported = get_discord_member_from_name(ctx, target)
+            reported: Member | None = get_discord_member_from_name(ctx, target)
 
             if reporter.id == reported.id:
                 await ctx.send(

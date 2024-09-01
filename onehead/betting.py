@@ -11,12 +11,12 @@ from tabulate import tabulate
 from onehead.common import Bet, Player, Roles, Side, get_bot_instance, get_discord_member_from_name, play_sound
 from onehead.game import Game, Challenge
 from onehead.protocols.database import OneHeadDatabase, Operation
+from onehead.lobby import Lobby
 from onehead.challenge import ChallengeMode
 
 
 if TYPE_CHECKING:
     from onehead.core import Core
-    from onehead.lobby import Lobby
 
 
 log: Logger = get_logger()
@@ -209,8 +209,7 @@ class Betting(Cog):
         
         # If it isn't a classic bet, is it a challenge bet?
         if not selection:
-            member: Member | None = None
-            member = get_discord_member_from_name(ctx, first)
+            member: Member | None = get_discord_member_from_name(ctx, first)
             if member:
                 selection = member
                 amount = second

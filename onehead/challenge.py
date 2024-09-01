@@ -16,9 +16,7 @@ from onehead.common import (
     Roles,
     get_discord_member_from_name,
     play_sound,
-    is_mention,
-    get_discord_member_from_id,
-    get_discord_id_from_mention,
+    get_discord_member_from_id
 )
 from onehead.game import Challenge
 from onehead.protocols.database import OneHeadDatabase
@@ -47,14 +45,8 @@ class ChallengeMode(Cog):
         Challenge an opponent to a 1v1 mid duel e.g. `!challenge ERIC`        
         """
         challenger: Member | User = ctx.author
-        opponent: Member | User |  None = None
 
-        if is_mention(opponent_name):
-            opponent_id: int | None = get_discord_id_from_mention(opponent_name)
-            if opponent_id:
-                opponent = get_discord_member_from_id(ctx, opponent_id)
-        else:
-            opponent = get_discord_member_from_name(ctx, opponent_name)
+        opponent: Member | None = get_discord_member_from_name(ctx, opponent_name)
 
         if opponent is None:
             return
@@ -67,7 +59,7 @@ class ChallengeMode(Cog):
             if challenge.challenger.id == challenger.id:
                 opponent = get_discord_member_from_id(ctx, challenge.opponent.id)
                 if opponent:
-                    await ctx.send(f"{challenger.mention} has already issued a challenge to {opponent.mention}!")
+                    await ctx.send(f"{challenger.mention} has already issued a challenge to {opponent.mention}!\n Stop sending for man, kmt.")
                 return
             elif challenge.opponent.id == opponent.id:
                 other_challenger: Member | None = get_discord_member_from_id(ctx, challenge.challenger.id)
@@ -110,9 +102,10 @@ class ChallengeMode(Cog):
         challenges: list[dict[str, Any]] = []
         for challenge in self.challenges:
             sorted_challenge: dict[str, Any] = {
+                "id": challenge.id,
                 "challenger": challenge.challenger.display_name,
                 "opponent": challenge.opponent.display_name,
-                "in_progress": challenge.in_progress,
+                "in_progress": challenge.in_progress(),
                 "expires": challenge.expires.astimezone(timezone("Europe/London")).strftime("%d/%m/%Y, %H:%M:%S"),
             }
             challenges.append(sorted_challenge)
@@ -136,6 +129,7 @@ class ChallengeMode(Cog):
                 challenge.start()
             else:
                 await ctx.send(f"{challenge.opponent} has already accepted their duel vs. {challenge.challenger}!")
+                await ctx.send(f"To start the game, ask an admin to type `!start {challenge.id}`")
         else:
             await ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
 
@@ -156,19 +150,10 @@ class ChallengeMode(Cog):
         else:
             await ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
 
-    async def result(self, ctx: Context, opponent: str) -> None:
-        # TODO: Allow the user to use the !result command to also enter results for duels.
-        pass
-
     def find_issued_challenge(self, ctx: Context, challenger_name: str) -> Challenge | None:
         challenged: Member | User = ctx.author
-        challenger: Member | None = None
 
-        if is_mention(challenger_name):
-            challenger_id: int | None = get_discord_id_from_mention(challenger_name)
-            challenger = get_discord_member_from_id(ctx, challenger_id)
-        else:
-            challenger = get_discord_member_from_name(ctx, challenger_name)
+        challenger: Member | None = get_discord_member_from_name(ctx, challenger_name)
 
         for challenge in self.challenges:
             if challenge.opponent.id == challenged.id and challenge.challenger.id == challenger.id:

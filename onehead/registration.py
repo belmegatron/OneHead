@@ -7,10 +7,7 @@ from structlog import get_logger
 from onehead.common import (
     Player,
     Roles,
-    get_discord_member_from_name,
-    is_mention,
-    get_discord_id_from_mention,
-    get_discord_member_from_id,
+    get_discord_member_from_name
 )
 from onehead.protocols.database import OneHeadDatabase
 
@@ -83,12 +80,7 @@ class Registration(Cog):
         """
         Update a player's in-house MMR to reflect a recent change in Dota 2 MMR.
         """
-        member: Member | None = None
-
-        if is_mention(name):
-            member = get_discord_member_from_id(ctx, get_discord_id_from_mention(name))
-        else:
-            member = get_discord_member_from_name(ctx, name)
+        member: Member | None = get_discord_member_from_name(ctx, name)
 
         if member is None:
             await ctx.send(f"{name} is not a registered member.")

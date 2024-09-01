@@ -31,10 +31,7 @@ from onehead.common import (
     get_discord_member_from_name,
     Metadata,
     play_sound,
-    voice_client_disconnect,
-    is_mention,
-    get_discord_id_from_mention,
-    get_discord_member_from_id
+    voice_client_disconnect
 )
 from onehead.database import Database
 from onehead.game import Game, ClassicGame, Challenge
@@ -141,13 +138,19 @@ class Core(Cog):
             raise OneHeadException("Unable to find cog(s)")
 
     async def reset(self, ctx: Context, game_cancelled=False) -> None:
+        
+        if self.current_game and isinstance(self.previous_game, Challenge):
+            self.challenge_mode.challenges.remove(self.previous_game)
+        
         if game_cancelled:
             self.previous_game = None
         else:
             self.previous_game = self.current_game
 
         self.current_game = None
-        self.lobby.clear_signups()
+        if isinstance(self.previous_game, ClassicGame):
+            self.lobby.clear_signups()
+            
         create_task(voice_client_disconnect(ctx))
 
     async def show_teams(self, ctx: Context) -> None:
@@ -167,21 +170,31 @@ class Core(Cog):
                 raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
 
             await self.channels.move_discord_channels(ctx)
-        
-    @has_role(Roles.ADMIN)
-    @command()
-    @max_concurrency(1, per=BucketType.default, wait=False)
-    async def start(self, ctx: Context, duel_id: str = "") -> None:
-        """
-        Starts an IHL game.
-        """
-        if self.current_game and self.current_game.in_progress():
-            await ctx.send("Game already in progress...")
+    
+    async def start_duel(self, ctx: Context, duel_id: str) -> None:
+        try:
+            id = int(duel_id)
+        except ValueError:
+            await ctx.send(f"Invalid Duel ID: `{duel_id}`.")
             return
-        
-        if duel_id:
-            
+        else:
+            target_challenge: Challenge | None = None
+            for challenge in self.challenge_mode.challenges:
+                if challenge.id == id:
+                    target_challenge = challenge
 
+            if target_challenge:
+                await play_sound(ctx, "fight.mp3")
+                self.current_game = target_challenge
+                target_challenge.start()
+                await ctx.send(f"**Duel starting**: {target_challenge.challenger.mention} and {target_challenge.opponent.mention}, prepare to fight!")
+                await self.current_game.open_betting_window(ctx)
+                await ctx.send("GL HF!")
+            else:
+                await ctx.send(f"Unable to find Duel ID: `{id}`.")
+                await ctx.invoke(self.challenge_mode.list_challenges)                
+        
+    async def start_classic_game(self, ctx: Context) -> None:
         signup_threshold_met: bool = await self.lobby.signup_check(ctx)
         if signup_threshold_met is False:
             return
@@ -219,6 +232,22 @@ class Core(Cog):
 
             log.info(f"Season {metadata['season']}, Game {metadata['game_id']} has started.")
             log.info(f"Radiant: {', '.join(radiant)}, Dire: {', '.join(dire)}.")
+    
+    @has_role(Roles.ADMIN)
+    @command()
+    @max_concurrency(1, per=BucketType.default, wait=False)
+    async def start(self, ctx: Context, duel_id: str = "") -> None:
+        """
+        If duel_id is specified, attempts to start a duel else attempts to start a 5v5 game.
+        """
+        if self.current_game and self.current_game.in_progress():
+            await ctx.send("Game already in progress...")
+            return
+        
+        if duel_id:
+            await self.start_duel(ctx, duel_id)
+        else:
+            await self.start_classic_game(ctx)
 
     @has_role(Roles.ADMIN)
     @command()
@@ -233,8 +262,11 @@ class Core(Cog):
             log.info(f"Game was cancelled by {ctx.author.display_name}.")
             await ctx.send("Game cancelled.")
             await self.betting.refund_all_bets(ctx)
-            await self.transfers.refund_transfers(ctx)
-            await self.channels.move_back_to_lobby(ctx)
+            
+            if isinstance(self.current_game, ClassicGame):
+                await self.transfers.refund_transfers(ctx)
+                await self.channels.move_back_to_lobby(ctx)
+                
             await self.reset(ctx, game_cancelled=True)
         else:
             await ctx.send("No currently active game.")
@@ -345,12 +377,7 @@ class Core(Cog):
             self.current_game = cast(Challenge, self.current_game)
             await ctx.send("")
             
-            winner: Member | None = None
-            if is_mention(result):
-                id: int = get_discord_id_from_mention(result)
-                winner = get_discord_member_from_id(ctx, id)
-            else:
-                winner = get_discord_member_from_name(ctx, result)
+            winner: Member | None = get_discord_member_from_name(ctx, result)
                 
             if winner not in (self.current_game.challenger, self.current_game.opponent):
                 await ctx.send(f"Must specify either {self.current_game.challenger.mention} or {self.current_game.opponent.mention} as the winner when entering a result.")

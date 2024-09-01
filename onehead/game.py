@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from discord.ext.commands import Context
 from discord.member import Member
@@ -112,5 +112,5 @@ class Challenge(Game):
         self.id: int = id
         self.challenger: Member | User = challenger
         self.opponent: Member | User = opponent
-        self.expires: datetime = datetime.now() + timedelta(hours=24)
+        self.expires: datetime = datetime.now(tz=UTC) + timedelta(hours=24)
         self.complete: bool = False

@@ -145,18 +145,28 @@ def update_config(updated_config: dict) -> None:
 
 
 def get_discord_member_from_name(ctx: Context, name: str) -> Member | None:
-    for member in ctx.guild.members:
-        if member.display_name == name:
-            return member
+    if ctx.guild is None:
+        return None
+    
+    if is_mention(name):
+        id: int = get_discord_id_from_mention(name)
+        return get_discord_member_from_id(ctx, id)
+    else:
+        for member in ctx.guild.members:
+            if member.display_name == name:
+                return member
 
     return None
 
 
 def get_discord_member_from_id(ctx: Context, id: int) -> Member | None:
+    if ctx.guild is None:
+        return None
+    
     for member in ctx.guild.members:
         if member.id == id:
             return member
-
+ 
     return None
 
 
