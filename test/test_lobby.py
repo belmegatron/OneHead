@@ -267,6 +267,7 @@ class TestSelectPlayers:
         lobby.select_players(mock_context)
         assert mock_context.send.is_not_called_once()
 
+    @pytest.mark.asyncio
     async def test_more_than_10(self, bot: Bot) -> None:
         lobby: Lobby = bot.get_cog("Lobby")
         lobby._signups = {

@@ -9,7 +9,7 @@ from discord.ext.commands import Bot, errors
 from onehead.betting import Bet
 from onehead.common import OneHeadException, Player, Side, Team
 from onehead.core import Core
-from onehead.game import Game
+from onehead.game import Game, ClassicGame
 from onehead.lobby import Lobby
 
 
@@ -24,6 +24,7 @@ class TestStart:
         await add_ihl_role(bot, "IHL Admin")
 
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         core.current_game._in_progress = True
 
         await dpytest.message("!start")
@@ -65,6 +66,7 @@ class TestStart:
         ]
         core.matchmaking.balance = balance
         core.setup_team_channels = AsyncMock()
+        core.current_game = ClassicGame()
         core.current_game.open_transfer_window = AsyncMock()
         core.current_game.open_betting_window = AsyncMock()
 
@@ -94,6 +96,7 @@ class TestStop:
         await add_ihl_role(bot, "IHL Admin")
 
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         core.current_game._in_progress = True
         core.betting.refund_all_bets = AsyncMock()
         core.transfers.refund_transfers = AsyncMock()
@@ -123,6 +126,7 @@ class TestResult:
     async def test_transfer_window_open(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         core.current_game._in_progress = True
         core.current_game._transfer_window_open = True
         core.current_game._betting_window_open = False
@@ -139,6 +143,7 @@ class TestResult:
     async def test_betting_window_open(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         core.current_game._in_progress = True
         core.current_game._transfer_window_open = False
         core.current_game._betting_window_open = True
@@ -155,6 +160,7 @@ class TestResult:
     async def test_invalid_side(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         core.current_game._in_progress = True
         await dpytest.message("!result derp")
         assert dpytest.verify().message().content(f"Must be either {Side.RADIANT} or {Side.DIRE}.")
@@ -163,6 +169,7 @@ class TestResult:
     async def test_invalid_team(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         core.current_game._in_progress = True
 
         core.channels.move_back_to_lobby = AsyncMock()
@@ -176,6 +183,7 @@ class TestResult:
         await add_ihl_role(bot, "IHL")
         await add_ihl_role(bot, "IHL Admin")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         current_game: Game = core.current_game
         current_game._in_progress = True
         current_game.radiant = [Player(name="RBEEZAY")]
@@ -213,6 +221,7 @@ class TestStatus:
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         core.current_game._in_progress = True
         core.current_game.radiant = [
             {"name": "A"},

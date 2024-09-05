@@ -43,7 +43,7 @@ class Behaviour(Cog):
         """
 
         bot: Bot = get_bot_instance()
-        core: Core = cast(Core, bot.get_cog("Core"))
+        core: Core = bot.get_cog("Core")    # type: ignore
         previous_game: Game | None = core.previous_game
 
         guild: Guild | None = ctx.guild
@@ -118,7 +118,7 @@ class Behaviour(Cog):
         """
 
         bot: Bot = get_bot_instance()
-        core: Core = cast(Core, bot.get_cog("Core"))
+        core: Core = bot.get_cog("Core")    # type: ignore
         previous_game: Game | None = core.previous_game
 
         guild: Guild | None = ctx.guild

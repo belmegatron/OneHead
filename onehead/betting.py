@@ -9,7 +9,7 @@ from structlog import get_logger
 from tabulate import tabulate
 
 from onehead.common import Bet, Player, Roles, Side, get_bot_instance, get_discord_member_from_name, play_sound
-from onehead.game import Game, Challenge
+from onehead.game import Game, Challenge, ClassicGame
 from onehead.protocols.database import OneHeadDatabase, Operation
 from onehead.lobby import Lobby
 from onehead.challenge import ChallengeMode
@@ -33,7 +33,7 @@ class Betting(Cog):
 
     def get_bet_results(self, winner: Side | Member) -> dict[str, list[float]]:
         bot: Bot = get_bot_instance()
-        core: Core = cast(Core, bot.get_cog("Core"))
+        core: Core = bot.get_cog("Core")    # type: ignore
         current_game: Game | None = core.current_game
 
         bet_results: dict[str, list[float]] = {}
@@ -47,7 +47,13 @@ class Betting(Cog):
             if bet_results.get(bet.bettor) is None:
                 bet_results[bet.bettor] = []
 
-            if bet.selection == winner:
+            if isinstance(winner, Member):
+                winner = cast(Member, winner)
+                winner_name: str = winner.display_name
+            else:
+                winner_name = winner
+
+            if bet.selection == winner_name:
                 winnings: float = (bet.stake * bet.price) - bet.stake
                 bet_results[bet.bettor].append(winnings)
             else:
@@ -62,7 +68,7 @@ class Betting(Cog):
         Lists active bets for the current game.
         """
         bot: Bot = get_bot_instance()
-        core: Core = cast(Core, bot.get_cog("Core"))
+        core: Core = bot.get_cog("Core")    # type: ignore
         current_game: Game | None = core.current_game
         if current_game is None:
             return
@@ -84,7 +90,7 @@ class Betting(Cog):
         """
 
         bot: Bot = get_bot_instance()
-        core: Core = cast(Core, bot.get_cog("Core"))
+        core: Core = bot.get_cog("Core")    # type: ignore
         current_game: Game | None = core.current_game
 
         if current_game is None:
@@ -100,7 +106,7 @@ class Betting(Cog):
             await ctx.send(f"Unable to find {ctx.author.mention} in database.")
             return None
 
-        bet: Bet | None = await self.parse_bet_arguments(ctx, first, second, record)
+        bet: Bet | None = await self.parse_bet_arguments(ctx, current_game, first, second, record)
         if bet is None:
             return
 
@@ -138,7 +144,7 @@ class Betting(Cog):
         )
 
         await ctx.send(
-            f"{ctx.author.mention} has placed a bet of `{bet.stake:.0f}` RBUCKS on {bet.selection} at a price of {bet.price}."
+            f"{ctx.author.mention} has placed a bet of `{bet.stake:.0f}` RBUCKS on {bet.selection} at a price of `{bet.price}`."
         )
 
     @has_role(Roles.MEMBER)
@@ -177,7 +183,7 @@ class Betting(Cog):
 
     async def refund_all_bets(self, ctx: Context) -> None:
         bot: Bot = get_bot_instance()
-        core: Core = cast(Core, bot.get_cog("Core"))
+        core: Core = bot.get_cog("Core")    # type: ignore
         current_game: Game | None = core.current_game
 
         if current_game is None:
@@ -189,38 +195,43 @@ class Betting(Cog):
             return
 
         for bet in active_bets:
-            m: Member | None = get_discord_member_from_name(ctx, bet.bettor)
-            if m:
-                self.database.modify(m.id, "rbucks", bet.stake, Operation.ADD)
+            member: Member | None = get_discord_member_from_name(ctx, bet.bettor)
+            if member:
+                self.database.modify(member.id, "rbucks", bet.stake, Operation.ADD)
 
         log.info("Refunded all bets.")
 
         await ctx.send("All bets have been refunded.")
 
-    async def parse_bet_arguments(self, ctx: Context, first: str, second: str, record: Player) -> Bet | None:
+    async def parse_bet_arguments(self, ctx: Context, current_game: Game, first: str, second: str, record: Player) -> Bet | None:
         selection: str = ""
         amount: str = ""
 
-        # Is it a classic bet?
-        if first in Side:
-            selection = first
-            amount = second
-        elif second in Side:
-            selection = second
-            amount = first
-
-        # If it isn't a classic bet, is it a challenge bet?
-        if not selection:
+        if isinstance(current_game, ClassicGame):
+            if first in Side:
+                selection = first
+                amount = second
+            elif second in Side:
+                selection = second
+                amount = first
+            else:
+                await ctx.send(f"{ctx.author.mention}, you must on either {Side.RADIANT} or {Side.DIRE}.")
+                return None                
+        elif isinstance(current_game, Challenge):
             member: Member | None = get_discord_member_from_name(ctx, first)
-            if member:
+            if member in (current_game.challenger, current_game.opponent):
                 selection = member.display_name
                 amount = second
             else:
                 member = get_discord_member_from_name(ctx, second)
-                if member:
+                if member in (current_game.challenger, current_game.opponent):
                     selection = member.display_name
                     amount = first
-
+                    
+            if selection == "":
+                await ctx.send(f"{ctx.author.mention}, you must specify either {current_game.challenger.mention} or {current_game.opponent.mention}.")
+                return None                
+            
         available_balance: int = record.get("rbucks", 0)
         stake: int = 0
 
@@ -234,10 +245,7 @@ class Betting(Cog):
                     f"{ctx.author.mention} - `{amount}` is not a valid number of RBUCKS to place a bet with."
                 )
 
-        if selection:
-            return Bet(bettor=ctx.author.display_name, selection=selection, stake=stake)
-
-        return None
+        return Bet(bettor=ctx.author.display_name, selection=selection, stake=stake)
 
     @staticmethod
     def convert_decimal_odds_to_percentage_odds(decimal_odds: float) -> float:

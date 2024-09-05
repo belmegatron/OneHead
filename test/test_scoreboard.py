@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import discord.ext.test as dpytest
 import pytest
 from conftest import add_ihl_role
-from discord.ext.commands import Bot, errors
+from discord.ext.commands import Bot, errors, CommandInvokeError
 
 from onehead.common import OneHeadException
 from onehead.scoreboard import ScoreBoard
@@ -23,7 +23,7 @@ class TestScoreboard:
         scoreboard.database.get_all = Mock()
         scoreboard.database.get_all.return_value = []
 
-        with pytest.raises(OneHeadException):
+        with pytest.raises(CommandInvokeError):
             await dpytest.message("!sb")
 
     @pytest.mark.asyncio

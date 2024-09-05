@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock, Mock, patch
 import discord.ext.test as dpytest
 import pytest
 from conftest import TEST_USER, add_ihl_role
-from discord.ext.commands import Bot, Cog, errors
+from discord.ext.commands import Bot, errors, CommandInvokeError
 
-from onehead.common import OneHeadException
-from onehead.game import Game
+from onehead.core import Core
+from onehead.game import Game, ClassicGame
 from onehead.transfers import Transfers
 
 
@@ -20,7 +20,8 @@ class TestShuffle:
     async def test_transfer_window_closed(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
-        core: Cog = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         current_game: Game = core.current_game
         current_game._transfer_window_open = False
 
@@ -31,18 +32,20 @@ class TestShuffle:
     async def test_invalid_teams(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
-        core: Cog = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         current_game: Game = core.current_game
         current_game._transfer_window_open = True
 
-        with pytest.raises(OneHeadException):
+        with pytest.raises(CommandInvokeError):
             await dpytest.message("!shuffle")
 
     @pytest.mark.asyncio
     async def test_not_signed_up(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
-        core: Cog = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         current_game: Game = core.current_game
         current_game._transfer_window_open = True
         current_game.radiant = []
@@ -60,7 +63,8 @@ class TestShuffle:
     async def test_insufficient_rbucks(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
-        core: Cog = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
 
         current_game: Game = core.current_game
         current_game._transfer_window_open = True
@@ -80,7 +84,9 @@ class TestShuffle:
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
-        core: Cog = bot.get_cog("Core")
+        core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
+        
         current_game: Game = core.current_game
         current_game._transfer_window_open = True
         current_game.radiant = []
@@ -95,7 +101,7 @@ class TestShuffle:
 
         core.matchmaking.balance = AsyncMock()
         core.matchmaking.balance.return_value = [{"name": "A"}], [{"name": "B"}]
-        core.setup_teams = AsyncMock()
+        core.setup_team_channels = AsyncMock()
 
         with patch("onehead.transfers.play_sound"):
             await dpytest.message("!shuffle")

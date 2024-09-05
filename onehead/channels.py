@@ -27,7 +27,7 @@ class Channels(Cog):
 
     def get_discord_members(self, ctx: Context) -> tuple[list[Member], list[Member]]:
         bot: Bot = get_bot_instance()
-        core: Core = cast(Core, bot.get_cog("Core"))
+        core: Core = bot.get_cog("Core")    # type: ignore
         current_game: Game | None = core.current_game
 
         guild: Guild | None = ctx.guild
@@ -83,7 +83,11 @@ class Channels(Cog):
         if guild is None:
             raise OneHeadException("No Guild associated with Discord Context")
 
-        lobby: VoiceChannel = [x for x in guild.voice_channels if x.name == self.lobby_name][0]
+        selected_channels: list[VoiceChannel] = [x for x in guild.voice_channels if x.name == self.lobby_name]
+        if len(selected_channels) != 1:
+            raise OneHeadException("Failed to find lobby voice channel")
+        
+        lobby: VoiceChannel = selected_channels[0]
 
         t1_discord_members: list[Member]
         t2_discord_members: list[Member]

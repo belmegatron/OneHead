@@ -112,16 +112,16 @@ class Core(Cog):
         self.token: str = token
 
         self.config: dict = load_config()
-        self.behaviour: Behaviour = bot.get_cog("Behaviour")  # type: ignore[assignment]
-        self.database: OneHeadDatabase = bot.get_cog("Database")  # type: ignore[assignment]
-        self.scoreboard: ScoreBoard = bot.get_cog("ScoreBoard")  # type: ignore[assignment]
-        self.lobby: Lobby = bot.get_cog("Lobby")  # type: ignore[assignment]
-        self.matchmaking: Matchmaking = bot.get_cog("Matchmaking")  # type: ignore[assignment]
-        self.channels: Channels = bot.get_cog("Channels")  # type: ignore[assignment]
-        self.registration: Registration = bot.get_cog("Registration")  # type: ignore[assignment]
-        self.betting: Betting = bot.get_cog("Betting")  # type: ignore[assignment]
-        self.transfers: Transfers = bot.get_cog("Transfers")  # type: ignore[assignment]
-        self.challenge_mode: ChallengeMode = bot.get_cog("ChallengeMode")  # type: ignore[assignment]
+        self.behaviour: Behaviour = cast(Behaviour, bot.get_cog("Behaviour"))
+        self.database: OneHeadDatabase = cast(Database, bot.get_cog("Database"))
+        self.scoreboard: ScoreBoard = cast(ScoreBoard, bot.get_cog("ScoreBoard"))
+        self.lobby: Lobby = cast(Lobby, bot.get_cog("Lobby"))
+        self.matchmaking: Matchmaking = cast(Matchmaking, bot.get_cog("Matchmaking"))
+        self.channels: Channels = cast(Channels, bot.get_cog("Channels"))
+        self.registration: Registration = cast(Registration, bot.get_cog("Registration"))
+        self.betting: Betting = cast(Betting, bot.get_cog("Betting"))
+        self.transfers: Transfers = cast(Transfers, bot.get_cog("Transfers"))
+        self.challenge_mode: ChallengeMode = cast(ChallengeMode, bot.get_cog("ChallengeMode"))
 
         if None in (
             self.database,
@@ -211,7 +211,7 @@ class Core(Cog):
         self.lobby.disable_signups()
 
         (
-            self.current_game.radiant,
+            self.current_game.radiant, 
             self.current_game.dire,
         ) = await self.matchmaking.balance(ctx)
 
@@ -295,52 +295,52 @@ class Core(Cog):
             await ctx.send("`Radiant` victory!")
 
             for player in radiant_names:
-                m: Member | None = get_discord_member_from_name(ctx, player)
+                member: Member | None = get_discord_member_from_name(ctx, player)
 
-                if m is None:
+                if member is None:
                     continue
 
-                self.database.modify(m.id, "win", 1, Operation.ADD)
-                self.database.modify(m.id, "win_streak", 1, Operation.ADD)
-                self.database.modify(m.id, "loss_streak", 0)
-                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
+                self.database.modify(member.id, "win", 1, Operation.ADD)
+                self.database.modify(member.id, "win_streak", 1, Operation.ADD)
+                self.database.modify(member.id, "loss_streak", 0)
+                self.database.modify(member.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
 
             for player in dire_names:
-                m: Member | None = get_discord_member_from_name(ctx, player)
+                member: Member | None = get_discord_member_from_name(ctx, player)
 
-                if m is None:
+                if member is None:
                     continue
 
-                self.database.modify(m.id, "loss", 1, Operation.ADD)
-                self.database.modify(m.id, "loss_streak", 1, Operation.ADD)
-                self.database.modify(m.id, "win_streak", 0)
-                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
+                self.database.modify(member.id, "loss", 1, Operation.ADD)
+                self.database.modify(member.id, "loss_streak", 1, Operation.ADD)
+                self.database.modify(member.id, "win_streak", 0)
+                self.database.modify(member.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
 
         elif result == Side.DIRE:
 
             await ctx.send("`Dire` victory!")
 
             for player in radiant_names:
-                m: Member | None = get_discord_member_from_name(ctx, player)
+                member: Member | None = get_discord_member_from_name(ctx, player)
 
-                if m is None:
+                if member is None:
                     continue
 
-                self.database.modify(m.id, "loss", 1, Operation.ADD)
-                self.database.modify(m.id, "loss_streak", 1, Operation.ADD)
-                self.database.modify(m.id, "win_streak", 0)
-                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
+                self.database.modify(member.id, "loss", 1, Operation.ADD)
+                self.database.modify(member.id, "loss_streak", 1, Operation.ADD)
+                self.database.modify(member.id, "win_streak", 0)
+                self.database.modify(member.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
 
             for player in dire_names:
-                m: Member | None = get_discord_member_from_name(ctx, player)
+                member: Member | None = get_discord_member_from_name(ctx, player)
 
-                if m is None:
+                if member is None:
                     continue
 
-                self.database.modify(m.id, "win", 1, Operation.ADD)
-                self.database.modify(m.id, "win_streak", 1, Operation.ADD)
-                self.database.modify(m.id, "loss_streak", 0)
-                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
+                self.database.modify(member.id, "win", 1, Operation.ADD)
+                self.database.modify(member.id, "win_streak", 1, Operation.ADD)
+                self.database.modify(member.id, "loss_streak", 0)
+                self.database.modify(member.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
 
     async def handle_classic_game_result(self, ctx: Context, result: str) -> None:
         self.current_game = cast(ClassicGame, self.current_game)
@@ -395,11 +395,7 @@ class Core(Cog):
         """
         Provide the result of game that has finished.
         """
-
-        if self.current_game is None:
-            return
-
-        if self.current_game.in_progress() is False:
+        if self.current_game is None or self.current_game.in_progress() is False:
             await ctx.send("No currently active game.")
             return
 
@@ -415,8 +411,6 @@ class Core(Cog):
             bet_results: dict = self.betting.get_bet_results(result)
         else:
             self.current_game = cast(Challenge, self.current_game)
-            await ctx.send("")
-
             winner: Member | None = get_discord_member_from_name(ctx, result)
 
             if winner not in (self.current_game.challenger, self.current_game.opponent):
@@ -513,7 +507,6 @@ class Core(Cog):
         """
         For testing purposes.
         """
-
         now: datetime = datetime.now()
 
         self.lobby._signups.update(

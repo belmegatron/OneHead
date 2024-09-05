@@ -18,12 +18,12 @@ from onehead.common import (
 )
 from onehead.game import ClassicGame
 from onehead.lobby import Lobby
+from onehead.matchmaking import Matchmaking
 from onehead.protocols.database import OneHeadDatabase, Operation
 
 
 if TYPE_CHECKING:
     from onehead.core import Core
-    from onehead.matchmaking import Matchmaking
 
 
 log: Logger = get_logger()
@@ -38,7 +38,7 @@ class Transfers(Cog):
 
     async def refund_transfers(self, ctx: Context) -> None:
         bot: Bot = get_bot_instance()
-        core: Core = cast(Core, bot.get_cog("Core"))
+        core: Core = bot.get_cog("Core")    # type: ignore
 
         if isinstance(core.current_game, ClassicGame) is False:
             return
@@ -51,9 +51,9 @@ class Transfers(Cog):
             return
 
         for transfer in transfers:
-            m: Member | None = get_discord_member_from_name(ctx, transfer.buyer)
-            if m:
-                self.database.modify(m.id, "rbucks", transfer.amount, Operation.ADD)
+            member: Member | None = get_discord_member_from_name(ctx, transfer.buyer)
+            if member:
+                self.database.modify(member.id, "rbucks", transfer.amount, Operation.ADD)
 
         message: str = "All player transactions have been refunded."
         log.info(message)
@@ -67,7 +67,7 @@ class Transfers(Cog):
         """
 
         bot: Bot = get_bot_instance()
-        core: Core = cast(Core, bot.get_cog("Core"))
+        core: Core = bot.get_cog("Core")    # type: ignore
         if isinstance(core.current_game, ClassicGame) is False:
             return
 

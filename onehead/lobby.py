@@ -287,7 +287,7 @@ class Lobby(Cog):
         the `on_presence_update` callback never gets called for them.
         """
         bot: Bot = get_bot_instance()
-        core: Core = cast(Core, bot.get_cog("Core"))
+        core: Core = bot.get_cog("Core")    # type: ignore
         game: Game | None = core.current_game
 
         max_signup_period: timedelta = timedelta(hours=4)
@@ -317,7 +317,7 @@ class Lobby(Cog):
 
 async def on_presence_update(before: "Member", after: "Member") -> None:
     bot: Bot = get_bot_instance()
-    core: Core = cast(Core, bot.get_cog("Core"))
+    core: Core = bot.get_cog("Core")    # type: ignore
     game: Game | None = core.current_game
 
     if game and game.in_progress():

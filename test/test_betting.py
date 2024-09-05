@@ -146,3 +146,59 @@ class TestPlaceBet:
         with patch("onehead.betting.play_sound"):
             await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
             assert dpytest.verify().message().content(f"has placed a bet").contains()
+
+
+class TestCalculateOdds:
+    @pytest.mark.asyncio
+    async def test_challenger_favoured(self, bot: Bot):
+        db = MagicMock(spec=Database)
+        cm: ChallengeMode = ChallengeMode(db)
+        challenger: Member = await dpytest.member_join(name="RBEEZAY")
+        opponent: Member = await dpytest.member_join(name="GEE")
+
+        challenger_record: Player = {"adjusted_mmr": 3000}
+        opponent_record: Player = {"adjusted_mmr": 2000}
+
+        db.get.side_effect = [challenger_record, opponent_record]
+
+        challenge: Challenge = Challenge(0, datetime.now(), challenger, opponent)
+
+        challenger_odds, opponent_odds = cm.calculate_odds(challenge)
+        assert challenger_odds == 1.5
+        assert opponent_odds == 3.0
+
+    @pytest.mark.asyncio
+    async def test_opponent_favoured(self, bot: Bot):
+        db = MagicMock(spec=Database)
+        cm: ChallengeMode = ChallengeMode(db)
+        challenger: Member = await dpytest.member_join(name="RBEEZAY")
+        opponent: Member = await dpytest.member_join(name="GEE")
+
+        challenger_record: Player = {"adjusted_mmr": 2000}
+        opponent_record: Player = {"adjusted_mmr": 3000}
+
+        db.get.side_effect = [challenger_record, opponent_record]
+
+        challenge: Challenge = Challenge(0, datetime.now(), challenger, opponent)
+
+        challenger_odds, opponent_odds = cm.calculate_odds(challenge)
+        assert challenger_odds == 3.0
+        assert opponent_odds == 1.5
+
+    @pytest.mark.asyncio
+    async def test_equal_odds(self, bot: Bot):
+        db = MagicMock(spec=Database)
+        cm: ChallengeMode = ChallengeMode(db)
+        challenger: Member = await dpytest.member_join(name="RBEEZAY")
+        opponent: Member = await dpytest.member_join(name="GEE")
+
+        challenger_record: Player = {"adjusted_mmr": 3000}
+        opponent_record: Player = {"adjusted_mmr": 3000}
+
+        db.get.side_effect = [challenger_record, opponent_record]
+
+        challenge: Challenge = Challenge(0, datetime.now(), challenger, opponent)
+
+        challenger_odds, opponent_odds = cm.calculate_odds(challenge)
+        assert challenger_odds == 2.0
+        assert opponent_odds == 2.0
