@@ -33,6 +33,8 @@ class Matchmaking(Cog):
         players: list[Player] = []
         for player_name in self.lobby.get_signups():
             member: Member | None = get_discord_member_from_name(ctx, player_name)
+            if member is None:
+                continue
             player: Player | None = self.database.get(member.id)
             if player:
                 players.append(player)

@@ -5,6 +5,7 @@ from logging import Logger
 from structlog import get_logger
 from typing import Any
 
+from discord.guild import Guild
 from discord.member import Member
 from discord.user import User
 from discord.ext.commands import Cog, Context, command, has_role
@@ -16,7 +17,8 @@ from onehead.common import (
     Roles,
     get_discord_member_from_name,
     play_sound,
-    get_discord_member_from_id
+    get_discord_member_from_id,
+    OneHeadException,
 )
 from onehead.game import Challenge
 from onehead.protocols.database import OneHeadDatabase
@@ -42,15 +44,18 @@ class ChallengeMode(Cog):
     @command()
     async def challenge(self, ctx: Context, opponent_name: str) -> None:
         """
-        Challenge an opponent to a 1v1 mid duel e.g. `!challenge ERIC`        
+        Challenge an opponent to a 1v1 mid duel e.g. `!challenge ERIC`
         """
-        challenger: Member | User = ctx.author
+        guild: Guild | None = ctx.guild
+        if guild is None:
+            raise OneHeadException("No Guild associated with Discord Context")
 
+        challenger: Member | User = ctx.author
         opponent: Member | None = get_discord_member_from_name(ctx, opponent_name)
 
         if opponent is None:
-            return
-        
+            raise OneHeadException(f"Failed to challenge {opponent_name} as they do not exist in {guild.name}")
+
         if challenger == opponent:
             await ctx.send("You cannot challenge yourself...")
             return
@@ -59,7 +64,9 @@ class ChallengeMode(Cog):
             if challenge.challenger.id == challenger.id:
                 opponent = get_discord_member_from_id(ctx, challenge.opponent.id)
                 if opponent:
-                    await ctx.send(f"{challenger.mention} has already issued a challenge to {opponent.mention}!\n Stop sending for man, kmt.")
+                    await ctx.send(
+                        f"{challenger.mention} has already issued a challenge to {opponent.mention}!\n Stop sending for man, kmt."
+                    )
                 return
             elif challenge.opponent.id == opponent.id:
                 other_challenger: Member | None = get_discord_member_from_id(ctx, challenge.challenger.id)
@@ -71,7 +78,9 @@ class ChallengeMode(Cog):
         opponent_record: Player | None = self.database.get(opponent.id)
 
         if challenger_record is None or opponent_record is None:
-            raise
+            raise OneHeadException(
+                f"Failed to obtain database record for {challenger.display_name if challenger_record is None else opponent.display_name}"
+            )
 
         if challenger_record["mmr"] - opponent_record["mmr"] > self.MAX_RATING_DIFFERENCE:
             await play_sound(ctx, "bully.mp3")
@@ -91,14 +100,25 @@ class ChallengeMode(Cog):
         )
 
         create_task(self.handle_expired_challenge(ctx, challenge))
-    
+
+    # TODO: Remove this.
+    @has_role(Roles.ADMIN)
+    @command()
+    async def sim_challenge(self, ctx: Context) -> None:
+        challenge: Challenge = Challenge(
+            next(self.counter),
+            challenger=get_discord_member_from_name(ctx, "TOCCO"),
+            opponent=get_discord_member_from_name(ctx, "RUGOR"),
+        )
+        self.challenges.append(challenge)
+
     @has_role(Roles.MEMBER)
     @command(aliases=["challenges"])
     async def list_challenges(self, ctx: Context) -> None:
         """
         Lists all active challenges.
         """
-        
+
         challenges: list[dict[str, Any]] = []
         for challenge in self.challenges:
             sorted_challenge: dict[str, Any] = {
@@ -122,7 +142,7 @@ class ChallengeMode(Cog):
         """
         Accept a duel issued by a challenger e.g. `!accept BOBBY`
         """
-        challenge: Challenge | None = self.find_issued_challenge(ctx, name)
+        challenge: Challenge | None = await self.find_issued_challenge(ctx, name)
 
         if challenge:
             if challenge.in_progress() is False:
@@ -139,7 +159,7 @@ class ChallengeMode(Cog):
         """
         Reject a duel issued by a challenger e.g. `!reject BOBBY`
         """
-        challenge: Challenge | None = self.find_issued_challenge(ctx, name)
+        challenge: Challenge | None = await self.find_issued_challenge(ctx, name)
 
         if challenge:
             await ctx.send(
@@ -150,17 +170,24 @@ class ChallengeMode(Cog):
         else:
             await ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
 
-    def find_issued_challenge(self, ctx: Context, challenger_name: str) -> Challenge | None:
-        challenged: Member | User = ctx.author
+    async def find_issued_challenge(self, ctx: Context, challenger_name: str) -> Challenge | None:
+        guild: Guild | None = ctx.guild
+        if guild is None:
+            raise OneHeadException("No Guild associated with Discord Context")
 
+        challenged: Member | User = ctx.author
         challenger: Member | None = get_discord_member_from_name(ctx, challenger_name)
+        if challenger is None:
+            raise OneHeadException(
+                f"Unable to find {challenger_name} in {guild.name} when searching for issued challenge"
+            )
 
         for challenge in self.challenges:
             if challenge.opponent.id == challenged.id and challenge.challenger.id == challenger.id:
                 return challenge
 
-        return None      
-        
+        return None
+
     async def handle_expired_challenge(self, ctx: Context, challenge: Challenge) -> None:
         to_wait: timedelta = challenge.expires - datetime.now(UTC)
 

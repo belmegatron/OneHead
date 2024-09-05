@@ -31,7 +31,7 @@ from onehead.common import (
     get_discord_member_from_name,
     Metadata,
     play_sound,
-    voice_client_disconnect
+    voice_client_disconnect,
 )
 from onehead.database import Database
 from onehead.game import Game, ClassicGame, Challenge
@@ -73,7 +73,7 @@ async def bot_factory() -> Bot:
     betting: Betting = Betting(database, lobby)
     behaviour: Behaviour = Behaviour(database)
     transfers: Transfers = Transfers(database, lobby)
-    challenge_mode: ChallengeMode = ChallengeMode(database) 
+    challenge_mode: ChallengeMode = ChallengeMode(database)
 
     await bot.add_cog(database)
     await bot.add_cog(lobby)
@@ -121,7 +121,7 @@ class Core(Cog):
         self.registration: Registration = bot.get_cog("Registration")  # type: ignore[assignment]
         self.betting: Betting = bot.get_cog("Betting")  # type: ignore[assignment]
         self.transfers: Transfers = bot.get_cog("Transfers")  # type: ignore[assignment]
-        self.challenge_mode: ChallengeMode = bot.get_cog("ChallengeMode") # type: ignore[assignment]
+        self.challenge_mode: ChallengeMode = bot.get_cog("ChallengeMode")  # type: ignore[assignment]
 
         if None in (
             self.database,
@@ -133,15 +133,14 @@ class Core(Cog):
             self.betting,
             self.transfers,
             self.behaviour,
-            self.challenge_mode
+            self.challenge_mode,
         ):
             raise OneHeadException("Unable to find cog(s)")
 
     async def reset(self, ctx: Context, game_cancelled=False) -> None:
-        
-        if self.current_game and isinstance(self.previous_game, Challenge):
-            self.challenge_mode.challenges.remove(self.previous_game)
-        
+        if self.current_game and isinstance(self.current_game, Challenge):
+            self.challenge_mode.challenges.remove(self.current_game)
+
         if game_cancelled:
             self.previous_game = None
         else:
@@ -150,7 +149,7 @@ class Core(Cog):
         self.current_game = None
         if isinstance(self.previous_game, ClassicGame):
             self.lobby.clear_signups()
-            
+
         create_task(voice_client_disconnect(ctx))
 
     async def show_teams(self, ctx: Context) -> None:
@@ -160,17 +159,17 @@ class Core(Cog):
     async def setup_team_channels(self, ctx: Context) -> None:
         if self.current_game is None:
             return
-        
+
         if isinstance(self.current_game, ClassicGame):
             self.current_game = cast(ClassicGame, self.current_game)
-        
+
             await self.channels.create_discord_channels(ctx)
 
             if self.current_game.radiant is None or self.current_game.dire is None:
                 raise OneHeadException(f"Expected valid teams: {self.current_game.radiant}, {self.current_game.dire}")
 
             await self.channels.move_discord_channels(ctx)
-    
+
     async def start_duel(self, ctx: Context, duel_id: str) -> None:
         try:
             id = int(duel_id)
@@ -187,18 +186,20 @@ class Core(Cog):
                 await play_sound(ctx, "fight.mp3")
                 self.current_game = target_challenge
                 target_challenge.start()
-                await ctx.send(f"**Duel starting**: {target_challenge.challenger.mention} and {target_challenge.opponent.mention}, prepare to fight!")
+                await ctx.send(
+                    f"**Duel starting**: {target_challenge.challenger.mention} and {target_challenge.opponent.mention}, prepare to fight!"
+                )
                 await self.current_game.open_betting_window(ctx)
                 await ctx.send("GL HF!")
             else:
                 await ctx.send(f"Unable to find Duel ID: `{id}`.")
-                await ctx.invoke(self.challenge_mode.list_challenges)                
-        
+                await ctx.invoke(self.challenge_mode.list_challenges)
+
     async def start_classic_game(self, ctx: Context) -> None:
         signup_threshold_met: bool = await self.lobby.signup_check(ctx)
         if signup_threshold_met is False:
             return
-        
+
         await play_sound(ctx, "start.mp3")
         metadata: Metadata = self.database.get_metadata()
         await ctx.send(f"Starting game: `Season {metadata.get('season')}`, Game `{metadata.get('game_id')}`.")
@@ -232,7 +233,7 @@ class Core(Cog):
 
             log.info(f"Season {metadata['season']}, Game {metadata['game_id']} has started.")
             log.info(f"Radiant: {', '.join(radiant)}, Dire: {', '.join(dire)}.")
-    
+
     @has_role(Roles.ADMIN)
     @command()
     @max_concurrency(1, per=BucketType.default, wait=False)
@@ -243,7 +244,7 @@ class Core(Cog):
         if self.current_game and self.current_game.in_progress():
             await ctx.send("Game already in progress...")
             return
-        
+
         if duel_id:
             await self.start_duel(ctx, duel_id)
         else:
@@ -262,18 +263,88 @@ class Core(Cog):
             log.info(f"Game was cancelled by {ctx.author.display_name}.")
             await ctx.send("Game cancelled.")
             await self.betting.refund_all_bets(ctx)
-            
+
             if isinstance(self.current_game, ClassicGame):
                 await self.transfers.refund_transfers(ctx)
                 await self.channels.move_back_to_lobby(ctx)
-                
+
             await self.reset(ctx, game_cancelled=True)
         else:
             await ctx.send("No currently active game.")
-            
+
+    async def update_database_with_result(self, ctx: Context, result: Side) -> None:
+        if self.current_game is None:
+            raise OneHeadException("Failed to update database as there is no active game")
+
+        if isinstance(self.current_game, ClassicGame) is False:
+            raise OneHeadException(
+                "Attempted to update database with a ClassicGame result when the active game is a Challenge"
+            )
+
+        self.current_game = cast(ClassicGame, self.current_game)
+        if self.current_game.radiant is None or self.current_game.dire is None:
+            raise OneHeadException("Unable to update database due to invalid teams")
+
+        radiant_names: tuple[str, ...]
+        dire_names: tuple[str, ...]
+
+        radiant_names, dire_names = get_player_names(self.current_game.radiant, self.current_game.dire)
+
+        if result == Side.RADIANT:
+
+            await ctx.send("`Radiant` victory!")
+
+            for player in radiant_names:
+                m: Member | None = get_discord_member_from_name(ctx, player)
+
+                if m is None:
+                    continue
+
+                self.database.modify(m.id, "win", 1, Operation.ADD)
+                self.database.modify(m.id, "win_streak", 1, Operation.ADD)
+                self.database.modify(m.id, "loss_streak", 0)
+                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
+
+            for player in dire_names:
+                m: Member | None = get_discord_member_from_name(ctx, player)
+
+                if m is None:
+                    continue
+
+                self.database.modify(m.id, "loss", 1, Operation.ADD)
+                self.database.modify(m.id, "loss_streak", 1, Operation.ADD)
+                self.database.modify(m.id, "win_streak", 0)
+                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
+
+        elif result == Side.DIRE:
+
+            await ctx.send("`Dire` victory!")
+
+            for player in radiant_names:
+                m: Member | None = get_discord_member_from_name(ctx, player)
+
+                if m is None:
+                    continue
+
+                self.database.modify(m.id, "loss", 1, Operation.ADD)
+                self.database.modify(m.id, "loss_streak", 1, Operation.ADD)
+                self.database.modify(m.id, "win_streak", 0)
+                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
+
+            for player in dire_names:
+                m: Member | None = get_discord_member_from_name(ctx, player)
+
+                if m is None:
+                    continue
+
+                self.database.modify(m.id, "win", 1, Operation.ADD)
+                self.database.modify(m.id, "win_streak", 1, Operation.ADD)
+                self.database.modify(m.id, "loss_streak", 0)
+                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
+
     async def handle_classic_game_result(self, ctx: Context, result: str) -> None:
         self.current_game = cast(ClassicGame, self.current_game)
-    
+
         if self.current_game.transfer_window_open():
             await ctx.send(
                 "Cannot enter result as the transfer window for the game is currently open. Use the `!stop` command if you wish to abort the game."
@@ -286,6 +357,8 @@ class Core(Cog):
             await ctx.send(f"Must be either {Side.RADIANT} or {Side.DIRE}.")
             return
 
+        result = cast(Side, result)
+
         await self.channels.move_back_to_lobby(ctx)
 
         log.info(f"{ctx.author.display_name} entered a result of {result}.")
@@ -297,46 +370,14 @@ class Core(Cog):
 
         log.info(f"Game {metadata['game_id']} has ended.")
 
-        radiant_names: tuple[str, ...]
-        dire_names: tuple[str, ...]
-
-        radiant_names, dire_names = get_player_names(self.current_game.radiant, self.current_game.dire)
-
         await play_sound(ctx, "result.mp3")
 
-        if result == Side.RADIANT:
-            await ctx.send("`Radiant` victory!")
-            for player in radiant_names:
-                m: Member | None = get_discord_member_from_name(ctx, player)
-                self.database.modify(m.id, "win", 1, Operation.ADD)
-                self.database.modify(m.id, "win_streak", 1, Operation.ADD)
-                self.database.modify(m.id, "loss_streak", 0)
-                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
-            for player in dire_names:
-                m: Member | None = get_discord_member_from_name(ctx, player)
-                self.database.modify(m.id, "loss", 1, Operation.ADD)
-                self.database.modify(m.id, "loss_streak", 1, Operation.ADD)
-                self.database.modify(m.id, "win_streak", 0)
-                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
-        elif result == Side.DIRE:
-            await ctx.send("`Dire` victory!")
-            for player in radiant_names:
-                m: Member | None = get_discord_member_from_name(ctx, player)
-                self.database.modify(m.id, "loss", 1, Operation.ADD)
-                self.database.modify(m.id, "loss_streak", 1, Operation.ADD)
-                self.database.modify(m.id, "win_streak", 0)
-                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
-            for player in dire_names:
-                m: Member | None = get_discord_member_from_name(ctx, player)
-                self.database.modify(m.id, "win", 1, Operation.ADD)
-                self.database.modify(m.id, "win_streak", 1, Operation.ADD)
-                self.database.modify(m.id, "loss_streak", 0)
-                self.database.modify(m.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
-
         await ctx.send("Updating scores...")
+        await self.update_database_with_result(ctx, result)
+
         scoreboard: Command = self.bot.get_command("scoreboard")  # type: ignore[assignment]
         await Command.invoke(scoreboard, ctx)
-        
+
         metadata["game_id"] += 1
         self.database.update_metadata(metadata)
 
@@ -347,7 +388,6 @@ class Core(Cog):
             self.database.update_metadata(metadata)
             # TODO: Make a big song and dance about the end of an IHL season, present winners, go crazy.
 
-
     @has_role(Roles.ADMIN)
     @command()
     @max_concurrency(1, per=BucketType.default, wait=False)
@@ -355,7 +395,7 @@ class Core(Cog):
         """
         Provide the result of game that has finished.
         """
-        
+
         if self.current_game is None:
             return
 
@@ -376,20 +416,24 @@ class Core(Cog):
         else:
             self.current_game = cast(Challenge, self.current_game)
             await ctx.send("")
-            
+
             winner: Member | None = get_discord_member_from_name(ctx, result)
-                
+
             if winner not in (self.current_game.challenger, self.current_game.opponent):
-                await ctx.send(f"Must specify either {self.current_game.challenger.mention} or {self.current_game.opponent.mention} as the winner when entering a result.")
+                await ctx.send(
+                    f"Must specify either {self.current_game.challenger.mention} or {self.current_game.opponent.mention} as the winner when entering a result."
+                )
                 return
-            
+
             bet_results: dict = self.betting.get_bet_results(winner)
 
         for name, bets in bet_results.items():
             for bet_result in bets:
                 if bet_result > 0:
-                    m: Member | None = get_discord_member_from_name(ctx, name)
-                    self.database.modify(m.id, "rbucks", bet_result, Operation.ADD)
+                    member: Member | None = get_discord_member_from_name(ctx, name)
+                    if member is None:
+                        continue
+                    self.database.modify(member.id, "rbucks", bet_result, Operation.ADD)
 
         if len(bet_results) > 0:
             report: Embed = self.betting.create_bet_report(bet_results)
@@ -403,7 +447,7 @@ class Core(Cog):
         """
         If a game is active, displays the teams and their respective players.
         """
-        
+
         if self.current_game is None:
             await ctx.send("No currently active game.")
             return
@@ -427,8 +471,9 @@ class Core(Cog):
                         f"{in_game_players}```"
                     )
             elif isinstance(self.current_game, Challenge):
-                await ctx.send(f"**Current Duel** - {self.current_game.challenger.mention} vs. {self.current_game.opponent.mention}")
-                
+                await ctx.send(
+                    f"**Current Duel** - {self.current_game.challenger.mention} vs. {self.current_game.opponent.mention}"
+                )
 
     @has_role(Roles.MEMBER)
     @command()

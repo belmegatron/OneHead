@@ -1,6 +1,6 @@
 from pathlib import Path
-from typing import cast
 import time
+from typing import cast
 
 from discord.ext import commands
 from tinydb import Query, TinyDB
@@ -27,7 +27,7 @@ class Database(commands.Cog):
 
     def _get_document(self, id: int) -> Document | None:
         User: Query = Query()
-        result: Document | None = self.players.get(User.id == id)
+        result: Document | None = cast(Document | None, self.players.get(User.id == id))
         return result
 
     def get(self, id: int) -> Player | None:
@@ -92,7 +92,7 @@ class Database(commands.Cog):
 
     def get_metadata(self) -> Metadata:
         q: Query = Query()
-        result: Document | None = self.metadata.get(q.name == "season")
+        result: Document | None = cast(Document | None, self.metadata.get(q.name == "season"))
         meta: Metadata | None = cast(Metadata, result)
         return meta
 

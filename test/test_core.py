@@ -44,7 +44,7 @@ class TestStart:
 
         await dpytest.message("!start")
         assert dpytest.verify().message().content("Only `2` signup(s), require `8` more.")
-    
+
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")

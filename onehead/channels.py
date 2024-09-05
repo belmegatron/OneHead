@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from discord import VoiceChannel
 from discord.errors import HTTPException
@@ -9,7 +9,7 @@ from discord.member import Member
 from structlog import get_logger
 
 from onehead.common import OneHeadException, get_bot_instance, get_player_names
-from onehead.game import Game
+from onehead.game import Game, ClassicGame
 
 if TYPE_CHECKING:
     from onehead.core import Core
@@ -27,8 +27,17 @@ class Channels(Cog):
 
     def get_discord_members(self, ctx: Context) -> tuple[list[Member], list[Member]]:
         bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")  # type: ignore[assignment]
+        core: Core = cast(Core, bot.get_cog("Core"))
         current_game: Game | None = core.current_game
+
+        guild: Guild | None = ctx.guild
+        if guild is None:
+            raise OneHeadException("No Guild associated with Discord Context")
+
+        if isinstance(current_game, ClassicGame) is False:
+            raise OneHeadException("Attempted to retrieve radiant/dire members but current game is not a ClassicGame")
+
+        current_game = cast(ClassicGame, current_game)
 
         if current_game is None or current_game.radiant is None or current_game.dire is None:
             raise OneHeadException("Unable to get discord members due to invalid game state.")
@@ -38,8 +47,8 @@ class Channels(Cog):
 
         t1_names, t2_names = get_player_names(current_game.radiant, current_game.dire)
 
-        t1_discord_members: list[Member] = [x for x in ctx.guild.members if x.display_name in t1_names]
-        t2_discord_members: list[Member] = [x for x in ctx.guild.members if x.display_name in t2_names]
+        t1_discord_members: list[Member] = [x for x in guild.members if x.display_name in t1_names]
+        t2_discord_members: list[Member] = [x for x in guild.members if x.display_name in t2_names]
 
         return t1_discord_members, t2_discord_members
 

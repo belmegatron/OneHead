@@ -49,7 +49,7 @@ class Game:
     def get_bets(self) -> list[Bet]:
         return self._bets
 
-  
+
 class ClassicGame(Game):
     def __init__(self) -> None:
         super().__init__()
@@ -76,10 +76,10 @@ class ClassicGame(Game):
         finally:
             self._transfer_window_open = False
             await ctx.send("Player transfer window has now closed!")
-        
+
     def transfer_window_open(self) -> bool:
         return self._transfer_window_open
-    
+
     def get_player_transfers(self) -> list[PlayerTransfer]:
         return self._player_transfers
 

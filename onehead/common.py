@@ -1,23 +1,22 @@
 from asyncio import sleep
 from dataclasses import dataclass
-from enum import EnumMeta, auto
+from enum import StrEnum
 from logging import Logger
 import json
 from pathlib import Path
-from typing import Any, Literal, Optional, TypedDict
 from structlog import get_logger
+from typing import TypedDict, cast
 
-from discord.channel import VoiceChannel
+from discord.channel import VocalGuildChannel
 from discord.ext.commands import Bot, Context
 from discord.errors import ClientException
 from discord.member import Member
 from discord.player import FFmpegPCMAudio
 from discord.voice_client import VoiceClient
 
-from strenum import LowercaseStrEnum, StrEnum
-
 
 log: Logger = get_logger()
+
 
 Player = TypedDict(
     "Player",
@@ -34,7 +33,7 @@ Player = TypedDict(
         "%": float,
         "commends": int,
         "reports": int,
-        "behaviour": int
+        "behaviour": int,
     },
 )
 
@@ -52,31 +51,19 @@ Metadata = TypedDict(
 )
 
 # We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
-bot: Optional[Bot] = None
+bot: Bot | None = None
 
 ROOT_DIR: Path = Path(__file__).resolve().parent.parent
 
 
-class EnumeratorMeta(EnumMeta):
-    def __contains__(cls, member: Any) -> bool:
-        if type(member) == cls:
-            return EnumMeta.__contains__(cls, member)
-        else:
-            try:
-                cls(member)
-            except ValueError:
-                return False
-            return True
-
-
 class Roles(StrEnum):
-    ADMIN: Literal["IHL Admin"] = "IHL Admin"
-    MEMBER: Literal["IHL"] = "IHL"
+    ADMIN = "IHL Admin"
+    MEMBER = "IHL"
 
 
-class Side(LowercaseStrEnum, metaclass=EnumeratorMeta):
-    RADIANT = auto()
-    DIRE = auto()
+class Side(StrEnum):
+    RADIANT = "radiant"
+    DIRE = "dire"
 
 
 @dataclass
@@ -88,12 +75,12 @@ class PlayerTransfer:
 @dataclass
 class Bet:
     bettor: str
-    selection: Side | Member
+    selection: str
     stake: int
     price: float = 2.0
 
 
-class OneHeadException(BaseException):
+class OneHeadException(Exception):
     pass
 
 
@@ -147,7 +134,7 @@ def update_config(updated_config: dict) -> None:
 def get_discord_member_from_name(ctx: Context, name: str) -> Member | None:
     if ctx.guild is None:
         return None
-    
+
     if is_mention(name):
         id: int = get_discord_id_from_mention(name)
         return get_discord_member_from_id(ctx, id)
@@ -162,11 +149,11 @@ def get_discord_member_from_name(ctx: Context, name: str) -> Member | None:
 def get_discord_member_from_id(ctx: Context, id: int) -> Member | None:
     if ctx.guild is None:
         return None
-    
+
     for member in ctx.guild.members:
         if member.id == id:
             return member
- 
+
     return None
 
 
@@ -184,9 +171,9 @@ def get_discord_id_from_mention(mention: str) -> int:
 
 
 async def play_sound(ctx: Context, file_name: str) -> None:
-    voice_client: VoiceClient | None = ctx.voice_client
+    voice_client: VoiceClient | None = cast(VoiceClient | None, ctx.voice_client)
     if voice_client is None:
-        voice_channel: VoiceChannel | None = ctx.author.voice.channel
+        voice_channel: VocalGuildChannel | None = ctx.author.voice.channel
         if voice_channel:
             voice_client = await voice_channel.connect()
     elif voice_client.channel.name != ctx.author.voice.channel.name:
@@ -200,7 +187,7 @@ async def play_sound(ctx: Context, file_name: str) -> None:
 
 async def voice_client_disconnect(ctx: Context) -> None:
     while True:
-        voice_client: VoiceClient | None = ctx.voice_client
+        voice_client: VoiceClient | None = cast(VoiceClient | None, ctx.voice_client)
         if voice_client and voice_client.is_playing() is False:
             await voice_client.disconnect()
             break

@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any
 
 from discord.ext.commands import Cog, Context, command, has_role
 from tabulate import tabulate
@@ -11,7 +11,7 @@ from onehead.statistics import Statistics
 class ScoreBoard(Cog):
     # It's actually 2000, but we prepend a small number of characters before our scoreboard so need to take
     # this into account.
-    DISCORD_MAX_MESSAGE_LENGTH: Literal[1950] = 1950
+    DISCORD_MAX_MESSAGE_LENGTH: int = 1950
 
     def __init__(self, database: OneHeadDatabase) -> None:
         self.database: OneHeadDatabase = database

@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, cast
 
 from discord.member import Member
 from discord.ext.commands import Bot, Cog, Context, command, has_role
@@ -30,7 +30,7 @@ log: Logger = get_logger()
 
 
 class Transfers(Cog):
-    SHUFFLE_COST: Literal[500] = 500
+    SHUFFLE_COST: int = 500
 
     def __init__(self, database: OneHeadDatabase, lobby: Lobby) -> None:
         self.database: OneHeadDatabase = database
@@ -38,11 +38,11 @@ class Transfers(Cog):
 
     async def refund_transfers(self, ctx: Context) -> None:
         bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")  # type: ignore[assignment]
-        
+        core: Core = cast(Core, bot.get_cog("Core"))
+
         if isinstance(core.current_game, ClassicGame) is False:
             return
-        
+
         current_game: ClassicGame = cast(ClassicGame, core.current_game)
 
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
@@ -67,10 +67,10 @@ class Transfers(Cog):
         """
 
         bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")  # type: ignore[assignment]
+        core: Core = cast(Core, bot.get_cog("Core"))
         if isinstance(core.current_game, ClassicGame) is False:
             return
-        
+
         current_game: ClassicGame = cast(ClassicGame, core.current_game)
 
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
@@ -114,7 +114,7 @@ class Transfers(Cog):
             current_game.radiant, current_game.dire
         )
 
-        matchmaking: Matchmaking = bot.get_cog("Matchmaking")  # type: ignore[assignment]
+        matchmaking: Matchmaking = cast(Matchmaking, bot.get_cog("Matchmaking"))
 
         shuffled_teams: tuple[Team, Team] = await matchmaking.balance(ctx)
 

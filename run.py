@@ -19,10 +19,12 @@ async def main() -> None:
     loop.set_exception_handler(global_exception_handler)
     await bot.start(core.token)
 
+
 def global_exception_handler(_: asyncio.AbstractEventLoop, context: dict) -> None:
-    ex: Exception | None = context.get('exception')
+    ex: Exception | None = context.get("exception")
     if ex:
         print_exception(ex)
+
 
 if __name__ == "__main__":
     asyncio.run(main(), debug=True)

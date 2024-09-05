@@ -1,14 +1,11 @@
 from logging import Logger
 
+from discord.guild import Guild
 from discord.member import Member
 from discord.ext.commands import Cog, Context, command, has_role
 from structlog import get_logger
 
-from onehead.common import (
-    Player,
-    Roles,
-    get_discord_member_from_name
-)
+from onehead.common import Player, Roles, get_discord_member_from_name, OneHeadException
 from onehead.protocols.database import OneHeadDatabase
 
 
@@ -45,7 +42,7 @@ class Registration(Cog):
             await ctx.send(f"`{mmr}` MMR is too high, must be less than or equal to `{self.MAX_MMR}`.")
             return
 
-        player: Player | None = self.database.get(id)
+        player: Player | None = self.database.get(ctx.author.id)
         if player is None:
             self.database.add(ctx.author.id, ctx.author.display_name, mmr_int)
             log.info(f"{ctx.author.display_name} registered with an MMR of {mmr}.")
@@ -59,10 +56,13 @@ class Registration(Cog):
         """
         Removes a player from the internal IHL database.
         """
+        guild: Guild | None = ctx.guild
+        if guild is None:
+            raise OneHeadException("No Guild associated with Discord Context")
 
         member: Member | None = get_discord_member_from_name(ctx, name)
         if member is None:
-            await ctx.send(f"{name} could not be found in the {ctx.guild.name} guild.")
+            await ctx.send(f"{name} could not be found in the {guild.name} guild.")
             return
 
         player: Player | None = self.database.get(member.id)

@@ -1,11 +1,9 @@
-from typing import Literal
-
 from onehead.common import Player
 
 
 class Statistics:
-    BASELINE_RATING: Literal[1500] = 1500
-    MMR_DELTA: Literal[50] = 50
+    BASELINE_RATING: int = 1500
+    MMR_DELTA: int = 50
 
     @staticmethod
     def calculate_win_percentage(profiles: list[Player]) -> None:

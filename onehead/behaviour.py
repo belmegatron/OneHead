@@ -1,6 +1,7 @@
 from logging import Logger
 from typing import TYPE_CHECKING, cast
 
+from discord.guild import Guild
 from discord.member import Member
 from discord.ext.commands import Bot, Cog, Context, command, has_role
 from discord.user import User
@@ -12,9 +13,9 @@ from onehead.common import (
     get_bot_instance,
     get_player_names,
     get_discord_member_from_name,
-    get_discord_member_from_id,
-    is_mention,
+    OneHeadException,
 )
+
 from onehead.game import Game, ClassicGame
 from onehead.protocols.database import OneHeadDatabase, Operation
 
@@ -42,16 +43,20 @@ class Behaviour(Cog):
         """
 
         bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")  # type: ignore[assignment]
+        core: Core = cast(Core, bot.get_cog("Core"))
         previous_game: Game | None = core.previous_game
+
+        guild: Guild | None = ctx.guild
+        if guild is None:
+            raise OneHeadException("No Guild associated with Discord Context")
 
         if previous_game is None:
             await ctx.send("Unable to commend as a game is yet to be played.")
             return
-        
+
         if isinstance(previous_game, ClassicGame):
             previous_game = cast(ClassicGame, previous_game)
-        
+
             if previous_game.radiant is None or previous_game.dire is None:
                 return
 
@@ -70,7 +75,7 @@ class Behaviour(Cog):
             commendee: Member | None = get_discord_member_from_name(ctx, target)
 
             if commendee is None:
-                await ctx.send(f"Unable to commend {target} as they do not exist in the {ctx.guild.name} guild.")
+                await ctx.send(f"Unable to commend {target} as they do not exist in the {guild.name} guild.")
                 return
 
             if commender.id == commendee.id:
@@ -78,7 +83,9 @@ class Behaviour(Cog):
                 return
 
             if commendee.display_name not in radiant and commendee.display_name not in dire:
-                await ctx.send(f"{commendee.mention} cannot be commended as they did not participate in the previous game.")
+                await ctx.send(
+                    f"{commendee.mention} cannot be commended as they did not participate in the previous game."
+                )
                 return
 
             if previous_game.has_been_previously_commended(commender.display_name, commendee.display_name):
@@ -111,61 +118,70 @@ class Behaviour(Cog):
         """
 
         bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")  # type: ignore[assignment]
+        core: Core = cast(Core, bot.get_cog("Core"))
         previous_game: Game | None = core.previous_game
+
+        guild: Guild | None = ctx.guild
+        if guild is None:
+            raise OneHeadException("No Guild associated with Discord Context")
 
         if previous_game is None:
             await ctx.send("Unable to report as a game is yet to be played.")
             return
-        
-        if isinstance(previous_game, ClassicGame):
-            previous_game = cast(ClassicGame, previous_game)
-        
-            if previous_game.radiant is None or previous_game.dire is None:
-                return
 
-            reporter: Member | User = ctx.author
+        if isinstance(previous_game, ClassicGame) is False:
+            raise OneHeadException("Attempted to report a player in a game which was not a ClassicGame")
 
-            radiant: tuple[str, ...]
-            dire: tuple[str, ...]
-            radiant, dire = get_player_names(previous_game.radiant, previous_game.dire)
+        previous_game = cast(ClassicGame, previous_game)
 
-            if reporter.display_name not in radiant and reporter.display_name not in dire:
-                await ctx.send(
-                    f"{reporter.mention} did not participate in the previous game and therefore cannot report another player."
-                )
-                return
+        if previous_game.radiant is None or previous_game.dire is None:
+            raise OneHeadException("Failed to report a player due to ivalid game state in previous game")
 
-            reported: Member | None = get_discord_member_from_name(ctx, target)
+        reporter: Member | User = ctx.author
 
-            if reporter.id == reported.id:
-                await ctx.send(
-                    f"{reporter.mention} has brought dishonour upon themselves and has attempted to commit seppuku. OneHead will now allow it... UWU!"
-                )
-                return
+        radiant: tuple[str, ...]
+        dire: tuple[str, ...]
+        radiant, dire = get_player_names(previous_game.radiant, previous_game.dire)
 
-            if reported.display_name not in radiant and reported.display_name not in dire:
-                await ctx.send(f"{reported.mention} cannot be reported as they did not participate in the previous game.")
-                return
+        if reporter.display_name not in radiant and reporter.display_name not in dire:
+            await ctx.send(
+                f"{reporter.mention} did not participate in the previous game and therefore cannot report another player."
+            )
+            return
 
-            if previous_game.has_been_previously_reported(reporter.display_name, reported.display_name):
-                await ctx.send(f"{reported.mention} has already been reported by {reporter.mention}.")
-                return
+        reported: Member | None = get_discord_member_from_name(ctx, target)
+        if reported is None:
+            await ctx.send(f"Unable to report {target} as they do not exist in {guild.name}")
+            return
 
-            reported_record: Player | None = self.database.get(reported.id)
-            if reported_record is None:
-                await ctx.send(f"{reported.mention} could not be found in the database.")
-                return
+        if reporter.id == reported.id:
+            await ctx.send(
+                f"{reporter.mention} has brought dishonour upon themselves and has attempted to commit seppuku. OneHead will now allow it... UWU!"
+            )
+            return
 
-            current_behaviour_score: int = reported_record["behaviour"]
+        if reported.display_name not in radiant and reported.display_name not in dire:
+            await ctx.send(f"{reported.mention} cannot be reported as they did not participate in the previous game.")
+            return
 
-            new_score: int = max(current_behaviour_score + self.REPORT_MODIFIER, self.MIN_BEHAVIOUR_SCORE)
+        if previous_game.has_been_previously_reported(reporter.display_name, reported.display_name):
+            await ctx.send(f"{reported.mention} has already been reported by {reporter.mention}.")
+            return
 
-            self.database.modify(reported.id, "behaviour", new_score)
-            self.database.modify(reported.id, "reports", 1, Operation.ADD)
+        reported_record: Player | None = self.database.get(reported.id)
+        if reported_record is None:
+            await ctx.send(f"{reported.mention} could not be found in the database.")
+            return
 
-            previous_game.add_report(reporter.display_name, reported.display_name)
+        current_behaviour_score: int = reported_record["behaviour"]
 
-            log.info(f"{reporter.display_name} reported {reported.display_name} for the following reason: {reason}.")
+        new_score: int = max(current_behaviour_score + self.REPORT_MODIFIER, self.MIN_BEHAVIOUR_SCORE)
 
-            await ctx.send(f"{reported.mention} has been reported.")
+        self.database.modify(reported.id, "behaviour", new_score)
+        self.database.modify(reported.id, "reports", 1, Operation.ADD)
+
+        previous_game.add_report(reporter.display_name, reported.display_name)
+
+        log.info(f"{reporter.display_name} reported {reported.display_name} for the following reason: {reason}.")
+
+        await ctx.send(f"{reported.mention} has been reported.")
