@@ -71,6 +71,7 @@ class Betting(Cog):
         core: Core = bot.get_cog("Core")    # type: ignore
         current_game: Game | None = core.current_game
         if current_game is None:
+            await ctx.send("There is no active game to currently bet on.")
             return
 
         active_bets: list[Bet] = current_game.get_bets()
@@ -105,6 +106,11 @@ class Betting(Cog):
         if record is None:
             await ctx.send(f"Unable to find {ctx.author.mention} in database.")
             return None
+        
+        available_balance: int = record.get("rbucks")
+        if available_balance == 0:
+            await ctx.send(f"{ctx.author.mention} cannot bet as they have no available RBUCKS.")
+            return
 
         bet: Bet | None = await self.parse_bet_arguments(ctx, current_game, first, second, record)
         if bet is None:
@@ -113,8 +119,7 @@ class Betting(Cog):
         if bet.stake <= 0:
             await ctx.send(f"{ctx.author.mention} - Bet stake must be greater than 0.")
             return
-
-        available_balance: int = record.get("rbucks")
+        
         if bet.stake > available_balance:
             await ctx.send(
                 f"Unable to place bet - {ctx.author.mention} tried to stake `{bet.stake:.0f}` RBUCKS but only has `{available_balance:.0f}` RBUCKS available."
@@ -215,7 +220,7 @@ class Betting(Cog):
                 selection = second
                 amount = first
             else:
-                await ctx.send(f"{ctx.author.mention}, you must on either {Side.RADIANT} or {Side.DIRE}.")
+                await ctx.send(f"{ctx.author.mention}, you must bet on either {Side.RADIANT} or {Side.DIRE}.")
                 return None                
         elif isinstance(current_game, Challenge):
             member: Member | None = get_discord_member_from_name(ctx, first)

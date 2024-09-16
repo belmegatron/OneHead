@@ -398,6 +398,11 @@ class Core(Cog):
         if self.current_game is None or self.current_game.in_progress() is False:
             await ctx.send("No currently active game.")
             return
+        
+        if isinstance(self.current_game, ClassicGame):
+            self.current_game = cast(ClassicGame, self.current_game)
+            if self.current_game.transfer_window_open():
+                await ctx.send("Cannot enter result as the transfer window for the game is currently open. Use the `!stop` command if you wish to abort the game.")
 
         if self.current_game.betting_window_open():
             await ctx.send(

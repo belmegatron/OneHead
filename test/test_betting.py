@@ -1,15 +1,17 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
 import discord.ext.test as dpytest
 import pytest
 from conftest import add_ihl_role
-from discord import Embed, colour
 from discord.ext.commands import Bot, errors
 from discord.member import Member
 
-from onehead.betting import Bet
-from onehead.common import Side
+from onehead.betting import Bet, Betting
+from onehead.challenge import Challenge
+from onehead.common import Side, Player
 from onehead.core import Core
+from onehead.database import Database
+from onehead.game import ClassicGame
 
 
 class TestBets:
@@ -22,26 +24,18 @@ class TestBets:
     async def test_no_bets(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
-        embed: Embed = Embed(colour=colour.Colour.green())
-        embed.add_field(name="Active Bets", value="``````")
-
         await dpytest.message("!bets")
-        assert dpytest.verify().message().embed(embed)
-
+        assert dpytest.verify().message().content("There is no active game to currently bet on.")
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         core.current_game._bets.append(Bet("dire", 1000, "RBEEZAY"))
 
-        embed: Embed = Embed(colour=colour.Colour.green())
-        embed.add_field(
-            name="Active Bets",
-            value="```side      stake  player\n------  -------  --------\ndire       1000  RBEEZAY```",
-        )
         await dpytest.message("!bets")
-        assert dpytest.verify().message().embed(embed)
+        assert dpytest.verify().message().content("**Bets** ```\n").contains()
 
 
 class TestPlaceBet:
@@ -53,6 +47,8 @@ class TestPlaceBet:
     @pytest.mark.asyncio
     async def test_betting_window_closed(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
+        core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         await dpytest.message("!bet dire all")
         assert dpytest.verify().message().content("Betting window closed.")
 
@@ -60,6 +56,7 @@ class TestPlaceBet:
     async def test_player_does_not_exist(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
         core.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} all")
         assert dpytest.verify().message().content(f"Unable to find").contains()
@@ -69,11 +66,12 @@ class TestPlaceBet:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
+        core.current_game._betting_window_open = True
 
         core.database.get = Mock()
         core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 0}
 
-        core.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
         assert dpytest.verify().message().content("cannot bet as they have no available RBUCKS.").contains()
 
@@ -82,19 +80,21 @@ class TestPlaceBet:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
 
         core.database.get = Mock()
         core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
 
         core.current_game._betting_window_open = True
         await dpytest.message("!bet derp all", 0, member)
-        assert dpytest.verify().message().content("Cannot bet on").contains()
+        assert dpytest.verify().message().content(f"you must bet on either {Side.RADIANT} or {Side.DIRE}.").contains()
 
     @pytest.mark.asyncio
     async def test_stake_not_valid_int(self, bot: Bot) -> None:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
 
         core.database.get = Mock()
         core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
@@ -108,6 +108,7 @@ class TestPlaceBet:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
 
         core.database.get = Mock()
         core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
@@ -121,6 +122,7 @@ class TestPlaceBet:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
 
         core.database.get = Mock()
         record = {"name": "RBEEZAY", "rbucks": 100}
@@ -136,6 +138,7 @@ class TestPlaceBet:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
         core: Core = bot.get_cog("Core")
+        core.current_game = ClassicGame()
 
         core.database.get = Mock()
         record = {"name": "RBEEZAY", "rbucks": 100}
@@ -150,55 +153,55 @@ class TestPlaceBet:
 
 class TestCalculateOdds:
     @pytest.mark.asyncio
-    async def test_challenger_favoured(self, bot: Bot):
+    async def test_challenger_favoured(self, bot: Bot) -> None:
         db = MagicMock(spec=Database)
-        cm: ChallengeMode = ChallengeMode(db)
+        betting: Betting = Betting(db, MagicMock())
         challenger: Member = await dpytest.member_join(name="RBEEZAY")
         opponent: Member = await dpytest.member_join(name="GEE")
 
-        challenger_record: Player = {"adjusted_mmr": 3000}
-        opponent_record: Player = {"adjusted_mmr": 2000}
+        challenger_record: Player = {"mmr": 3000}
+        opponent_record: Player = {"mmr": 2000}
 
         db.get.side_effect = [challenger_record, opponent_record]
 
-        challenge: Challenge = Challenge(0, datetime.now(), challenger, opponent)
+        challenge: Challenge = Challenge(0, challenger, opponent)
 
-        challenger_odds, opponent_odds = cm.calculate_odds(challenge)
+        challenger_odds, opponent_odds = betting.calculate_challenge_odds(challenge)
         assert challenger_odds == 1.5
         assert opponent_odds == 3.0
 
     @pytest.mark.asyncio
-    async def test_opponent_favoured(self, bot: Bot):
+    async def test_opponent_favoured(self, bot: Bot) -> None:
         db = MagicMock(spec=Database)
-        cm: ChallengeMode = ChallengeMode(db)
+        betting: Betting = Betting(db, MagicMock())
         challenger: Member = await dpytest.member_join(name="RBEEZAY")
         opponent: Member = await dpytest.member_join(name="GEE")
 
-        challenger_record: Player = {"adjusted_mmr": 2000}
-        opponent_record: Player = {"adjusted_mmr": 3000}
+        challenger_record: Player = {"mmr": 2000}
+        opponent_record: Player = {"mmr": 3000}
 
         db.get.side_effect = [challenger_record, opponent_record]
 
-        challenge: Challenge = Challenge(0, datetime.now(), challenger, opponent)
+        challenge: Challenge = Challenge(0, challenger, opponent)
 
-        challenger_odds, opponent_odds = cm.calculate_odds(challenge)
+        challenger_odds, opponent_odds = betting.calculate_challenge_odds(challenge)
         assert challenger_odds == 3.0
         assert opponent_odds == 1.5
 
     @pytest.mark.asyncio
-    async def test_equal_odds(self, bot: Bot):
+    async def test_equal_odds(self, bot: Bot) -> None:
         db = MagicMock(spec=Database)
-        cm: ChallengeMode = ChallengeMode(db)
+        betting: Betting = Betting(db, MagicMock())
         challenger: Member = await dpytest.member_join(name="RBEEZAY")
         opponent: Member = await dpytest.member_join(name="GEE")
 
-        challenger_record: Player = {"adjusted_mmr": 3000}
-        opponent_record: Player = {"adjusted_mmr": 3000}
+        challenger_record: Player = {"mmr": 3000}
+        opponent_record: Player = {"mmr": 3000}
 
         db.get.side_effect = [challenger_record, opponent_record]
 
-        challenge: Challenge = Challenge(0, datetime.now(), challenger, opponent)
+        challenge: Challenge = Challenge(0, challenger, opponent)
 
-        challenger_odds, opponent_odds = cm.calculate_odds(challenge)
+        challenger_odds, opponent_odds = betting.calculate_challenge_odds(challenge)
         assert challenger_odds == 2.0
         assert opponent_odds == 2.0

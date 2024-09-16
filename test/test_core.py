@@ -4,10 +4,11 @@ from unittest.mock import AsyncMock, patch, Mock
 import discord.ext.test as dpytest
 import pytest
 from conftest import add_ihl_role
-from discord.ext.commands import Bot, errors
+from discord.ext.commands import Bot, errors, CommandInvokeError
 
 from onehead.betting import Bet
-from onehead.common import OneHeadException, Player, Side, Team
+
+from onehead.common import Player, Side
 from onehead.core import Core
 from onehead.game import Game, ClassicGame
 from onehead.lobby import Lobby
@@ -66,12 +67,11 @@ class TestStart:
         ]
         core.matchmaking.balance = balance
         core.setup_team_channels = AsyncMock()
-        core.current_game = ClassicGame()
-        core.current_game.open_transfer_window = AsyncMock()
-        core.current_game.open_betting_window = AsyncMock()
-
-        with patch("onehead.core.play_sound"):
-            await dpytest.message("!start")
+        
+        with patch("onehead.game.ClassicGame.open_transfer_window"):
+            with patch("onehead.game.Game.open_betting_window"):
+                with patch("onehead.core.play_sound"):
+                    await dpytest.message("!start")
 
         assert dpytest.verify().message().content("Starting game:").contains()
         assert dpytest.verify().message().content("**Current Game**").contains()
@@ -174,7 +174,7 @@ class TestResult:
 
         core.channels.move_back_to_lobby = AsyncMock()
 
-        with pytest.raises(OneHeadException):
+        with pytest.raises(CommandInvokeError):
             await dpytest.message(f"!result {Side.RADIANT}")
 
     @pytest.mark.asyncio
@@ -189,8 +189,8 @@ class TestResult:
         current_game.radiant = [Player(name="RBEEZAY")]
         current_game.dire = []
         current_game._bets = [
-            Bet(Side.RADIANT, 100, "RBEEZAY"),
-            Bet(Side.DIRE, 500, "RBEEZAY"),
+            Bet("RBEEZAY", Side.RADIANT, 100),
+            Bet("RBEEZAY", Side.DIRE, 500),
         ]
 
         core.scoreboard.scoreboard = AsyncMock()

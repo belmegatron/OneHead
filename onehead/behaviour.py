@@ -135,7 +135,7 @@ class Behaviour(Cog):
         previous_game = cast(ClassicGame, previous_game)
 
         if previous_game.radiant is None or previous_game.dire is None:
-            raise OneHeadException("Failed to report a player due to ivalid game state in previous game")
+            raise OneHeadException("Failed to report a player due to invalid game state in previous game")
 
         reporter: Member | User = ctx.author
 
