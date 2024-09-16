@@ -1,22 +1,19 @@
 from dataclasses import asdict
 from logging import Logger
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from discord import Embed, colour
 from discord.member import Member
-from discord.ext.commands import Bot, Cog, Context, command, has_role
+from discord.ext.commands import Cog, Context, command, has_role
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import Bet, Player, Roles, Side, get_bot_instance, get_discord_member_from_name, play_sound
+from onehead.common import Bet, Player, Roles, Side, get_discord_member_from_name, play_sound
+from onehead.store import GameStore
 from onehead.game import Game, Challenge, ClassicGame
-from onehead.protocols.database import OneHeadDatabase, Operation
+from onehead.protocols.database import PlayerDatabase, Operation
 from onehead.lobby import Lobby
 from onehead.challenge import ChallengeMode
-
-
-if TYPE_CHECKING:
-    from onehead.core import Core
 
 
 log: Logger = get_logger()
@@ -27,14 +24,13 @@ class Betting(Cog):
     REWARD_ON_WIN: int = 100
     REWARD_ON_LOSS: int = 50
 
-    def __init__(self, database: OneHeadDatabase, lobby: Lobby) -> None:
-        self.database: OneHeadDatabase = database
+    def __init__(self, store: GameStore, database: PlayerDatabase, lobby: Lobby) -> None:
+        self.store: GameStore = store
+        self.database: PlayerDatabase = database
         self.lobby: Lobby = lobby
 
     def get_bet_results(self, winner: Side | Member) -> dict[str, list[float]]:
-        bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")    # type: ignore
-        current_game: Game | None = core.current_game
+        current_game: Game | None = self.store.current_game
 
         bet_results: dict[str, list[float]] = {}
 
@@ -67,9 +63,8 @@ class Betting(Cog):
         """
         Lists active bets for the current game.
         """
-        bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")    # type: ignore
-        current_game: Game | None = core.current_game
+        current_game: Game | None = self.store.current_game
+
         if current_game is None:
             await ctx.send("There is no active game to currently bet on.")
             return
@@ -90,9 +85,7 @@ class Betting(Cog):
         e.g. !bet radiant 500 or !bet dire all or !bet 500 radiant or bet all dire
         """
 
-        bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")    # type: ignore
-        current_game: Game | None = core.current_game
+        current_game: Game | None = self.store.current_game
 
         if current_game is None:
             await ctx.send("Unable to bet as there is currently no game being played.")
@@ -187,9 +180,7 @@ class Betting(Cog):
         return embed
 
     async def refund_all_bets(self, ctx: Context) -> None:
-        bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")    # type: ignore
-        current_game: Game | None = core.current_game
+        current_game: Game | None = self.store.current_game
 
         if current_game is None:
             return

@@ -1,8 +1,8 @@
 from logging import Logger
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from discord.member import Member
-from discord.ext.commands import Bot, Cog, Context, command, has_role
+from discord.ext.commands import Cog, Context, command, has_role
 from structlog import get_logger
 
 from onehead.common import (
@@ -11,7 +11,6 @@ from onehead.common import (
     PlayerTransfer,
     Roles,
     Team,
-    get_bot_instance,
     get_player_names,
     get_discord_member_from_name,
     play_sound,
@@ -19,11 +18,8 @@ from onehead.common import (
 from onehead.game import ClassicGame
 from onehead.lobby import Lobby
 from onehead.matchmaking import Matchmaking
-from onehead.protocols.database import OneHeadDatabase, Operation
-
-
-if TYPE_CHECKING:
-    from onehead.core import Core
+from onehead.protocols.database import PlayerDatabase, Operation
+from onehead.store import GameStore
 
 
 log: Logger = get_logger()
@@ -32,18 +28,17 @@ log: Logger = get_logger()
 class Transfers(Cog):
     SHUFFLE_COST: int = 500
 
-    def __init__(self, database: OneHeadDatabase, lobby: Lobby) -> None:
-        self.database: OneHeadDatabase = database
+    def __init__(self, store: GameStore, database: PlayerDatabase, lobby: Lobby, matchmaking: Matchmaking) -> None:
+        self.store: GameStore = store
+        self.database: PlayerDatabase = database
         self.lobby: Lobby = lobby
+        self.matchmaking: Matchmaking = matchmaking
 
     async def refund_transfers(self, ctx: Context) -> None:
-        bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")    # type: ignore
-
-        if isinstance(core.current_game, ClassicGame) is False:
+        if isinstance(self.store.current_game, ClassicGame) is False:
             return
 
-        current_game: ClassicGame = cast(ClassicGame, core.current_game)
+        current_game: ClassicGame = cast(ClassicGame, self.store.current_game)
 
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
 
@@ -65,13 +60,10 @@ class Transfers(Cog):
         """
         Shuffles teams (costs 500 RBUCKS)
         """
-
-        bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")    # type: ignore
-        if isinstance(core.current_game, ClassicGame) is False:
+        if isinstance(self.store.current_game, ClassicGame) is False:
             return
 
-        current_game: ClassicGame = cast(ClassicGame, core.current_game)
+        current_game: ClassicGame = cast(ClassicGame, self.store.current_game)
 
         transfers: list[PlayerTransfer] = current_game.get_player_transfers()
 
@@ -114,9 +106,7 @@ class Transfers(Cog):
             current_game.radiant, current_game.dire
         )
 
-        matchmaking: Matchmaking = cast(Matchmaking, bot.get_cog("Matchmaking"))
-
-        shuffled_teams: tuple[Team, Team] = await matchmaking.balance(ctx)
+        shuffled_teams: tuple[Team, Team] = await self.matchmaking.balance(ctx)
 
         shuffled_teams_names_only: tuple[tuple[str, ...], tuple[str, ...]] = get_player_names(
             shuffled_teams[0], shuffled_teams[1]
@@ -124,9 +114,9 @@ class Transfers(Cog):
 
         # TODO: Can we try and ensure at least 2 players have changed from the previous 2 shuffles?
         while current_teams_names_only == shuffled_teams_names_only:
-            shuffled_teams = await matchmaking.balance(ctx)
+            shuffled_teams = await self.matchmaking.balance(ctx)
             shuffled_teams_names_only = get_player_names(shuffled_teams[0], shuffled_teams[1])
 
         current_game.radiant, current_game.dire = shuffled_teams
 
-        await core.show_teams(ctx)
+        await self.store.show_teams(ctx)

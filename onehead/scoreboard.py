@@ -4,7 +4,7 @@ from discord.ext.commands import Cog, Context, command, has_role
 from tabulate import tabulate
 
 from onehead.common import OneHeadException, Player, Roles
-from onehead.protocols.database import OneHeadDatabase
+from onehead.protocols.database import PlayerDatabase
 from onehead.statistics import Statistics
 
 
@@ -13,8 +13,8 @@ class ScoreBoard(Cog):
     # this into account.
     DISCORD_MAX_MESSAGE_LENGTH: int = 1950
 
-    def __init__(self, database: OneHeadDatabase) -> None:
-        self.database: OneHeadDatabase = database
+    def __init__(self, database: PlayerDatabase) -> None:
+        self.database: PlayerDatabase = database
 
     def _chunk_scoreboard(self, scoreboard: str) -> tuple[str, ...]:
         if len(scoreboard) < self.DISCORD_MAX_MESSAGE_LENGTH:
@@ -43,7 +43,6 @@ class ScoreBoard(Cog):
         """
         Shows the current rankings for the IGC IHL Leaderboard.
         """
-
         scoreboard: str = self._get_scoreboard()
         chunked_scoreboard: tuple[str, ...] = self._chunk_scoreboard(scoreboard)
 
@@ -58,7 +57,6 @@ class ScoreBoard(Cog):
         :param scoreboard: Unsorted scoreboard
         :return: Sorted scoreboard
         """
-
         key_order: list[str] = [
             "#",
             "name",
@@ -87,7 +85,6 @@ class ScoreBoard(Cog):
         :param sort_key: The key by which to sort the scoreboard.
         :return: Scoreboard sorted in descending order with additional '#' field.
         """
-
         sorted_scoreboard: list[Player] = sorted(scoreboard, key=lambda k: k[sort_key], reverse=True)  # type: ignore
         scoreboard_positions: list[Player] = []
 
@@ -113,7 +110,6 @@ class ScoreBoard(Cog):
 
         :return: Scoreboard string to be displayed in Discord chat.
         """
-
         scoreboard: list[Player] = self.database.get_all()
 
         if not scoreboard:

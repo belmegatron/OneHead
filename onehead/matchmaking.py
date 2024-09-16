@@ -11,7 +11,7 @@ from tabulate import tabulate
 from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination, get_discord_member_from_name
 
 from onehead.lobby import Lobby
-from onehead.protocols.database import OneHeadDatabase
+from onehead.protocols.database import PlayerDatabase
 from onehead.statistics import Statistics
 
 
@@ -19,8 +19,8 @@ log: Logger = get_logger()
 
 
 class Matchmaking(Cog):
-    def __init__(self, database: OneHeadDatabase, lobby: Lobby) -> None:
-        self.database: OneHeadDatabase = database
+    def __init__(self, database: PlayerDatabase, lobby: Lobby) -> None:
+        self.database: PlayerDatabase = database
         self.lobby: Lobby = lobby
 
     def _get_player_records(self, ctx: Context) -> list[Player]:
@@ -29,7 +29,6 @@ class Matchmaking(Cog):
 
         :return: Player records for all signed up players.
         """
-
         players: list[Player] = []
         for player_name in self.lobby.get_signups():
             member: Member | None = get_discord_member_from_name(ctx, player_name)
@@ -52,7 +51,6 @@ class Matchmaking(Cog):
 
         :return: Unique team combinations.
         """
-
         unique_combinations: list[TeamCombination] = []
 
         for matchup in all_matchups:
@@ -73,7 +71,6 @@ class Matchmaking(Cog):
 
         :param all_unique_combinations: All 5v5 unique combinations.
         """
-
         for unique_combination in all_unique_combinations:
             t1_rating: int = sum([player["adjusted_mmr"] for player in unique_combination[Side.RADIANT]])
             t2_rating: int = sum([player["adjusted_mmr"] for player in unique_combination[Side.DIRE]])
@@ -87,7 +84,6 @@ class Matchmaking(Cog):
         :return: Returns a matchup of two, five-man teams that are evenly (or as close to evenly) matched based on
         a rating value associated with each player.
         """
-
         profiles: list[Player] = self._get_player_records(ctx)
         profile_count: int = len(profiles)
         if profile_count != 10:
@@ -128,7 +124,6 @@ class Matchmaking(Cog):
         :param ctx: Discord context.
         :return: Balanced teams.
         """
-
         signup_count: int = len(self.lobby.get_signups())
         await ctx.send("Balancing teams...")
         if signup_count != 10:
@@ -153,7 +148,6 @@ class Matchmaking(Cog):
         """
         Shows the internal MMR used for balancing teams.
         """
-
         scoreboard: list[Player] = self.database.get_all()
         Statistics.calculate_rating(scoreboard)
         Statistics.calculate_adjusted_mmr(scoreboard)

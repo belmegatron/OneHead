@@ -1,4 +1,3 @@
-from pathlib import Path
 import time
 from typing import cast
 
@@ -9,15 +8,14 @@ from tinydb.table import Document, Table
 
 from onehead.behaviour import Behaviour
 from onehead.betting import Betting
-from onehead.common import OneHeadException, Player, Metadata, ROOT_DIR
+from onehead.config import Config
+from onehead.common import OneHeadException, Player, Metadata
 from onehead.protocols.database import Operation
 
 
 class Database(commands.Cog):
-    def __init__(self, config: dict) -> None:
-
-        db_path: Path = Path(ROOT_DIR, config["tinydb"]["path"])
-        self.db: TinyDB = TinyDB(db_path)
+    def __init__(self, config: Config) -> None:
+        self.db: TinyDB = TinyDB(config.tinydb.path)
         self.players: Table = self.db.table("players")
         self.metadata: Table = self.db.table("metadata")
         if self.metadata.contains(Query().name == "season") is False:

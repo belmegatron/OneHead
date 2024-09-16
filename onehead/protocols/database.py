@@ -10,7 +10,7 @@ class Operation(Enum):
     SUBTRACT = 2
 
 
-class OneHeadDatabase(Protocol):
+class PlayerDatabase(Protocol):
     def get(self, id: int) -> Player | None:
         pass
 

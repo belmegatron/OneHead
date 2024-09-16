@@ -5,14 +5,14 @@ from traceback import print_exception
 from discord.ext.commands import Bot
 from discord.utils import setup_logging
 
-from onehead.core import Core, bot_factory
+from onehead.core import Core, bot_builder
 
 
 handler = logging.FileHandler(filename="discord.log", encoding="utf-8", mode="w")
 
 
 async def main() -> None:
-    bot: Bot = await bot_factory()
+    bot: Bot = await bot_builder()
     core: Core = bot.get_cog("Core")  # type: ignore[assignment]
     setup_logging(level=logging.INFO, root=False, handler=handler)
     loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()

@@ -21,7 +21,7 @@ from onehead.common import (
     OneHeadException,
 )
 from onehead.game import Challenge
-from onehead.protocols.database import OneHeadDatabase
+from onehead.protocols.database import PlayerDatabase
 
 
 log: Logger = get_logger()
@@ -35,8 +35,8 @@ class ChallengeMode(Cog):
 
     counter = itertools.count()
 
-    def __init__(self, database: OneHeadDatabase) -> None:
-        self.database: OneHeadDatabase = database
+    def __init__(self, database: PlayerDatabase) -> None:
+        self.database: PlayerDatabase = database
         self.challenges: list[Challenge] = []
         self._active: bool = False
 
@@ -45,6 +45,12 @@ class ChallengeMode(Cog):
     async def challenge(self, ctx: Context, opponent_name: str) -> None:
         """
         Challenge an opponent to a 1v1 mid duel e.g. `!challenge ERIC`
+        
+        Your opponent can accept by issuing the `!accept <Challenger>` command e.g. `!accept GEE`
+        
+        An admin can then start the challenge by issuing the `!start <Challenge ID>` command e.g. `!start 0`
+        
+        You can check currently active challenges by issuing the `!challenges` command.
         """
         guild: Guild | None = ctx.guild
         if guild is None:
@@ -118,7 +124,6 @@ class ChallengeMode(Cog):
         """
         Lists all active challenges.
         """
-
         challenges: list[dict[str, Any]] = []
         for challenge in self.challenges:
             sorted_challenge: dict[str, Any] = {

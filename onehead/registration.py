@@ -6,7 +6,7 @@ from discord.ext.commands import Cog, Context, command, has_role
 from structlog import get_logger
 
 from onehead.common import Player, Roles, get_discord_member_from_name, OneHeadException
-from onehead.protocols.database import OneHeadDatabase
+from onehead.protocols.database import PlayerDatabase
 
 
 log: Logger = get_logger()
@@ -16,8 +16,8 @@ class Registration(Cog):
     MIN_MMR: int = 1000
     MAX_MMR: int = 10000
 
-    def __init__(self, database: OneHeadDatabase) -> None:
-        self.database: OneHeadDatabase = database
+    def __init__(self, database: PlayerDatabase) -> None:
+        self.database: PlayerDatabase = database
 
     @has_role(Roles.MEMBER)
     @command(aliases=["reg"])
@@ -25,7 +25,6 @@ class Registration(Cog):
         """
         Register yourself to the IHL by typing !register <your mmr>.
         """
-
         try:
             mmr_int: int = int(mmr)
         except ValueError:

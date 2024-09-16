@@ -9,6 +9,7 @@ keywords = ["dota", "discord", "inhouse"]
 
 dependencies = [
     "aiohttp",
+    "dacite",
     "discord.py>=2.1.0",
     "pynacl",
     "pytz",

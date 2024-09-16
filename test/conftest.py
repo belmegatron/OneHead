@@ -7,14 +7,14 @@ from discord.guild import Guild
 from discord.member import Member
 from discord.role import Role
 
-from onehead.core import bot_factory
+from onehead.core import bot_builder
 
 TEST_USER: str = "TestUser0_0_nick"
 
 
 @pytest_asyncio.fixture
 async def bot() -> Bot:
-    bot: Bot = await bot_factory()
+    bot: Bot = await bot_builder()
     await bot._async_setup_hook()
     dpytest.configure(bot)
 

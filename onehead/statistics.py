@@ -12,7 +12,6 @@ class Statistics:
 
         :param profiles: List of player profiles.
         """
-
         for record in profiles:
             if record["win"] == 0:
                 record["%"] = 0
@@ -26,7 +25,6 @@ class Statistics:
 
         :param profiles: List of player profiles.
         """
-
         for record in profiles:
             win_modifier: int = record["win"] * cls.MMR_DELTA
             loss_modifier: int = record["loss"] * cls.MMR_DELTA
@@ -40,7 +38,6 @@ class Statistics:
 
         :param profiles: Scoreboard with added rating field.
         """
-
         for record in profiles:
             rating: int = record["rating"]
             mmr: int = record["mmr"]

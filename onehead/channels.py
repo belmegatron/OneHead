@@ -1,34 +1,32 @@
 from logging import Logger
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from discord import VoiceChannel
 from discord.errors import HTTPException
-from discord.ext.commands import Bot, Cog, Context
+from discord.ext.commands import Cog, Context
 from discord.guild import Guild
 from discord.member import Member
 from structlog import get_logger
 
-from onehead.common import OneHeadException, get_bot_instance, get_player_names
+from onehead.common import OneHeadException, get_player_names
+from onehead.config import Config, DiscordChannelConfig
 from onehead.game import Game, ClassicGame
-
-if TYPE_CHECKING:
-    from onehead.core import Core
+from onehead.store import GameStore
 
 
 log: Logger = get_logger()
 
 
 class Channels(Cog):
-    def __init__(self, config: dict) -> None:
-        channel_config_settings: dict = config["discord"]["channels"]
-        self.channel_names: list[str] = [f"{channel_config_settings['match']} #{x}" for x in (1, 2)]
-        self.lobby_name: str = channel_config_settings["lobby"]
+    def __init__(self, store: GameStore, config: Config) -> None:
+        self.store: GameStore = store
+        channel_config_settings: DiscordChannelConfig = config.discord.channels
+        self.channel_names: list[str] = [f"{channel_config_settings.match} #{x}" for x in (1, 2)]
+        self.lobby_name: str = channel_config_settings.lobby
         self.ihl_discord_channels: list[VoiceChannel]
 
     def get_discord_members(self, ctx: Context) -> tuple[list[Member], list[Member]]:
-        bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")    # type: ignore
-        current_game: Game | None = core.current_game
+        current_game: Game | None = self.store.current_game
 
         guild: Guild | None = ctx.guild
         if guild is None:
@@ -58,7 +56,6 @@ class Channels(Cog):
 
         :param ctx: Discord Context
         """
-
         guild: Guild | None = ctx.guild
         if guild is None:
             raise OneHeadException("No Guild associated with Discord Context")
@@ -78,7 +75,6 @@ class Channels(Cog):
 
         :param ctx: Discord Context
         """
-
         guild: Guild | None = ctx.guild
         if guild is None:
             raise OneHeadException("No Guild associated with Discord Context")
@@ -107,7 +103,6 @@ class Channels(Cog):
 
         :param ctx: Discord Context
         """
-
         channel_count: int = len(self.ihl_discord_channels)
         if channel_count != 2:
             raise OneHeadException(f"Expected 2 Discord Channels, Identified {channel_count}.")

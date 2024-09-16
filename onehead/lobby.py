@@ -1,32 +1,28 @@
 from asyncio import create_task, sleep
-from functools import cache
 from datetime import datetime, timedelta
 from logging import Logger
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any
 
-from discord import Status
-from discord.ext.commands import Bot, BucketType, Cog, Command, Context, command, cooldown, has_role, max_concurrency
+from discord.ext.commands import BucketType, Cog, Command, Context, command, cooldown, has_role, max_concurrency
 from discord.guild import Guild
-from discord.message import Message
+from discord.member import Member
 from discord.role import Role
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, Player, Roles, get_bot_instance, get_discord_member_from_name, play_sound
+from onehead.common import OneHeadException, Player, Roles, get_discord_member_from_name, play_sound
 from onehead.game import Game
-from onehead.protocols.database import OneHeadDatabase
-
-if TYPE_CHECKING:
-    from onehead.core import Core
-    from discord.member import Member
+from onehead.protocols.database import PlayerDatabase
+from onehead.store import GameStore
 
 
 log: Logger = get_logger()
 
 
 class Lobby(Cog):
-    def __init__(self, database: OneHeadDatabase) -> None:
-        self.database: OneHeadDatabase = database
+    def __init__(self, store: GameStore, database: PlayerDatabase) -> None:
+        self.store: GameStore = store
+        self.database: PlayerDatabase = database
         self._signups: dict[str, datetime] = {}
         self._players_ready: list[str] = []
         self._ready_check_in_progress: bool = False
@@ -53,7 +49,6 @@ class Lobby(Cog):
         """
         Messages all registered players of the IHL to come and sign up.
         """
-
         guild: Guild | None = ctx.guild
         if guild is None:
             raise OneHeadException("No Guild associated with Discord context.")
@@ -83,7 +78,6 @@ class Lobby(Cog):
 
         :param ctx: Discord context
         """
-
         number_of_signups: int = len(self._signups)
         if number_of_signups <= 10:
             return
@@ -137,7 +131,6 @@ class Lobby(Cog):
         """
         Shows all players currently signed up to play in the IHL.
         """
-
         await ctx.send(f"There are currently `{len(self._signups)}` players signed up.")
         signups: list[dict[str, Any]] = [{"#": i, "name": name} for i, name in enumerate(self._signups, start=1)]
         if len(signups) > 0:
@@ -151,7 +144,6 @@ class Lobby(Cog):
         """
         Signup to join a game in the IHL.
         """
-
         if self._signups_disabled:
             await ctx.send("Game in progress - `!su` command unavailable.")
             return
@@ -185,7 +177,6 @@ class Lobby(Cog):
         """
         Remove yourself from the current pool of signed up players.
         """
-
         if self._signups_disabled:
             await ctx.send("Game in progress - `!so` command unavailable.")
             return
@@ -255,7 +246,6 @@ class Lobby(Cog):
         """
         Initiates a ready check, after approx. 30s the result of the check will be displayed.
         """
-
         if await self.signup_check(ctx):
             await play_sound(ctx, "ready.mp3")
 
@@ -286,9 +276,7 @@ class Lobby(Cog):
         Some players never seem to trigger an 'Idle' or 'Offline' status change and therefore
         the `on_presence_update` callback never gets called for them.
         """
-        bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")    # type: ignore
-        game: Game | None = core.current_game
+        current_game: Game | None = self.store.current_game
 
         max_signup_period: timedelta = timedelta(hours=4)
         self._cleanup_is_running = True
@@ -296,7 +284,7 @@ class Lobby(Cog):
         while True:
             to_remove: list[str] = []
 
-            if game and game.in_progress() is False:
+            if current_game and current_game.in_progress() is False:
                 for name, signup_time in self._signups.items():
                     if datetime.now() >= (signup_time + max_signup_period):
                         to_remove.append(name)
@@ -313,66 +301,3 @@ class Lobby(Cog):
                     )
 
             await sleep(3600)
-
-
-async def on_presence_update(before: "Member", after: "Member") -> None:
-    bot: Bot = get_bot_instance()
-    core: Core = bot.get_cog("Core")    # type: ignore
-    game: Game | None = core.current_game
-
-    if game and game.in_progress():
-        return
-
-    lobby: Lobby = cast(Lobby, bot.get_cog("Lobby"))
-    if lobby._context is None:
-        return
-
-    signups: list[str] = lobby.get_signups()
-
-    name: str = after.display_name
-
-    if after.status in (Status.offline, Status.idle) and name in signups:
-        reason: str = "Offline" if after.status == Status.offline else "Idle"
-        log.info(f"{name} is now {reason}.")
-        lobby.remove_player_from_signups(name)
-        await lobby._context.send(f"{after.mention} has been signed out due to being {reason}.")
-
-
-@cache
-def get_supported_bot_commands(bot: Bot) -> list[str]:
-    commands: list[str] = [command.name for command in bot.commands]
-    command_aliases: list[str] = []
-    for cmd in bot.commands:
-        command_aliases += cmd.aliases
-
-    return commands + command_aliases
-
-
-async def allow_message(message: Message, bot: Bot) -> bool:
-    split_message: list[str] = message.content.split()
-    user_command: str = split_message[0]
-
-    prefix: str = user_command[0]
-    if prefix != bot.command_prefix:
-        return True
-
-    supported_commands: list[str] = get_supported_bot_commands(bot)
-    user_command = user_command[1:]
-    if user_command not in supported_commands:
-        return False
-
-    return True
-
-
-async def on_message(message: Message) -> None:
-    bot: Bot = get_bot_instance()
-
-    if message.author.bot:
-        return
-
-    allow: bool = await allow_message(message, bot)
-    if allow is False:
-        await message.delete()
-        return
-
-    await bot.process_commands(message)

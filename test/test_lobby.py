@@ -264,7 +264,7 @@ class TestSelectPlayers:
         }
 
         mock_context: MagicMock = MagicMock(spec=Context)
-        lobby.select_players(mock_context)
+        await lobby.select_players(mock_context)
         assert mock_context.send.is_not_called_once()
 
     @pytest.mark.asyncio
@@ -286,5 +286,5 @@ class TestSelectPlayers:
         }
 
         mock_context: MagicMock = MagicMock(spec=Context)
-        lobby.select_players(mock_context)
+        await lobby.select_players(mock_context)
         assert mock_context.send.is_not_called_once()

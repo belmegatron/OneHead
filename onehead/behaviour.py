@@ -1,26 +1,23 @@
 from logging import Logger
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from discord.guild import Guild
 from discord.member import Member
-from discord.ext.commands import Bot, Cog, Context, command, has_role
+from discord.ext.commands import Cog, Context, command, has_role
 from discord.user import User
 from structlog import get_logger
 
 from onehead.common import (
     Player,
     Roles,
-    get_bot_instance,
     get_player_names,
     get_discord_member_from_name,
     OneHeadException,
 )
 
+from onehead.store import GameStore
 from onehead.game import Game, ClassicGame
-from onehead.protocols.database import OneHeadDatabase, Operation
-
-if TYPE_CHECKING:
-    from onehead.core import Core
+from onehead.protocols.database import PlayerDatabase, Operation
 
 
 log: Logger = get_logger()
@@ -32,8 +29,9 @@ class Behaviour(Cog):
     COMMEND_MODIFIER = 100
     REPORT_MODIFIER = -200
 
-    def __init__(self, database: OneHeadDatabase) -> None:
-        self.database: OneHeadDatabase = database
+    def __init__(self, store: GameStore, database: PlayerDatabase) -> None:
+        self.store: GameStore = store
+        self.database: PlayerDatabase = database
 
     @has_role(Roles.MEMBER)
     @command()
@@ -41,18 +39,14 @@ class Behaviour(Cog):
         """
         Commend a player for playing well.
         """
-
-        bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")    # type: ignore
-        previous_game: Game | None = core.previous_game
+        previous_game: Game | None = self.store.previous_game
+        if previous_game is None:
+            await ctx.send("Unable to commend as a game is yet to be played.")
+            return
 
         guild: Guild | None = ctx.guild
         if guild is None:
             raise OneHeadException("No Guild associated with Discord Context")
-
-        if previous_game is None:
-            await ctx.send("Unable to commend as a game is yet to be played.")
-            return
 
         if isinstance(previous_game, ClassicGame):
             previous_game = cast(ClassicGame, previous_game)
@@ -116,18 +110,14 @@ class Behaviour(Cog):
         """
         Report a player for intentionally ruining the game experience.
         """
-
-        bot: Bot = get_bot_instance()
-        core: Core = bot.get_cog("Core")    # type: ignore
-        previous_game: Game | None = core.previous_game
+        previous_game: Game | None = self.store.previous_game
+        if previous_game is None:
+            await ctx.send("Unable to commend as a game is yet to be played.")
+            return
 
         guild: Guild | None = ctx.guild
         if guild is None:
             raise OneHeadException("No Guild associated with Discord Context")
-
-        if previous_game is None:
-            await ctx.send("Unable to report as a game is yet to be played.")
-            return
 
         if isinstance(previous_game, ClassicGame) is False:
             raise OneHeadException("Attempted to report a player in a game which was not a ClassicGame")

@@ -2,15 +2,13 @@ from asyncio import sleep
 from dataclasses import dataclass
 from enum import StrEnum
 from logging import Logger
-import json
-from pathlib import Path
 from structlog import get_logger
 from typing import TypedDict, cast
 
 from discord.channel import VocalGuildChannel
-from discord.ext.commands import Bot, Context
+from discord.ext.commands import Context
 from discord.errors import ClientException
-from discord.member import Member
+from discord.member import Member, VoiceState
 from discord.player import FFmpegPCMAudio
 from discord.voice_client import VoiceClient
 
@@ -50,11 +48,6 @@ Metadata = TypedDict(
     },
 )
 
-# We need a globally accessible reference to the bot instance for event handlers that require Cog functionality.
-bot: Bot | None = None
-
-ROOT_DIR: Path = Path(__file__).resolve().parent.parent
-
 
 class Roles(StrEnum):
     ADMIN = "IHL Admin"
@@ -84,18 +77,6 @@ class OneHeadException(Exception):
     pass
 
 
-def get_bot_instance() -> Bot:
-    if bot is None:
-        raise OneHeadException("Global bot instance is None")
-
-    return bot
-
-
-def set_bot_instance(new_bot_instance: Bot) -> None:
-    global bot
-    bot = new_bot_instance
-
-
 def get_player_names(t1: "Team", t2: "Team") -> tuple[tuple[str, ...], tuple[str, ...]]:
     """
     Obtain player names from player profiles.
@@ -104,31 +85,10 @@ def get_player_names(t1: "Team", t2: "Team") -> tuple[tuple[str, ...], tuple[str
     :param t2: Player Profiles for Team 2.
     :return: Names of players on each team.
     """
-
     t1_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t1]))
     t2_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t2]))
 
     return t1_names, t2_names
-
-
-def load_config() -> dict:
-    try:
-        config_path: Path = Path(ROOT_DIR, "secrets/config.json")
-        with open(str(config_path), "r") as f:
-            config: dict = json.load(f)
-    except IOError as e:
-        raise OneHeadException(e)
-
-    return config
-
-
-def update_config(updated_config: dict) -> None:
-    try:
-        config_path: Path = Path(ROOT_DIR, "secrets/config.json")
-        with open(str(config_path), "w") as f:
-            json.dump(updated_config, f)
-    except IOError as e:
-        raise OneHeadException(e)
 
 
 def get_discord_member_from_name(ctx: Context, name: str) -> Member | None:
@@ -173,10 +133,17 @@ def get_discord_id_from_mention(mention: str) -> int:
 async def play_sound(ctx: Context, file_name: str) -> None:
     voice_client: VoiceClient | None = cast(VoiceClient | None, ctx.voice_client)
     if voice_client is None:
-        voice_channel: VocalGuildChannel | None = ctx.author.voice.channel
+        member: Member = cast(Member, ctx.author)
+        voice_state: VoiceState | None = cast(VoiceState, member.voice)
+        voice_channel: VocalGuildChannel | None = None
+        
+        if voice_state:
+            voice_channel = voice_state.channel
+            
         if voice_channel:
             voice_client = await voice_channel.connect()
-    elif voice_client.channel.name != ctx.author.voice.channel.name:
+            
+    elif voice_client.channel.name != voice_channel.name:
         await voice_client.move_to(ctx.author.voice.channel)
 
     try:
