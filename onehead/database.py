@@ -9,8 +9,8 @@ from tinydb.table import Document, Table
 
 from onehead.behaviour import Behaviour
 from onehead.betting import Betting
+from onehead.common import ROOT_DIR, Metadata, OneHeadException, Player
 from onehead.config import Config
-from onehead.common import OneHeadException, Player, Metadata, ROOT_DIR
 from onehead.protocols.database import Operation
 
 

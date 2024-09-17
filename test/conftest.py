@@ -7,8 +7,8 @@ from discord.guild import Guild
 from discord.member import Member
 from discord.role import Role
 
-from onehead.core import bot_builder
 from onehead.config import load_config
+from onehead.core import bot_builder
 
 TEST_USER: str = "TestUser0_0_nick"
 

@@ -1,28 +1,27 @@
-from asyncio import create_task, sleep
-from datetime import datetime, timedelta, UTC
 import itertools
+from asyncio import create_task, sleep
+from datetime import UTC, datetime, timedelta
 from logging import Logger
-from structlog import get_logger
 from typing import Any
 
+from discord.ext.commands import Cog, Context, command, has_role
 from discord.guild import Guild
 from discord.member import Member
 from discord.user import User
-from discord.ext.commands import Cog, Context, command, has_role
 from pytz import timezone
+from structlog import get_logger
 from tabulate import tabulate
 
 from onehead.common import (
+    OneHeadException,
     Player,
     Roles,
-    get_discord_member_from_name,
-    play_sound,
     get_discord_member_from_id,
-    OneHeadException,
+    get_discord_member_from_name,
+    play_sound
 )
 from onehead.game import Challenge
 from onehead.protocols.database import PlayerDatabase
-
 
 log: Logger = get_logger()
 
@@ -101,17 +100,6 @@ class ChallengeMode(Cog):
         )
 
         create_task(self.handle_expired_challenge(ctx, challenge))
-
-    # TODO: Remove this.
-    @has_role(Roles.ADMIN)
-    @command()
-    async def sim_challenge(self, ctx: Context) -> None:
-        challenge: Challenge = Challenge(
-            next(self.counter),
-            challenger=get_discord_member_from_name(ctx, "TOCCO"),
-            opponent=get_discord_member_from_name(ctx, "RUGOR"),
-        )
-        self.challenges.append(challenge)
 
     @has_role(Roles.MEMBER)
     @command(aliases=["challenges"])

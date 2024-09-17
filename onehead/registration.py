@@ -1,13 +1,12 @@
 from logging import Logger
 
+from discord.ext.commands import Cog, Context, command, has_role
 from discord.guild import Guild
 from discord.member import Member
-from discord.ext.commands import Cog, Context, command, has_role
 from structlog import get_logger
 
-from onehead.common import Player, Roles, get_discord_member_from_name, OneHeadException
+from onehead.common import OneHeadException, Player, Roles, get_discord_member_from_name
 from onehead.protocols.database import PlayerDatabase
-
 
 log: Logger = get_logger()
 

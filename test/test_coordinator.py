@@ -1,18 +1,17 @@
 from datetime import datetime
 from typing import cast
-from unittest.mock import AsyncMock, patch, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import discord.ext.test as dpytest
 import pytest
 from conftest import add_ihl_role
-from discord.ext.commands import Bot, errors, CommandInvokeError
+from discord.ext.commands import Bot, CommandInvokeError, errors
 
 from onehead.betting import Bet
-
 from onehead.common import Player, Side
 from onehead.coordinator import GameCoordinator
 from onehead.core import Core
-from onehead.game import Game, ClassicGame
+from onehead.game import ClassicGame, Game
 from onehead.lobby import Lobby
 from onehead.store import GameStore
 

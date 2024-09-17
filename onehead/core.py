@@ -1,24 +1,16 @@
+from datetime import UTC, datetime
 from logging import Logger
-from datetime import datetime, UTC
 
 from discord import Intents
-from discord.ext.commands import (
-    Bot,
-    Cog,
-    Context,
-    command,
-    has_role,
-)
+from discord.ext.commands import Bot, Cog, Context, command, has_role
 from structlog import get_logger
 
 from onehead.behaviour import Behaviour
 from onehead.betting import Betting
-from onehead.callbacks import on_presence_update, on_message, set_bot_instance
+from onehead.callbacks import on_message, on_presence_update, set_bot_instance
+from onehead.challenge import ChallengeMode
 from onehead.channels import Channels
-from onehead.common import (
-    Roles,
-    Metadata,
-)
+from onehead.common import Metadata, Roles
 from onehead.config import Config, load_config
 from onehead.coordinator import GameCoordinator
 from onehead.database import Database
@@ -28,11 +20,9 @@ from onehead.mental_health import MentalHealth
 from onehead.protocols.database import PlayerDatabase
 from onehead.registration import Registration
 from onehead.scoreboard import ScoreBoard
-from onehead.transfers import Transfers
-from onehead.challenge import ChallengeMode
 from onehead.store import GameStore
+from onehead.transfers import Transfers
 from version import __changelog__, __version__
-
 
 log: Logger = get_logger()
 

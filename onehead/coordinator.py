@@ -2,41 +2,32 @@ from asyncio import create_task
 from logging import Logger
 from typing import cast
 
+from discord.ext.commands import BucketType, Cog, Command, Context, command, has_role, max_concurrency
 from discord.member import Member
-from discord.ext.commands import (
-    BucketType,
-    Cog,
-    Command,
-    Context,
-    command,
-    has_role,
-    max_concurrency,
-)
 from structlog import get_logger
 
 from onehead.betting import Betting
+from onehead.challenge import ChallengeMode
 from onehead.channels import Channels
 from onehead.common import (
+    Metadata,
     OneHeadException,
     Roles,
     Side,
-    get_player_names,
-    get_discord_member_from_name,
-    Metadata,
-    play_sound,
-    voice_client_disconnect,
     get_command_from_cog,
+    get_discord_member_from_name,
+    get_player_names,
+    play_sound,
+    voice_client_disconnect
 )
-from onehead.game import ClassicGame, Challenge
+from onehead.game import Challenge, ClassicGame
 from onehead.lobby import Lobby
 from onehead.matchmaking import Matchmaking
-from onehead.protocols.database import PlayerDatabase, Operation
+from onehead.protocols.database import Operation, PlayerDatabase
 from onehead.scoreboard import ScoreBoard
-from onehead.transfers import Transfers
-from onehead.challenge import ChallengeMode
 from onehead.store import GameStore
+from onehead.transfers import Transfers
 from version import __changelog__, __version__
-
 
 log: Logger = get_logger()
 

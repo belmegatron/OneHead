@@ -2,19 +2,17 @@ from dataclasses import asdict
 from logging import Logger
 from typing import cast
 
-from discord import Embed, colour
-from discord.member import Member
 from discord.ext.commands import Cog, Context, command, has_role
+from discord.member import Member
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import Bet, Player, Roles, Side, get_discord_member_from_name, play_sound
-from onehead.store import GameStore
-from onehead.game import Game, Challenge, ClassicGame
-from onehead.protocols.database import PlayerDatabase, Operation
-from onehead.lobby import Lobby
 from onehead.challenge import ChallengeMode
-
+from onehead.common import Bet, Player, Roles, Side, get_discord_member_from_name, play_sound
+from onehead.game import Challenge, ClassicGame, Game
+from onehead.lobby import Lobby
+from onehead.protocols.database import Operation, PlayerDatabase
+from onehead.store import GameStore
 
 log: Logger = get_logger()
 

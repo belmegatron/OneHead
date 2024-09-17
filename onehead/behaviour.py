@@ -1,24 +1,16 @@
 from logging import Logger
 from typing import cast
 
+from discord.ext.commands import Cog, Context, command, has_role
 from discord.guild import Guild
 from discord.member import Member
-from discord.ext.commands import Cog, Context, command, has_role
 from discord.user import User
 from structlog import get_logger
 
-from onehead.common import (
-    Player,
-    Roles,
-    get_player_names,
-    get_discord_member_from_name,
-    OneHeadException,
-)
-
+from onehead.common import OneHeadException, Player, Roles, get_discord_member_from_name, get_player_names
+from onehead.game import ClassicGame, Game
+from onehead.protocols.database import Operation, PlayerDatabase
 from onehead.store import GameStore
-from onehead.game import Game, ClassicGame
-from onehead.protocols.database import PlayerDatabase, Operation
-
 
 log: Logger = get_logger()
 

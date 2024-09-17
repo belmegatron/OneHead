@@ -1,10 +1,10 @@
-from unittest.mock import AsyncMock, Mock, patch
 from typing import cast
+from unittest.mock import AsyncMock, Mock, patch
 
 import discord.ext.test as dpytest
 import pytest
 from conftest import TEST_USER, add_ihl_role
-from discord.ext.commands import Bot, errors, CommandInvokeError
+from discord.ext.commands import Bot, CommandInvokeError, errors
 
 from onehead.game import ClassicGame
 from onehead.store import GameStore

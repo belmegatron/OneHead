@@ -1,15 +1,15 @@
 from typing import cast
 from unittest.mock import Mock
 
-from conftest import TEST_USER, add_ihl_role
-from discord.ext.commands import Bot, errors
 import discord.ext.test as dpytest
 import pytest
+from conftest import TEST_USER, add_ihl_role
+from discord.ext.commands import Bot, errors
 
 from onehead.behaviour import Behaviour
 from onehead.common import Team
-from onehead.store import GameStore
 from onehead.game import ClassicGame
+from onehead.store import GameStore
 
 
 class TestCommend:

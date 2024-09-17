@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import discord.ext.test as dpytest
 import pytest
 from conftest import add_ihl_role
-from discord.ext.commands import Bot, errors, CommandInvokeError
+from discord.ext.commands import Bot, CommandInvokeError, errors
 
 from onehead.common import OneHeadException
 from onehead.scoreboard import ScoreBoard

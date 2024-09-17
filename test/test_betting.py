@@ -1,5 +1,5 @@
 from typing import cast
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
 
 import discord.ext.test as dpytest
 import pytest
@@ -9,7 +9,7 @@ from discord.member import Member
 
 from onehead.betting import Bet, Betting
 from onehead.challenge import Challenge
-from onehead.common import Side, Player
+from onehead.common import Player, Side
 from onehead.database import Database
 from onehead.game import ClassicGame
 from onehead.store import GameStore

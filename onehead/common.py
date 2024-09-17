@@ -3,16 +3,15 @@ from dataclasses import dataclass
 from enum import StrEnum
 from logging import Logger
 from pathlib import Path
-from structlog import get_logger
 from typing import TypedDict, cast
 
 from discord.channel import VocalGuildChannel
-from discord.ext.commands import Context, Cog, Command
 from discord.errors import ClientException
+from discord.ext.commands import Cog, Command, Context
 from discord.member import Member, VoiceState
 from discord.player import FFmpegPCMAudio
 from discord.voice_client import VoiceClient
-
+from structlog import get_logger
 
 log: Logger = get_logger()
 

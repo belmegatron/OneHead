@@ -10,9 +10,8 @@ from structlog import get_logger
 
 from onehead.common import OneHeadException, get_player_names
 from onehead.config import Config, DiscordChannelConfig
-from onehead.game import Game, ClassicGame
+from onehead.game import ClassicGame, Game
 from onehead.store import GameStore
-
 
 log: Logger = get_logger()
 

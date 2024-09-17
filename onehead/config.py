@@ -1,7 +1,8 @@
-from dataclasses import dataclass, asdict
-from dacite import from_dict
 import json
+from dataclasses import asdict, dataclass
 from pathlib import Path
+
+from dacite import from_dict
 
 from onehead.common import ROOT_DIR
 

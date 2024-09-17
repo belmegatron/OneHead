@@ -3,17 +3,15 @@ import random
 from logging import Logger
 from typing import Any
 
-from discord.member import Member
 from discord.ext.commands import Cog, Context, command, has_role
+from discord.member import Member
 from structlog import get_logger
 from tabulate import tabulate
 
 from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination, get_discord_member_from_name
-
 from onehead.lobby import Lobby
 from onehead.protocols.database import PlayerDatabase
 from onehead.statistics import Statistics
-
 
 log: Logger = get_logger()
 

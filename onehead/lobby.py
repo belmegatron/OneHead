@@ -15,7 +15,6 @@ from onehead.game import Game
 from onehead.protocols.database import PlayerDatabase
 from onehead.store import GameStore
 
-
 log: Logger = get_logger()
 
 

@@ -13,7 +13,6 @@ from onehead.game import Game
 from onehead.lobby import Lobby
 from onehead.store import GameStore
 
-
 log: Logger = get_logger()
 
 # We need a globally accessible reference to the bot instance in order for our callbacks to work.

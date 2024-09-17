@@ -1,24 +1,13 @@
 from logging import Logger
 
-from discord.ext.commands import (
-    Cog,
-    Context,
-    command,
-    has_role,
-)
+from discord.ext.commands import Cog, Context, command, has_role
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import (
-    Roles,
-    Side,
-    get_player_names,
-    Metadata,
-)
-from onehead.game import Game, ClassicGame, Challenge
+from onehead.common import Metadata, Roles, Side, get_player_names
+from onehead.game import Challenge, ClassicGame, Game
 from onehead.protocols.database import PlayerDatabase
 from version import __changelog__, __version__
-
 
 log: Logger = get_logger()
 

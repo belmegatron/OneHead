@@ -1,7 +1,7 @@
 import random
 
-from discord.member import Member
 from discord.ext.commands import Cog, Context, command, has_role
+from discord.member import Member
 
 from onehead.common import Roles, get_discord_member_from_name
 

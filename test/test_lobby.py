@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import discord.ext.test as dpytest
 import pytest
 from conftest import TEST_USER, add_ihl_role
-from discord.ext.commands import Bot, errors, Context
+from discord.ext.commands import Bot, Context, errors
 from discord.guild import Guild
 from discord.role import Role
 
