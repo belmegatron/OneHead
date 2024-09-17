@@ -36,7 +36,6 @@ class ChallengeMode(Cog):
         self.database: PlayerDatabase = database
         self.challenges: list[Challenge] = []
 
-    # TODO: Prevent someone making multiple challenges!
     @has_role(Roles.MEMBER)
     @command()
     async def challenge(self, ctx: Context, opponent_name: str) -> None:
