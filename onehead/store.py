@@ -28,7 +28,7 @@ class GameStore(Cog):
         self.database: PlayerDatabase = database
         self.current_game: Game | None = None
         self.previous_game: Game | None = None
-        
+
     @has_role(Roles.MEMBER)
     @command()
     async def status(self, ctx: Context) -> None:

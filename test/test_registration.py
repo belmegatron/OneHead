@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+from typing import cast
 
 import discord.ext.test as dpytest
 import pytest
@@ -36,7 +37,7 @@ class TestRegister:
     @pytest.mark.asyncio
     async def test_already_registered(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
-        registration: Registration = bot.get_cog("Registration")
+        registration: Registration = cast(Registration, bot.get_cog("Registration"))
 
         registration.database.get = Mock()
         registration.database.get.return_value = {"name": TEST_USER}
@@ -47,7 +48,7 @@ class TestRegister:
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
-        registration: Registration = bot.get_cog("Registration")
+        registration: Registration = cast(Registration, bot.get_cog("Registration"))
 
         registration.database.get = Mock()
         registration.database.get.return_value = None
@@ -66,7 +67,7 @@ class TestDeregister:
     @pytest.mark.asyncio
     async def test_user_not_in_guild(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
-        registration: Registration = bot.get_cog("Registration")
+        registration: Registration = cast(Registration, bot.get_cog("Registration"))
 
         registration.database.get = Mock()
         registration.database.get.return_value = None
@@ -78,7 +79,7 @@ class TestDeregister:
     async def test_user_not_in_database(self, bot: Bot) -> None:
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL Admin")
-        registration: Registration = bot.get_cog("Registration")
+        registration: Registration = cast(Registration, bot.get_cog("Registration"))
 
         registration.database.get = Mock()
         registration.database.get.return_value = None
@@ -90,7 +91,7 @@ class TestDeregister:
     async def test_success(self, bot: Bot) -> None:
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL Admin")
-        registration: Registration = bot.get_cog("Registration")
+        registration: Registration = cast(Registration, bot.get_cog("Registration"))
 
         registration.database.get = Mock()
         registration.database.get.return_value = {"name": "RBEEZAY"}

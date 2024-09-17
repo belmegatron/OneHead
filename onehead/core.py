@@ -61,7 +61,9 @@ async def bot_builder(config: Config) -> Bot:
     behaviour: Behaviour = Behaviour(store, database)
     transfers: Transfers = Transfers(store, database, lobby, matchmaking)
     challenge_mode: ChallengeMode = ChallengeMode(database)
-    coordinator: GameCoordinator = GameCoordinator(store, betting, transfers, channels, database, challenge_mode, lobby, matchmaking, scoreboard)
+    coordinator: GameCoordinator = GameCoordinator(
+        store, betting, transfers, channels, database, challenge_mode, lobby, matchmaking, scoreboard
+    )
     core: Core = Core(database, lobby)
 
     await bot.add_cog(database)

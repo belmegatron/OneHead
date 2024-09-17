@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 from typing import cast
 
 from discord.ext import commands
@@ -9,13 +10,13 @@ from tinydb.table import Document, Table
 from onehead.behaviour import Behaviour
 from onehead.betting import Betting
 from onehead.config import Config
-from onehead.common import OneHeadException, Player, Metadata
+from onehead.common import OneHeadException, Player, Metadata, ROOT_DIR
 from onehead.protocols.database import Operation
 
 
 class Database(commands.Cog):
     def __init__(self, config: Config) -> None:
-        self.db: TinyDB = TinyDB(config.tinydb.path)
+        self.db: TinyDB = TinyDB(Path(ROOT_DIR, config.tinydb.path))
         self.players: Table = self.db.table("players")
         self.metadata: Table = self.db.table("metadata")
         if self.metadata.contains(Query().name == "season") is False:

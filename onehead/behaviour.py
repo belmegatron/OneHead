@@ -112,7 +112,7 @@ class Behaviour(Cog):
         """
         previous_game: Game | None = self.store.previous_game
         if previous_game is None:
-            await ctx.send("Unable to commend as a game is yet to be played.")
+            await ctx.send("Unable to report as a game is yet to be played.")
             return
 
         guild: Guild | None = ctx.guild

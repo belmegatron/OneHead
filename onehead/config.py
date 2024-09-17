@@ -25,8 +25,8 @@ class DiscordChannelConfig:
 class DiscordConfig:
     token: str
     channels: DiscordChannelConfig
-    
-    
+
+
 @dataclass
 class Config:
     tinydb: TinyDBConfig
@@ -37,7 +37,7 @@ def load_config() -> Config:
     config_path: Path = Path(ROOT_DIR, "secrets/config.json")
     with open(config_path, "r") as f:
         json_blob: dict = json.load(f)
-    
+
     return from_dict(data_class=Config, data=json_blob)
 
 
@@ -45,4 +45,3 @@ def update_config(updated_config: Config) -> None:
     config_path: Path = Path(ROOT_DIR, "secrets/config.json")
     with open(config_path, "w") as f:
         json.dump(asdict(updated_config), f)
-

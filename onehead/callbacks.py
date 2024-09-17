@@ -24,11 +24,13 @@ def set_bot_instance(new_bot_instance: Bot) -> None:
     global bot
     bot = new_bot_instance
 
+
 def get_bot_instance() -> Bot:
     if bot is None:
         raise OneHeadException("Global bot instance is None")
 
     return bot
+
 
 async def on_presence_update(before: Member, after: Member) -> None:
     bot: Bot = get_bot_instance()

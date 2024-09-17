@@ -140,13 +140,13 @@ async def play_sound(ctx: Context, file_name: str) -> None:
         member: Member = cast(Member, ctx.author)
         voice_state: VoiceState | None = cast(VoiceState, member.voice)
         voice_channel: VocalGuildChannel | None = None
-        
+
         if voice_state:
             voice_channel = voice_state.channel
-            
+
         if voice_channel:
             voice_client = await voice_channel.connect()
-            
+
     elif voice_client.channel.name != ctx.author.voice.channel.name:
         await voice_client.move_to(ctx.author.voice.channel)
 
@@ -165,9 +165,10 @@ async def voice_client_disconnect(ctx: Context) -> None:
         else:
             await sleep(5)
 
+
 def get_command_from_cog(cog: Cog, name: str) -> Command | None:
     for command in cog.get_commands():
         if command.name == name:
             return command
-    
+
     return None

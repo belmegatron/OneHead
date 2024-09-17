@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import cast
 from unittest.mock import AsyncMock, patch, Mock
 
 import discord.ext.test as dpytest
@@ -9,9 +10,11 @@ from discord.ext.commands import Bot, errors, CommandInvokeError
 from onehead.betting import Bet
 
 from onehead.common import Player, Side
+from onehead.coordinator import GameCoordinator
 from onehead.core import Core
 from onehead.game import Game, ClassicGame
 from onehead.lobby import Lobby
+from onehead.store import GameStore
 
 
 class TestStart:
@@ -24,9 +27,9 @@ class TestStart:
     async def test_game_in_progress(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
 
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
-        core.current_game._in_progress = True
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._in_progress = True
 
         await dpytest.message("!start")
         assert dpytest.verify().message().content("Game already in progress...")
@@ -41,7 +44,7 @@ class TestStart:
     async def test_game_not_enough_signups(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
 
-        lobby: Lobby = bot.get_cog("Lobby")
+        lobby: Lobby = cast(Lobby, bot.get_cog("Lobby"))
         lobby._signups = {"BOB": datetime.now(), "BILL": datetime.now()}
 
         await dpytest.message("!start")
@@ -52,11 +55,11 @@ class TestStart:
         await add_ihl_role(bot, "IHL")
         await add_ihl_role(bot, "IHL Admin")
 
-        lobby: Lobby = bot.get_cog("Lobby")
+        lobby: Lobby = cast(Lobby, bot.get_cog("Lobby"))
         players: list[Player] = lobby.database.get_all()[:10]
         lobby._signups = {player["name"]: datetime.now() for player in players}
 
-        core: Core = bot.get_cog("Core")
+        coordinator: GameCoordinator = cast(GameCoordinator, bot.get_cog("GameCoordinator"))
         balance: AsyncMock = AsyncMock()
         balance.return_value = [{"name": "foo"}, {"name": "foo"}, {"name": "foo"}, {"name": "foo"}, {"name": "foo"}], [
             {"name": "foo"},
@@ -65,12 +68,12 @@ class TestStart:
             {"name": "foo"},
             {"name": "foo"},
         ]
-        core.matchmaking.balance = balance
-        core.setup_team_channels = AsyncMock()
-        
+        coordinator.matchmaking.balance = balance
+        coordinator.setup_team_channels = AsyncMock()
+
         with patch("onehead.game.ClassicGame.open_transfer_window"):
             with patch("onehead.game.Game.open_betting_window"):
-                with patch("onehead.core.play_sound"):
+                with patch("onehead.coordinator.play_sound"):
                     await dpytest.message("!start")
 
         assert dpytest.verify().message().content("Starting game:").contains()
@@ -95,19 +98,19 @@ class TestStop:
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
 
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
-        core.current_game._in_progress = True
-        core.betting.refund_all_bets = AsyncMock()
-        core.transfers.refund_transfers = AsyncMock()
-        core.channels.move_back_to_lobby = AsyncMock()
-        core.reset = AsyncMock()
+        coordinator: GameCoordinator = cast(GameCoordinator, bot.get_cog("GameCoordinator"))
+        coordinator.store.current_game = ClassicGame()
+        coordinator.store.current_game._in_progress = True
+        coordinator.betting.refund_all_bets = AsyncMock()
+        coordinator.transfers.refund_transfers = AsyncMock()
+        coordinator.channels.move_back_to_lobby = AsyncMock()
+        coordinator.reset = AsyncMock()
 
         await dpytest.message("!stop")
-        core.betting.refund_all_bets.assert_called()
-        core.transfers.refund_transfers.assert_called()
-        core.channels.move_back_to_lobby.assert_called()
-        core.reset.assert_called()
+        coordinator.betting.refund_all_bets.assert_called()
+        coordinator.transfers.refund_transfers.assert_called()
+        coordinator.channels.move_back_to_lobby.assert_called()
+        coordinator.reset.assert_called()
 
 
 class TestResult:
@@ -125,11 +128,11 @@ class TestResult:
     @pytest.mark.asyncio
     async def test_transfer_window_open(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
-        core.current_game._in_progress = True
-        core.current_game._transfer_window_open = True
-        core.current_game._betting_window_open = False
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._in_progress = True
+        store.current_game._transfer_window_open = True
+        store.current_game._betting_window_open = False
 
         await dpytest.message(f"!result {Side.RADIANT}")
         assert (
@@ -142,11 +145,11 @@ class TestResult:
     @pytest.mark.asyncio
     async def test_betting_window_open(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
-        core.current_game._in_progress = True
-        core.current_game._transfer_window_open = False
-        core.current_game._betting_window_open = True
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._in_progress = True
+        store.current_game._transfer_window_open = False
+        store.current_game._betting_window_open = True
 
         await dpytest.message(f"!result {Side.RADIANT}")
         assert (
@@ -159,20 +162,21 @@ class TestResult:
     @pytest.mark.asyncio
     async def test_invalid_side(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
-        core.current_game._in_progress = True
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._in_progress = True
         await dpytest.message("!result derp")
         assert dpytest.verify().message().content(f"Must be either {Side.RADIANT} or {Side.DIRE}.")
 
     @pytest.mark.asyncio
     async def test_invalid_team(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL Admin")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
-        core.current_game._in_progress = True
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._in_progress = True
 
-        core.channels.move_back_to_lobby = AsyncMock()
+        coordinator: GameCoordinator = cast(GameCoordinator, bot.get_cog("GameCoordinator"))
+        coordinator.channels.move_back_to_lobby = AsyncMock()
 
         with pytest.raises(CommandInvokeError):
             await dpytest.message(f"!result {Side.RADIANT}")
@@ -182,27 +186,27 @@ class TestResult:
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
         await add_ihl_role(bot, "IHL Admin")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
-        current_game: Game = core.current_game
-        current_game._in_progress = True
-        current_game.radiant = [Player(name="RBEEZAY")]
-        current_game.dire = []
-        current_game._bets = [
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._in_progress = True
+        store.current_game.radiant = [Player(name="RBEEZAY")]
+        store.current_game.dire = []
+        store.current_game._bets = [
             Bet("RBEEZAY", Side.RADIANT, 100),
             Bet("RBEEZAY", Side.DIRE, 500),
         ]
 
-        core.scoreboard.scoreboard = AsyncMock()
-        core.channels.move_back_to_lobby = AsyncMock()
-        core.reset = AsyncMock()
-        core.database.modify = Mock()
+        coordinator: GameCoordinator = cast(GameCoordinator, bot.get_cog("GameCoordinator"))
+        coordinator.scoreboard.scoreboard = AsyncMock()
+        coordinator.channels.move_back_to_lobby = AsyncMock()
+        coordinator.reset = AsyncMock()
+        coordinator.database.modify = Mock()
 
-        with patch("onehead.core.play_sound"):
+        with patch("onehead.coordinator.play_sound"):
             await dpytest.message(f"!result {Side.RADIANT}")
 
-        core.channels.move_back_to_lobby.assert_called_once()
-        core.reset.assert_called_once()
+        coordinator.channels.move_back_to_lobby.assert_called_once()
+        coordinator.reset.assert_called_once()
 
 
 class TestStatus:
@@ -220,17 +224,17 @@ class TestStatus:
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
-        core.current_game._in_progress = True
-        core.current_game.radiant = [
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._in_progress = True
+        store.current_game.radiant = [
             {"name": "A"},
             {"name": "B"},
             {"name": "C"},
             {"name": "D"},
             {"name": "E"},
         ]
-        core.current_game.dire = [
+        store.current_game.dire = [
             {"name": "F"},
             {"name": "G"},
             {"name": "H"},

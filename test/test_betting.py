@@ -1,3 +1,4 @@
+from typing import cast
 from unittest.mock import Mock, patch, MagicMock
 
 import discord.ext.test as dpytest
@@ -9,9 +10,9 @@ from discord.member import Member
 from onehead.betting import Bet, Betting
 from onehead.challenge import Challenge
 from onehead.common import Side, Player
-from onehead.core import Core
 from onehead.database import Database
 from onehead.game import ClassicGame
+from onehead.store import GameStore
 
 
 class TestBets:
@@ -26,13 +27,14 @@ class TestBets:
 
         await dpytest.message("!bets")
         assert dpytest.verify().message().content("There is no active game to currently bet on.")
+
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
-        core.current_game._bets.append(Bet("dire", 1000, "RBEEZAY"))
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._bets.append(Bet(selection="dire", stake=1000, bettor="RBEEZAY"))
 
         await dpytest.message("!bets")
         assert dpytest.verify().message().content("**Bets** ```\n").contains()
@@ -47,17 +49,17 @@ class TestPlaceBet:
     @pytest.mark.asyncio
     async def test_betting_window_closed(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
         await dpytest.message("!bet dire all")
         assert dpytest.verify().message().content("Betting window closed.")
 
     @pytest.mark.asyncio
     async def test_player_does_not_exist(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
-        core.current_game._betting_window_open = True
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} all")
         assert dpytest.verify().message().content(f"Unable to find").contains()
 
@@ -65,12 +67,13 @@ class TestPlaceBet:
     async def test_available_balance_is_zero(self, bot: Bot) -> None:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
-        core.current_game._betting_window_open = True
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._betting_window_open = True
 
-        core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 0}
+        betting: Betting = cast(Betting, bot.get_cog("Betting"))
+        betting.database.get = Mock()
+        betting.database.get.return_value = {"name": "RBEEZAY", "rbucks": 0}
 
         await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
         assert dpytest.verify().message().content("cannot bet as they have no available RBUCKS.").contains()
@@ -79,13 +82,14 @@ class TestPlaceBet:
     async def test_invalid_side(self, bot: Bot) -> None:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._betting_window_open = True
 
-        core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
+        betting: Betting = cast(Betting, bot.get_cog("Betting"))
+        betting.database.get = Mock()
+        betting.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
 
-        core.current_game._betting_window_open = True
         await dpytest.message("!bet derp all", 0, member)
         assert dpytest.verify().message().content(f"you must bet on either {Side.RADIANT} or {Side.DIRE}.").contains()
 
@@ -93,13 +97,14 @@ class TestPlaceBet:
     async def test_stake_not_valid_int(self, bot: Bot) -> None:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._betting_window_open = True
 
-        core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
+        betting: Betting = cast(Betting, bot.get_cog("Betting"))
+        betting.database.get = Mock()
+        betting.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
 
-        core.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} foobar", 0, member)
         assert dpytest.verify().message().content("is not a valid number of RBUCKS").contains()
 
@@ -107,13 +112,14 @@ class TestPlaceBet:
     async def test_stake_negative_int(self, bot: Bot) -> None:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._betting_window_open = True
 
-        core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
+        betting: Betting = cast(Betting, bot.get_cog("Betting"))
+        betting.database.get = Mock()
+        betting.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
 
-        core.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} -100", 0, member)
         assert dpytest.verify().message().content("stake must be greater than 0.").contains()
 
@@ -121,14 +127,15 @@ class TestPlaceBet:
     async def test_stake_greater_than_balance(self, bot: Bot) -> None:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._betting_window_open = True
 
-        core.database.get = Mock()
+        betting: Betting = cast(Betting, bot.get_cog("Betting"))
+        betting.database.get = Mock()
         record = {"name": "RBEEZAY", "rbucks": 100}
-        core.database.get.return_value = record
+        betting.database.get.return_value = record
 
-        core.current_game._betting_window_open = True
         stake: int = record["rbucks"] + 100
         await dpytest.message(f"!bet {Side.RADIANT} {stake:.0f}", 0, member)
         assert dpytest.verify().message().content(f"Unable to place bet").contains()
@@ -137,15 +144,16 @@ class TestPlaceBet:
     async def test_success(self, bot: Bot) -> None:
         member: Member = await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL", "RBEEZAY")
-        core: Core = bot.get_cog("Core")
-        core.current_game = ClassicGame()
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.current_game = ClassicGame()
+        store.current_game._betting_window_open = True
 
-        core.database.get = Mock()
+        betting: Betting = cast(Betting, bot.get_cog("Betting"))
+        betting.database.get = Mock()
         record = {"name": "RBEEZAY", "rbucks": 100}
-        core.database.get.return_value = record
-        core.database.modify = Mock()
+        betting.database.get.return_value = record
+        betting.database.modify = Mock()
 
-        core.current_game._betting_window_open = True
         with patch("onehead.betting.play_sound"):
             await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
             assert dpytest.verify().message().content(f"has placed a bet").contains()
@@ -155,7 +163,8 @@ class TestCalculateOdds:
     @pytest.mark.asyncio
     async def test_challenger_favoured(self, bot: Bot) -> None:
         db = MagicMock(spec=Database)
-        betting: Betting = Betting(db, MagicMock())
+        betting: Betting = cast(Betting, bot.get_cog("Betting"))
+        betting.database = db
         challenger: Member = await dpytest.member_join(name="RBEEZAY")
         opponent: Member = await dpytest.member_join(name="GEE")
 
@@ -172,8 +181,9 @@ class TestCalculateOdds:
 
     @pytest.mark.asyncio
     async def test_opponent_favoured(self, bot: Bot) -> None:
-        db = MagicMock(spec=Database)
-        betting: Betting = Betting(db, MagicMock())
+        db: MagicMock = MagicMock(spec=Database)
+        betting: Betting = cast(Betting, bot.get_cog("Betting"))
+        betting.database = db
         challenger: Member = await dpytest.member_join(name="RBEEZAY")
         opponent: Member = await dpytest.member_join(name="GEE")
 
@@ -191,7 +201,8 @@ class TestCalculateOdds:
     @pytest.mark.asyncio
     async def test_equal_odds(self, bot: Bot) -> None:
         db = MagicMock(spec=Database)
-        betting: Betting = Betting(db, MagicMock())
+        betting: Betting = cast(Betting, bot.get_cog("Betting"))
+        betting.database = db
         challenger: Member = await dpytest.member_join(name="RBEEZAY")
         opponent: Member = await dpytest.member_join(name="GEE")
 

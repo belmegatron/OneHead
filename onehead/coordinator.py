@@ -3,7 +3,6 @@ from logging import Logger
 from typing import cast
 
 from discord.member import Member
-from discord import Embed
 from discord.ext.commands import (
     BucketType,
     Cog,
@@ -14,7 +13,6 @@ from discord.ext.commands import (
     max_concurrency,
 )
 from structlog import get_logger
-from tabulate import tabulate
 
 from onehead.betting import Betting
 from onehead.channels import Channels
@@ -27,7 +25,7 @@ from onehead.common import (
     Metadata,
     play_sound,
     voice_client_disconnect,
-    get_command_from_cog
+    get_command_from_cog,
 )
 from onehead.game import ClassicGame, Challenge
 from onehead.lobby import Lobby
@@ -44,18 +42,20 @@ log: Logger = get_logger()
 
 
 class GameCoordinator(Cog):
-    def __init__(self,
-                 store: GameStore, 
-                 betting: Betting, 
-                 transfers: Transfers, 
-                 channels: Channels, 
-                 database: PlayerDatabase, 
-                 challenge_mode: ChallengeMode,
-                 lobby: Lobby,
-                 matchmaking: Matchmaking,
-                 scoreboard: ScoreBoard) -> None:
+    def __init__(
+        self,
+        store: GameStore,
+        betting: Betting,
+        transfers: Transfers,
+        channels: Channels,
+        database: PlayerDatabase,
+        challenge_mode: ChallengeMode,
+        lobby: Lobby,
+        matchmaking: Matchmaking,
+        scoreboard: ScoreBoard,
+    ) -> None:
         super().__init__()
-        
+
         self.store: GameStore = store
         self.betting: Betting = betting
         self.transfers: Transfers = transfers
@@ -65,7 +65,7 @@ class GameCoordinator(Cog):
         self.lobby: Lobby = lobby
         self.matchmaking: Matchmaking = matchmaking
         self.scoreboard: ScoreBoard = scoreboard
-    
+
     @has_role(Roles.ADMIN)
     @command()
     @max_concurrency(1, per=BucketType.default, wait=False)
@@ -81,7 +81,7 @@ class GameCoordinator(Cog):
             await self.start_challenge(ctx, duel_id)
         else:
             await self.start_classic_game(ctx)
-        
+
     @has_role(Roles.ADMIN)
     @command()
     @max_concurrency(1, per=BucketType.default, wait=False)
@@ -102,7 +102,7 @@ class GameCoordinator(Cog):
             await self.reset(ctx, game_cancelled=True)
         else:
             await ctx.send("No currently active game.")
-               
+
     @has_role(Roles.ADMIN)
     @command()
     @max_concurrency(1, per=BucketType.default, wait=False)
@@ -113,9 +113,9 @@ class GameCoordinator(Cog):
         if self.store.current_game is None or self.store.current_game.in_progress() is False:
             await ctx.send("No currently active game.")
             return
-        
+
         winner: Side | Member | None = None
-        
+
         if isinstance(self.store.current_game, ClassicGame):
             await self.handle_classic_game_result(ctx, result)
             winner = cast(Side, result)
@@ -125,7 +125,7 @@ class GameCoordinator(Cog):
         if winner:
             await self.handle_bet_results(ctx, winner)
             await self.reset(ctx)
-   
+
     async def handle_challenge_result(self, ctx: Context, result: str) -> Member | None:
         self.store.current_game = cast(Challenge, self.store.current_game)
         if self.store.current_game.betting_window_open():
@@ -133,7 +133,7 @@ class GameCoordinator(Cog):
                 "Cannot enter result as the betting window for the game is currently open. Use the `!stop` command if you wish to abort the game."
             )
             return
-        
+
         winner = get_discord_member_from_name(ctx, result)
 
         if winner not in (self.store.current_game.challenger, self.store.current_game.opponent):
@@ -141,13 +141,13 @@ class GameCoordinator(Cog):
                 f"Must specify either {self.store.current_game.challenger.mention} or {self.store.current_game.opponent.mention} as the winner when entering a result."
             )
             return
-        
+
         await play_sound(ctx, "winner.mp3")
         await ctx.send(f"{winner.mention} has emerged victorious!")
         await ctx.send(f"All hail {winner.mention}!")
-        
+
         return winner
-    
+
     async def handle_bet_results(self, ctx: Context, winner: Side | Member) -> None:
         bet_results: dict = self.betting.get_bet_results(winner)
 
@@ -162,7 +162,7 @@ class GameCoordinator(Cog):
         if len(bet_results) > 0:
             report: str = self.betting.create_bet_report(bet_results)
             await ctx.send(report)
-    
+
     async def show_teams(self, ctx: Context) -> None:
         command: Command | None = get_command_from_cog(self.store, "status")
         if command:
@@ -178,7 +178,9 @@ class GameCoordinator(Cog):
             await self.channels.create_discord_channels(ctx)
 
             if self.store.current_game.radiant is None or self.store.current_game.dire is None:
-                raise OneHeadException(f"Expected valid teams: {self.store.current_game.radiant}, {self.store.current_game.dire}")
+                raise OneHeadException(
+                    f"Expected valid teams: {self.store.current_game.radiant}, {self.store.current_game.dire}"
+                )
 
             await self.channels.move_discord_channels(ctx)
 
@@ -223,7 +225,7 @@ class GameCoordinator(Cog):
         self.lobby.disable_signups()
 
         (
-            self.store.current_game.radiant, 
+            self.store.current_game.radiant,
             self.store.current_game.dire,
         ) = await self.matchmaking.balance(ctx)
 
@@ -318,7 +320,7 @@ class GameCoordinator(Cog):
 
     async def handle_classic_game_result(self, ctx: Context, result: str) -> None:
         self.store.current_game = cast(ClassicGame, self.store.current_game)
-        
+
         if self.store.current_game.transfer_window_open():
             await ctx.send(
                 "Cannot enter result as the transfer window for the game is currently open. Use the `!stop` command if you wish to abort the game."
@@ -344,7 +346,9 @@ class GameCoordinator(Cog):
         log.info(f"{ctx.author.display_name} entered a result of {result}.")
 
         if self.store.current_game.radiant is None or self.store.current_game.dire is None:
-            raise OneHeadException(f"Expected valid teams: {self.store.current_game.radiant}, {self.store.current_game.dire}")
+            raise OneHeadException(
+                f"Expected valid teams: {self.store.current_game.radiant}, {self.store.current_game.dire}"
+            )
 
         metadata: Metadata = self.database.get_metadata()
 
@@ -369,7 +373,6 @@ class GameCoordinator(Cog):
             self.database.update_metadata(metadata)
             # TODO: Make a big song and dance about the end of an IHL season, present winners, go crazy.
 
-        
     async def reset(self, ctx: Context, game_cancelled=False) -> None:
         if self.store.current_game and isinstance(self.store.current_game, Challenge):
             self.challenge_mode.challenges.remove(self.store.current_game)
@@ -384,7 +387,7 @@ class GameCoordinator(Cog):
             self.lobby.clear_signups()
 
         create_task(voice_client_disconnect(ctx))
-    
+
     def is_end_of_season(self) -> bool:
         metadata: Metadata = self.database.get_metadata()
         return metadata["game_id"] >= metadata["max_game_count"]

@@ -14,7 +14,7 @@ from onehead.common import (
     get_player_names,
     get_discord_member_from_name,
     play_sound,
-    get_command_from_cog
+    get_command_from_cog,
 )
 from onehead.game import ClassicGame
 from onehead.lobby import Lobby
@@ -123,4 +123,3 @@ class Transfers(Cog):
         command: Command | None = get_command_from_cog(self.store, "status")
         if command:
             await Command.invoke(command, ctx)
-

@@ -99,7 +99,7 @@ class Betting(Cog):
         if record is None:
             await ctx.send(f"Unable to find {ctx.author.mention} in database.")
             return None
-        
+
         available_balance: int = record.get("rbucks")
         if available_balance == 0:
             await ctx.send(f"{ctx.author.mention} cannot bet as they have no available RBUCKS.")
@@ -112,7 +112,7 @@ class Betting(Cog):
         if bet.stake <= 0:
             await ctx.send(f"{ctx.author.mention} - Bet stake must be greater than 0.")
             return
-        
+
         if bet.stake > available_balance:
             await ctx.send(
                 f"Unable to place bet - {ctx.author.mention} tried to stake `{bet.stake:.0f}` RBUCKS but only has `{available_balance:.0f}` RBUCKS available."
@@ -176,7 +176,6 @@ class Betting(Cog):
 
         return f"**Bet results**\n```{contents}```"
 
-
     async def refund_all_bets(self, ctx: Context) -> None:
         current_game: Game | None = self.store.current_game
 
@@ -197,7 +196,9 @@ class Betting(Cog):
 
         await ctx.send("All bets have been refunded.")
 
-    async def parse_bet_arguments(self, ctx: Context, current_game: Game, first: str, second: str, record: Player) -> Bet | None:
+    async def parse_bet_arguments(
+        self, ctx: Context, current_game: Game, first: str, second: str, record: Player
+    ) -> Bet | None:
         selection: str = ""
         amount: str = ""
 
@@ -210,7 +211,7 @@ class Betting(Cog):
                 amount = first
             else:
                 await ctx.send(f"{ctx.author.mention}, you must bet on either {Side.RADIANT} or {Side.DIRE}.")
-                return None                
+                return None
         elif isinstance(current_game, Challenge):
             member: Member | None = get_discord_member_from_name(ctx, first)
             if member in (current_game.challenger, current_game.opponent):
@@ -221,11 +222,13 @@ class Betting(Cog):
                 if member in (current_game.challenger, current_game.opponent):
                     selection = member.display_name
                     amount = first
-                    
+
             if selection == "":
-                await ctx.send(f"{ctx.author.mention}, you must specify either {current_game.challenger.mention} or {current_game.opponent.mention}.")
-                return None                
-            
+                await ctx.send(
+                    f"{ctx.author.mention}, you must specify either {current_game.challenger.mention} or {current_game.opponent.mention}."
+                )
+                return None
+
         available_balance: int = record.get("rbucks", 0)
         stake: int = 0
 

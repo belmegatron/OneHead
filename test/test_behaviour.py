@@ -1,14 +1,15 @@
 from typing import cast
 from unittest.mock import Mock
 
-import discord.ext.test as dpytest
-import pytest
 from conftest import TEST_USER, add_ihl_role
 from discord.ext.commands import Bot, errors
+import discord.ext.test as dpytest
+import pytest
 
+from onehead.behaviour import Behaviour
 from onehead.common import Team
-from onehead.core import Core
-from onehead.game import Game, ClassicGame
+from onehead.store import GameStore
+from onehead.game import ClassicGame
 
 
 class TestCommend:
@@ -25,11 +26,11 @@ class TestCommend:
 
     @pytest.mark.asyncio
     async def test_commender_did_not_play(self, bot: Bot) -> None:
-        core: Core = bot.get_cog("Core")
-        core.previous_game = ClassicGame()
-        core.previous_game = cast(ClassicGame, core.previous_game)
-        core.previous_game.radiant = Team()
-        core.previous_game.dire = Team()
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.previous_game = ClassicGame()
+        store.previous_game = cast(ClassicGame, store.previous_game)
+        store.previous_game.radiant = Team()
+        store.previous_game.dire = Team()
 
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!commend RBEEZAY")
@@ -42,11 +43,11 @@ class TestCommend:
 
     @pytest.mark.asyncio
     async def test_commend_self(self, bot: Bot) -> None:
-        core: Core = bot.get_cog("Core")
-        core.previous_game = ClassicGame()
-        core.previous_game = cast(ClassicGame, core.previous_game)
-        core.previous_game.radiant = [{"name": TEST_USER}]
-        core.previous_game.dire = []
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.previous_game = ClassicGame()
+        store.previous_game = cast(ClassicGame, store.previous_game)
+        store.previous_game.radiant = [{"name": TEST_USER}]
+        store.previous_game.dire = []
 
         await add_ihl_role(bot, "IHL")
         await dpytest.message(f"!commend {TEST_USER}")
@@ -54,11 +55,11 @@ class TestCommend:
 
     @pytest.mark.asyncio
     async def test_commendee_did_not_play(self, bot: Bot) -> None:
-        core: Core = bot.get_cog("Core")
-        core.previous_game = ClassicGame()
-        core.previous_game = cast(ClassicGame, core.previous_game)
-        core.previous_game.radiant = [{"name": TEST_USER}]
-        core.previous_game.dire = []
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.previous_game = ClassicGame()
+        store.previous_game = cast(ClassicGame, store.previous_game)
+        store.previous_game.radiant = [{"name": TEST_USER}]
+        store.previous_game.dire = []
 
         await dpytest.member_join(name="RBEEZAY")
 
@@ -73,11 +74,12 @@ class TestCommend:
 
     @pytest.mark.asyncio
     async def test_previously_commended(self, bot: Bot) -> None:
-        core: Core = bot.get_cog("Core")
-        core.previous_game = ClassicGame()
-        core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
-        core.previous_game.dire = []
-        core.previous_game._commends["RBEEZAY"] = [TEST_USER]
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.previous_game = ClassicGame()
+        store.previous_game = cast(ClassicGame, store.previous_game)
+        store.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
+        store.previous_game.dire = []
+        store.previous_game._commends["RBEEZAY"] = [TEST_USER]
 
         await dpytest.member_join(name="RBEEZAY")
 
@@ -87,14 +89,15 @@ class TestCommend:
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
-        core: Core = bot.get_cog("Core")
-        core.previous_game = ClassicGame()
-        core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
-        core.previous_game.dire = []
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.previous_game = ClassicGame()
+        store.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
+        store.previous_game.dire = []
 
-        core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "behaviour": 10000}
-        core.database.modify = Mock()
+        behaviour: Behaviour = cast(Behaviour, bot.get_cog("Behaviour"))
+        behaviour.database.get = Mock()
+        behaviour.database.get.return_value = {"name": "RBEEZAY", "behaviour": 10000}
+        behaviour.database.modify = Mock()
 
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
@@ -124,10 +127,10 @@ class TestReport:
 
     @pytest.mark.asyncio
     async def test_reporter_did_not_play(self, bot: Bot) -> None:
-        core: Core = bot.get_cog("Core")
-        core.previous_game = ClassicGame()
-        core.previous_game.radiant = [{"name": "RBEEZAY"}]
-        core.previous_game.dire = []
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.previous_game = ClassicGame()
+        store.previous_game.radiant = [{"name": "RBEEZAY"}]
+        store.previous_game.dire = []
 
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
@@ -141,10 +144,10 @@ class TestReport:
 
     @pytest.mark.asyncio
     async def test_report_self(self, bot: Bot) -> None:
-        core: Core = bot.get_cog("Core")
-        core.previous_game = ClassicGame()
-        core.previous_game.radiant = [{"name": TEST_USER}]
-        core.previous_game.dire = []
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.previous_game = ClassicGame()
+        store.previous_game.radiant = [{"name": TEST_USER}]
+        store.previous_game.dire = []
 
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
@@ -153,10 +156,10 @@ class TestReport:
 
     @pytest.mark.asyncio
     async def test_reportee_did_not_play(self, bot: Bot) -> None:
-        core: Core = bot.get_cog("Core")
-        core.previous_game = ClassicGame()
-        core.previous_game.radiant = [{"name": TEST_USER}]
-        core.previous_game.dire = []
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.previous_game = ClassicGame()
+        store.previous_game.radiant = [{"name": TEST_USER}]
+        store.previous_game.dire = []
 
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
@@ -170,11 +173,11 @@ class TestReport:
 
     @pytest.mark.asyncio
     async def test_reported_previously(self, bot: Bot) -> None:
-        core: Core = bot.get_cog("Core")
-        core.previous_game = ClassicGame()
-        core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
-        core.previous_game.dire = []
-        core.previous_game._reports["RBEEZAY"] = [TEST_USER]
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.previous_game = ClassicGame()
+        store.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
+        store.previous_game.dire = []
+        store.previous_game._reports["RBEEZAY"] = [TEST_USER]
 
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
@@ -183,14 +186,15 @@ class TestReport:
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
-        core: Core = bot.get_cog("Core")
-        core.previous_game = ClassicGame()
-        core.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
-        core.previous_game.dire = []
+        store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
+        store.previous_game = ClassicGame()
+        store.previous_game.radiant = [{"name": "RBEEZAY"}, {"name": TEST_USER}]
+        store.previous_game.dire = []
 
-        core.database.get = Mock()
-        core.database.get.return_value = {"name": "RBEEZAY", "behaviour": 10000}
-        core.database.modify = Mock()
+        behaviour: Behaviour = cast(Behaviour, bot.get_cog("Behaviour"))
+        behaviour.database.get = Mock()
+        behaviour.database.get.return_value = {"name": "RBEEZAY", "behaviour": 10000}
+        behaviour.database.modify = Mock()
 
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")

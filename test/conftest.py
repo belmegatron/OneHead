@@ -8,13 +8,14 @@ from discord.member import Member
 from discord.role import Role
 
 from onehead.core import bot_builder
+from onehead.config import load_config
 
 TEST_USER: str = "TestUser0_0_nick"
 
 
 @pytest_asyncio.fixture
 async def bot() -> Bot:
-    bot: Bot = await bot_builder()
+    bot: Bot = await bot_builder(load_config())
     await bot._async_setup_hook()
     dpytest.configure(bot)
 
@@ -32,7 +33,7 @@ async def cleanup() -> AsyncGenerator[None, None]:
     yield
 
 
-async def add_ihl_role(bot: Bot, role: str, name: str = None) -> None:
+async def add_ihl_role(bot: Bot, role: str, name: str | None = None) -> None:
     guilds: Sequence[Guild] = bot.guilds
     guild: Guild = guilds[0]
     members: list[Member] = list(bot.get_all_members())

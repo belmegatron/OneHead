@@ -82,7 +82,7 @@ class Channels(Cog):
         selected_channels: list[VoiceChannel] = [x for x in guild.voice_channels if x.name == self.lobby_name]
         if len(selected_channels) != 1:
             raise OneHeadException("Failed to find lobby voice channel")
-        
+
         lobby: VoiceChannel = selected_channels[0]
 
         t1_discord_members: list[Member]
