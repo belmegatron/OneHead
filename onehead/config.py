@@ -3,8 +3,7 @@ from dacite import from_dict
 import json
 from pathlib import Path
 
-
-ROOT_DIR: Path = Path(__file__).resolve().parent.parent
+from onehead.common import ROOT_DIR
 
 
 class ConfigException(Exception):

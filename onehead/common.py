@@ -2,11 +2,12 @@ from asyncio import sleep
 from dataclasses import dataclass
 from enum import StrEnum
 from logging import Logger
+from pathlib import Path
 from structlog import get_logger
 from typing import TypedDict, cast
 
 from discord.channel import VocalGuildChannel
-from discord.ext.commands import Context
+from discord.ext.commands import Context, Cog, Command
 from discord.errors import ClientException
 from discord.member import Member, VoiceState
 from discord.player import FFmpegPCMAudio
@@ -14,6 +15,9 @@ from discord.voice_client import VoiceClient
 
 
 log: Logger = get_logger()
+
+
+ROOT_DIR: Path = Path(__file__).resolve().parent.parent
 
 
 Player = TypedDict(
@@ -143,7 +147,7 @@ async def play_sound(ctx: Context, file_name: str) -> None:
         if voice_channel:
             voice_client = await voice_channel.connect()
             
-    elif voice_client.channel.name != voice_channel.name:
+    elif voice_client.channel.name != ctx.author.voice.channel.name:
         await voice_client.move_to(ctx.author.voice.channel)
 
     try:
@@ -160,3 +164,10 @@ async def voice_client_disconnect(ctx: Context) -> None:
             break
         else:
             await sleep(5)
+
+def get_command_from_cog(cog: Cog, name: str) -> Command | None:
+    for command in cog.get_commands():
+        if command.name == name:
+            return command
+    
+    return None

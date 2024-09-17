@@ -163,7 +163,7 @@ class Betting(Cog):
         await ctx.send(f"**RBUCKS** ```\n{bucks_board}```")
 
     @staticmethod
-    def create_bet_report(bet_results: dict[str, list[float]]) -> Embed:
+    def create_bet_report(bet_results: dict[str, list[float]]) -> str:
         contents: str = ""
 
         for name, deltas in bet_results.items():
@@ -174,10 +174,8 @@ class Betting(Cog):
                 contents += line
                 contents += "\n"
 
-        embed: Embed = Embed(title="**RBUCKS**", colour=colour.Colour.green())
-        embed.add_field(name="Bet Report", value=f"```{contents}```")
+        return f"**Bet results**\n```{contents}```"
 
-        return embed
 
     async def refund_all_bets(self, ctx: Context) -> None:
         current_game: Game | None = self.store.current_game

@@ -16,7 +16,6 @@ from discord.ext.commands import (
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.behaviour import Behaviour
 from onehead.betting import Betting
 from onehead.channels import Channels
 from onehead.common import (
@@ -28,14 +27,12 @@ from onehead.common import (
     Metadata,
     play_sound,
     voice_client_disconnect,
+    get_command_from_cog
 )
-from onehead.database import Database
-from onehead.game import Game, ClassicGame, Challenge
+from onehead.game import ClassicGame, Challenge
 from onehead.lobby import Lobby
 from onehead.matchmaking import Matchmaking
-from onehead.mental_health import MentalHealth
 from onehead.protocols.database import PlayerDatabase, Operation
-from onehead.registration import Registration
 from onehead.scoreboard import ScoreBoard
 from onehead.transfers import Transfers
 from onehead.challenge import ChallengeMode
@@ -55,7 +52,8 @@ class GameCoordinator(Cog):
                  database: PlayerDatabase, 
                  challenge_mode: ChallengeMode,
                  lobby: Lobby,
-                 matchmaking: Matchmaking) -> None:
+                 matchmaking: Matchmaking,
+                 scoreboard: ScoreBoard) -> None:
         super().__init__()
         
         self.store: GameStore = store
@@ -66,6 +64,7 @@ class GameCoordinator(Cog):
         self.challenge_mode: ChallengeMode = challenge_mode
         self.lobby: Lobby = lobby
         self.matchmaking: Matchmaking = matchmaking
+        self.scoreboard: ScoreBoard = scoreboard
     
     @has_role(Roles.ADMIN)
     @command()
@@ -103,6 +102,39 @@ class GameCoordinator(Cog):
             await self.reset(ctx, game_cancelled=True)
         else:
             await ctx.send("No currently active game.")
+            
+    async def handle_challenge_result(self, ctx: Context, result: str) -> Member | None:
+        self.store.current_game = cast(Challenge, self.store.current_game)
+        if self.store.current_game.betting_window_open():
+            await ctx.send(
+                "Cannot enter result as the betting window for the game is currently open. Use the `!stop` command if you wish to abort the game."
+            )
+            return
+        
+        winner = get_discord_member_from_name(ctx, result)
+
+        if winner not in (self.store.current_game.challenger, self.store.current_game.opponent):
+            await ctx.send(
+                f"Must specify either {self.store.current_game.challenger.mention} or {self.store.current_game.opponent.mention} as the winner when entering a result."
+            )
+            return
+        
+        return winner
+    
+    async def handle_bet_results(self, ctx: Context, winner: Side | Member) -> None:
+        bet_results: dict = self.betting.get_bet_results(winner)
+
+        for name, bets in bet_results.items():
+            for bet_result in bets:
+                if bet_result > 0:
+                    member: Member | None = get_discord_member_from_name(ctx, name)
+                    if member is None:
+                        continue
+                    self.database.modify(member.id, "rbucks", bet_result, Operation.ADD)
+
+        if len(bet_results) > 0:
+            report: str = self.betting.create_bet_report(bet_results)
+            await ctx.send(report)
     
     @has_role(Roles.ADMIN)
     @command()
@@ -115,45 +147,17 @@ class GameCoordinator(Cog):
             await ctx.send("No currently active game.")
             return
         
-        if isinstance(self.store.current_game, ClassicGame):
-            self.store.current_game = cast(ClassicGame, self.store.current_game)
-            if self.store.current_game.transfer_window_open():
-                await ctx.send("Cannot enter result as the transfer window for the game is currently open. Use the `!stop` command if you wish to abort the game.")
-
-        if self.store.current_game.betting_window_open():
-            await ctx.send(
-                "Cannot enter result as the betting window for the game is currently open. Use the `!stop` command if you wish to abort the game."
-            )
-            return
-
+        winner: Side | Member | None = None
+        
         if isinstance(self.store.current_game, ClassicGame):
             await self.handle_classic_game_result(ctx, result)
-            result = cast(Side, result)
-            bet_results: dict = self.betting.get_bet_results(result)
-        else:
-            self.store.current_game = cast(Challenge, self.store.current_game)
-            winner: Member | None = get_discord_member_from_name(ctx, result)
+            winner = cast(Side, result)
+        elif isinstance(self.store.current_game, Challenge):
+            winner = await self.handle_challenge_result(ctx, result)
 
-            if winner not in (self.store.current_game.challenger, self.store.current_game.opponent):
-                await ctx.send(
-                    f"Must specify either {self.store.current_game.challenger.mention} or {self.store.current_game.opponent.mention} as the winner when entering a result."
-                )
-                return
-
-            bet_results: dict = self.betting.get_bet_results(winner)
-
-        for name, bets in bet_results.items():
-            for bet_result in bets:
-                if bet_result > 0:
-                    member: Member | None = get_discord_member_from_name(ctx, name)
-                    if member is None:
-                        continue
-                    self.database.modify(member.id, "rbucks", bet_result, Operation.ADD)
-
-        if len(bet_results) > 0:
-            report: Embed = self.betting.create_bet_report(bet_results)
-            await ctx.send(embed=report)
-
+        if winner:
+            await self.handle_bet_results(ctx, winner)
+        
         await self.reset(ctx)
 
     @has_role(Roles.MEMBER)
@@ -189,10 +193,10 @@ class GameCoordinator(Cog):
                     f"**Current Duel** - {self.store.current_game.challenger.mention} vs. {self.store.current_game.opponent.mention}"
                 )
     
-    
     async def show_teams(self, ctx: Context) -> None:
-        status: Command = self.get_command("status")  # type: ignore[assignment]
-        await Command.invoke(status, ctx)
+        command: Command | None = get_command_from_cog(self, "status")
+        if command:
+            await Command.invoke(command, ctx)
 
     async def setup_team_channels(self, ctx: Context) -> None:
         if self.store.current_game is None:
@@ -212,7 +216,7 @@ class GameCoordinator(Cog):
         try:
             id = int(duel_id)
         except ValueError:
-            await ctx.send(f"Invalid Duel ID: `{duel_id}`.")
+            await ctx.send(f"Invalid duel id: `{duel_id}`.")
             return
         else:
             target_challenge: Challenge | None = None
@@ -344,10 +348,16 @@ class GameCoordinator(Cog):
 
     async def handle_classic_game_result(self, ctx: Context, result: str) -> None:
         self.store.current_game = cast(ClassicGame, self.store.current_game)
-
+        
         if self.store.current_game.transfer_window_open():
             await ctx.send(
                 "Cannot enter result as the transfer window for the game is currently open. Use the `!stop` command if you wish to abort the game."
+            )
+            return
+
+        if self.store.current_game.betting_window_open():
+            await ctx.send(
+                "Cannot enter result as the betting window for the game is currently open. Use the `!stop` command if you wish to abort the game."
             )
             return
 
@@ -375,8 +385,9 @@ class GameCoordinator(Cog):
         await ctx.send("Updating scores...")
         await self.update_database_with_result(ctx, result)
 
-        scoreboard: Command = self.bot.get_command("scoreboard")  # type: ignore[assignment]
-        await Command.invoke(scoreboard, ctx)
+        command: Command | None = get_command_from_cog(self.scoreboard, "scoreboard")
+        if command:
+            await Command.invoke(command, ctx)
 
         metadata["game_id"] += 1
         self.database.update_metadata(metadata)
