@@ -191,9 +191,16 @@ class GameCoordinator(Cog):
                 await play_sound(ctx, "fight.mp3")
                 self.store.current_game = target_challenge
                 target_challenge.start()
+                
+                challenger_odds: float
+                opponent_odds: float
+                challenger_odds, opponent_odds = self.betting.calculate_challenge_odds(target_challenge)
+                
                 await ctx.send(
                     f"**Duel starting**: {target_challenge.challenger.mention} and {target_challenge.opponent.mention}, prepare to fight!"
                 )
+                
+                await ctx.send(f"**Bookie prices**: {target_challenge.challenger.mention} at `{challenger_odds}`, {target_challenge.opponent.mention} at `{opponent_odds}`")
                 await self.store.current_game.open_betting_window(ctx)
                 await ctx.send("GL HF!")
             else:
