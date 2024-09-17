@@ -2,7 +2,7 @@ from logging import Logger
 from typing import cast
 
 from discord.member import Member
-from discord.ext.commands import Cog, Context, command, has_role
+from discord.ext.commands import Cog, Context, command, has_role, Command
 from structlog import get_logger
 
 from onehead.common import (
@@ -14,6 +14,7 @@ from onehead.common import (
     get_player_names,
     get_discord_member_from_name,
     play_sound,
+    get_command_from_cog
 )
 from onehead.game import ClassicGame
 from onehead.lobby import Lobby
@@ -119,4 +120,7 @@ class Transfers(Cog):
 
         current_game.radiant, current_game.dire = shuffled_teams
 
-        await self.store.show_teams(ctx)
+        command: Command | None = get_command_from_cog(self.store, "status")
+        if command:
+            await Command.invoke(command, ctx)
+

@@ -1,6 +1,5 @@
 from logging import Logger
 from datetime import datetime, UTC
-from typing import cast
 
 from discord import Intents
 from discord.ext.commands import (
@@ -17,7 +16,6 @@ from onehead.betting import Betting
 from onehead.callbacks import on_presence_update, on_message, set_bot_instance
 from onehead.channels import Channels
 from onehead.common import (
-    OneHeadException,
     Roles,
     Metadata,
 )
@@ -39,7 +37,7 @@ from version import __changelog__, __version__
 log: Logger = get_logger()
 
 
-async def bot_builder() -> Bot:
+async def bot_builder(config: Config) -> Bot:
     """
     Builder method for generating an instance of our Bot.
 
@@ -51,10 +49,8 @@ async def bot_builder() -> Bot:
     intents.presences = True
     bot: Bot = Bot(command_prefix="!", intents=intents)
 
-    config: Config = load_config()
-    store: GameStore = GameStore()
-    
     database: Database = Database(config)
+    store: GameStore = GameStore(database)
     scoreboard: ScoreBoard = ScoreBoard(database)
     lobby: Lobby = Lobby(store, database)
     matchmaking: Matchmaking = Matchmaking(database, lobby)
@@ -66,8 +62,10 @@ async def bot_builder() -> Bot:
     transfers: Transfers = Transfers(store, database, lobby, matchmaking)
     challenge_mode: ChallengeMode = ChallengeMode(database)
     coordinator: GameCoordinator = GameCoordinator(store, betting, transfers, channels, database, challenge_mode, lobby, matchmaking, scoreboard)
+    core: Core = Core(database, lobby)
 
     await bot.add_cog(database)
+    await bot.add_cog(store)
     await bot.add_cog(lobby)
     await bot.add_cog(scoreboard)
     await bot.add_cog(registration)
@@ -79,9 +77,6 @@ async def bot_builder() -> Bot:
     await bot.add_cog(transfers)
     await bot.add_cog(challenge_mode)
     await bot.add_cog(coordinator)
-
-    # Add cogs first, then instantiate Core as we reference them as instance variables
-    core: Core = Core(bot, config.discord.token)
     await bot.add_cog(core)
 
     # Register events
@@ -95,12 +90,9 @@ async def bot_builder() -> Bot:
 
 
 class Core(Cog):
-    def __init__(self, bot: Bot, token: str) -> None:
-        self.bot: Bot = bot
-        self.token: str = token
-
-        self.database: PlayerDatabase = cast(Database, bot.get_cog("Database"))
-        self.lobby: Lobby = cast(Lobby, bot.get_cog("Lobby"))
+    def __init__(self, database: PlayerDatabase, lobby: Lobby) -> None:
+        self.database: PlayerDatabase = database
+        self.lobby: Lobby = lobby
 
     @has_role(Roles.MEMBER)
     @command()
@@ -129,6 +121,7 @@ class Core(Cog):
         dt: datetime = datetime.fromtimestamp(metadata["timestamp"], UTC)
 
         await ctx.send(f"Season `{metadata['season']}` started on: `{dt}`")
+        await ctx.send(f"`{metadata['max_game_count'] - metadata['game_id']}` games remaining for this season.")
 
     @has_role(Roles.ADMIN)
     @command(aliases=["sim"])

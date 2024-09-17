@@ -102,40 +102,7 @@ class GameCoordinator(Cog):
             await self.reset(ctx, game_cancelled=True)
         else:
             await ctx.send("No currently active game.")
-            
-    async def handle_challenge_result(self, ctx: Context, result: str) -> Member | None:
-        self.store.current_game = cast(Challenge, self.store.current_game)
-        if self.store.current_game.betting_window_open():
-            await ctx.send(
-                "Cannot enter result as the betting window for the game is currently open. Use the `!stop` command if you wish to abort the game."
-            )
-            return
-        
-        winner = get_discord_member_from_name(ctx, result)
-
-        if winner not in (self.store.current_game.challenger, self.store.current_game.opponent):
-            await ctx.send(
-                f"Must specify either {self.store.current_game.challenger.mention} or {self.store.current_game.opponent.mention} as the winner when entering a result."
-            )
-            return
-        
-        return winner
-    
-    async def handle_bet_results(self, ctx: Context, winner: Side | Member) -> None:
-        bet_results: dict = self.betting.get_bet_results(winner)
-
-        for name, bets in bet_results.items():
-            for bet_result in bets:
-                if bet_result > 0:
-                    member: Member | None = get_discord_member_from_name(ctx, name)
-                    if member is None:
-                        continue
-                    self.database.modify(member.id, "rbucks", bet_result, Operation.ADD)
-
-        if len(bet_results) > 0:
-            report: str = self.betting.create_bet_report(bet_results)
-            await ctx.send(report)
-    
+               
     @has_role(Roles.ADMIN)
     @command()
     @max_concurrency(1, per=BucketType.default, wait=False)
@@ -157,44 +124,47 @@ class GameCoordinator(Cog):
 
         if winner:
             await self.handle_bet_results(ctx, winner)
-        
-        await self.reset(ctx)
-
-    @has_role(Roles.MEMBER)
-    @command()
-    async def status(self, ctx: Context) -> None:
-        """
-        If a game is active, displays the teams and their respective players.
-        """
-        if self.store.current_game is None:
-            await ctx.send("No currently active game.")
+            await self.reset(ctx)
+   
+    async def handle_challenge_result(self, ctx: Context, result: str) -> Member | None:
+        self.store.current_game = cast(Challenge, self.store.current_game)
+        if self.store.current_game.betting_window_open():
+            await ctx.send(
+                "Cannot enter result as the betting window for the game is currently open. Use the `!stop` command if you wish to abort the game."
+            )
             return
+        
+        winner = get_discord_member_from_name(ctx, result)
 
-        if self.store.current_game.in_progress():
-            if isinstance(self.store.current_game, ClassicGame):
-                if self.store.current_game.radiant and self.store.current_game.dire:
-                    t1_names: tuple[str, ...]
-                    t2_names: tuple[str, ...]
-                    t1_names, t2_names = get_player_names(self.store.current_game.radiant, self.store.current_game.dire)
+        if winner not in (self.store.current_game.challenger, self.store.current_game.opponent):
+            await ctx.send(
+                f"Must specify either {self.store.current_game.challenger.mention} or {self.store.current_game.opponent.mention} as the winner when entering a result."
+            )
+            return
+        
+        await play_sound(ctx, "winner.mp3")
+        await ctx.send(f"{winner.mention} has emerged victorious!")
+        await ctx.send(f"All hail {winner.mention}!")
+        
+        return winner
+    
+    async def handle_bet_results(self, ctx: Context, winner: Side | Member) -> None:
+        bet_results: dict = self.betting.get_bet_results(winner)
 
-                    players: dict[Side, tuple[str, ...]] = {
-                        Side.RADIANT: t1_names,
-                        Side.DIRE: t2_names,
-                    }
-                    in_game_players: str = tabulate(players, headers="keys", tablefmt="simple")
-                    metadata: Metadata = self.database.get_metadata()
+        for name, bets in bet_results.items():
+            for bet_result in bets:
+                if bet_result > 0:
+                    member: Member | None = get_discord_member_from_name(ctx, name)
+                    if member is None:
+                        continue
+                    self.database.modify(member.id, "rbucks", bet_result, Operation.ADD)
 
-                    await ctx.send(
-                        f"**Current Game** - Season `{metadata['season']}`, Game `{metadata['game_id']}` ```\n"
-                        f"{in_game_players}```"
-                    )
-            elif isinstance(self.store.current_game, Challenge):
-                await ctx.send(
-                    f"**Current Duel** - {self.store.current_game.challenger.mention} vs. {self.store.current_game.opponent.mention}"
-                )
+        if len(bet_results) > 0:
+            report: str = self.betting.create_bet_report(bet_results)
+            await ctx.send(report)
     
     async def show_teams(self, ctx: Context) -> None:
-        command: Command | None = get_command_from_cog(self, "status")
+        command: Command | None = get_command_from_cog(self.store, "status")
         if command:
             await Command.invoke(command, ctx)
 
@@ -276,7 +246,7 @@ class GameCoordinator(Cog):
             log.info(f"Season {metadata['season']}, Game {metadata['game_id']} has started.")
             log.info(f"Radiant: {', '.join(radiant)}, Dire: {', '.join(dire)}.")
 
-    async def update_database_with_result(self, ctx: Context, result: Side) -> None:
+    async def update_database_with_classic_result(self, ctx: Context, result: Side) -> None:
         if self.store.current_game is None:
             raise OneHeadException("Failed to update database as there is no active game")
 
@@ -383,7 +353,7 @@ class GameCoordinator(Cog):
         await play_sound(ctx, "result.mp3")
 
         await ctx.send("Updating scores...")
-        await self.update_database_with_result(ctx, result)
+        await self.update_database_with_classic_result(ctx, result)
 
         command: Command | None = get_command_from_cog(self.scoreboard, "scoreboard")
         if command:

@@ -30,26 +30,21 @@ log: Logger = get_logger()
 class ChallengeMode(Cog):
 
     MAX_RATING_DIFFERENCE: int = 2000
-    MAX_CHALLENGES_ISSUED: int = 1
-    MAX_CHALLENGED_RECEIVED: int = 1
 
     counter = itertools.count()
 
     def __init__(self, database: PlayerDatabase) -> None:
         self.database: PlayerDatabase = database
         self.challenges: list[Challenge] = []
-        self._active: bool = False
 
+    # TODO: Prevent someone making multiple challenges!
     @has_role(Roles.MEMBER)
     @command()
     async def challenge(self, ctx: Context, opponent_name: str) -> None:
         """
-        Challenge an opponent to a 1v1 mid duel e.g. `!challenge ERIC`
-        
-        Your opponent can accept by issuing the `!accept <Challenger>` command e.g. `!accept GEE`
-        
+        Challenge an opponent to a 1v1 mid duel e.g. !challenge ERIC
+        Your opponent can accept by issuing the !accept <Challenger> command e.g. !accept GEE
         An admin can then start the challenge by issuing the `!start <Challenge ID>` command e.g. `!start 0`
-        
         You can check currently active challenges by issuing the `!challenges` command.
         """
         guild: Guild | None = ctx.guild
