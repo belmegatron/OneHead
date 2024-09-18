@@ -149,6 +149,10 @@ async def play_sound(ctx: Context, file_name: str) -> None:
     elif voice_client.channel.name != ctx.author.voice.channel.name:
         await voice_client.move_to(ctx.author.voice.channel)
 
+    if voice_client is None:
+        log.warning(f"Skipping playing {file_name} as {ctx.author.display_name} is not in a voice channel.")
+        return
+        
     try:
         voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"))
     except ClientException as ex:

@@ -18,7 +18,8 @@ from onehead.common import (
     Roles,
     get_discord_member_from_id,
     get_discord_member_from_name,
-    play_sound
+    play_sound,
+    voice_client_disconnect
 )
 from onehead.game import Challenge
 from onehead.protocols.database import PlayerDatabase
@@ -84,7 +85,7 @@ class ChallengeMode(Cog):
         if challenger_record["mmr"] - opponent_record["mmr"] > self.MAX_RATING_DIFFERENCE:
             await play_sound(ctx, "bully.mp3")
             await ctx.send(
-                f"{challenger.mention}, your opponent must be within {self.MAX_RATING_DIFFERENCE} MMR of your MMR in order to duel them."
+                f"{challenger.mention}, your opponent must be within `{self.MAX_RATING_DIFFERENCE}` MMR of your MMR in order to duel them."
             )
             return
 
@@ -99,6 +100,8 @@ class ChallengeMode(Cog):
         )
 
         create_task(self.handle_expired_challenge(ctx, challenge))
+        create_task(voice_client_disconnect(ctx))
+        
 
     @has_role(Roles.MEMBER)
     @command(aliases=["challenges"])
@@ -156,6 +159,8 @@ class ChallengeMode(Cog):
             self.challenges.remove(challenge)
         else:
             await ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
+        
+        create_task(voice_client_disconnect(ctx))
 
     async def find_issued_challenge(self, ctx: Context, challenger_name: str) -> Challenge | None:
         guild: Guild | None = ctx.guild
