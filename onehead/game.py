@@ -114,3 +114,9 @@ class Challenge(Game):
         self.opponent: Member | User = opponent
         self.expires: datetime = datetime.now(tz=UTC) + timedelta(hours=24)
         self.complete: bool = False
+        self.handle_expiration_task: asyncio.Task | None = None
+
+    def start(self) -> None:
+        super().start()
+        if self.handle_expiration_task:
+            self.handle_expiration_task.cancel()

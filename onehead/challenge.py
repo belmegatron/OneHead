@@ -91,17 +91,16 @@ class ChallengeMode(Cog):
 
         # TODO: Persist challenges to database.
         await play_sound(ctx, "challenger.mp3")
-        challenge: Challenge = Challenge(next(self.counter), challenger=challenger, opponent=opponent)
-        self.challenges.append(challenge)
 
         await ctx.send(f"{challenger.mention} has challenged {opponent.mention} to a 1v1 mid!")
         await ctx.send(
             f"{opponent.mention} has 24 hours to accept this challenge, if they wish to accept, type `!accept` {challenger.mention}."
         )
 
-        create_task(self.handle_expired_challenge(ctx, challenge))
+        challenge: Challenge = Challenge(next(self.counter), challenger=challenger, opponent=opponent)
+        challenge.handle_expiration_task = create_task(self.handle_expired_challenge(ctx, challenge))
         create_task(voice_client_disconnect(ctx))
-        
+        self.challenges.append(challenge)
 
     @has_role(Roles.MEMBER)
     @command(aliases=["challenges"])
@@ -137,8 +136,10 @@ class ChallengeMode(Cog):
         if challenge:
             if challenge.in_progress() is False:
                 challenge.start()
+                await ctx.send(f"{challenge.opponent.mention} has accepted their duel vs. {challenge.challenger.mention}!")
+                await ctx.send(f"Start this 1v1 duel by asking an admin to type `!start {challenge.id}`")
             else:
-                await ctx.send(f"{challenge.opponent} has already accepted their duel vs. {challenge.challenger}!")
+                await ctx.send(f"{challenge.opponent.mention} has already accepted their duel vs. {challenge.challenger.mention}!")
                 await ctx.send(f"To start the game, ask an admin to type `!start {challenge.id}`")
         else:
             await ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
@@ -156,6 +157,8 @@ class ChallengeMode(Cog):
                 f"{challenge.opponent.mention} has rejected the challenge issued by {challenge.challenger.mention}."
             )
             await play_sound(ctx, "shame.mp3")
+            if challenge.handle_expiration_task:
+                    challenge.handle_expiration_task.cancel()
             self.challenges.remove(challenge)
         else:
             await ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
@@ -188,7 +191,7 @@ class ChallengeMode(Cog):
 
         if challenge.complete is False:
             await ctx.send(
-                f"{challenge.opponent.mention} has failed to accept {challenge.challenger.mention}'s request to duel due to it expiring."
+                f"{challenge.opponent.mention} has failed to accept {challenge.challenger.mention}'s request to duel (id: `{challenge.id}`) due to it expiring."
             )
 
         try:

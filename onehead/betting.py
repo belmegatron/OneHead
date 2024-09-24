@@ -1,4 +1,4 @@
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from logging import Logger
 from typing import cast
 
@@ -17,6 +17,13 @@ from onehead.store import GameStore
 log: Logger = get_logger()
 
 
+@dataclass
+class BetResult:
+    win: bool
+    stake: float = 0
+    winnings: float = 0
+
+
 class Betting(Cog):
     INITIAL_BALANCE: int = 100
     REWARD_ON_WIN: int = 100
@@ -27,10 +34,10 @@ class Betting(Cog):
         self.database: PlayerDatabase = database
         self.lobby: Lobby = lobby
 
-    def get_bet_results(self, winner: Side | Member) -> dict[str, list[float]]:
+    def get_bet_results(self, winner: Side | Member) -> dict[str, list[BetResult]]:
         current_game: Game | None = self.store.current_game
 
-        bet_results: dict[str, list[float]] = {}
+        bet_results: dict[str, list[BetResult]] = {}
 
         if current_game is None:
             return bet_results
@@ -48,11 +55,11 @@ class Betting(Cog):
                 winner_name = winner
 
             if bet.selection == winner_name:
-                winnings: float = (bet.stake * bet.price) - bet.stake
-                bet_results[bet.bettor].append(winnings)
+                bet_result: BetResult = BetResult(win=True, stake=bet.stake, winnings=(bet.stake * bet.price) - bet.stake)
             else:
-                bet_results[bet.bettor].append(-1 * bet.stake)
-
+                bet_result: BetResult = BetResult(win=False, winnings=(-1*bet.stake))
+            bet_results[bet.bettor].append(bet_result)
+            
         return bet_results
 
     @has_role(Roles.MEMBER)
@@ -161,13 +168,13 @@ class Betting(Cog):
         await ctx.send(f"**RBUCKS** ```\n{bucks_board}```")
 
     @staticmethod
-    def create_bet_report(bet_results: dict[str, list[float]]) -> str:
+    def create_bet_report(bet_results: dict[str, list[BetResult]]) -> str:
         contents: str = ""
 
-        for name, deltas in bet_results.items():
-            for delta in deltas:
-                won_or_lost: str = "won" if delta >= 0 else "lost"
-                line: str = f"{name} {won_or_lost} {abs(delta)} RBUCKS!"
+        for name, results in bet_results.items():
+            for result in results:
+                won_or_lost: str = "won" if result.win else "lost"
+                line: str = f"{name} {won_or_lost} {abs(result.winnings)} RBUCKS!"
                 log.info(line)
                 contents += line
                 contents += "\n"
@@ -262,6 +269,9 @@ class Betting(Cog):
         challenger_decimal_odds: float = 2.0
         opponent_decimal_odds: float = 2.0
         scaled_difference: float = abs(float(mmr_difference / ChallengeMode.MAX_RATING_DIFFERENCE))
+        
+        # Ensure that this does not exceed 0.99, otherwise we may calculate the favourted runner to have odds of <= 1.0.
+        scaled_difference = min(scaled_difference, 0.99)
 
         # Challenger is favoured
         if mmr_difference > 0:

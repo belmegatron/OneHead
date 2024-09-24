@@ -6,7 +6,7 @@ from discord.ext.commands import BucketType, Cog, Command, Context, command, has
 from discord.member import Member
 from structlog import get_logger
 
-from onehead.betting import Betting
+from onehead.betting import Betting, BetResult
 from onehead.challenge import ChallengeMode
 from onehead.channels import Channels
 from onehead.common import (
@@ -136,19 +136,28 @@ class GameCoordinator(Cog):
         await play_sound(ctx, "winner.mp3")
         await ctx.send(f"{winner.mention} has emerged victorious!")
         await ctx.send(f"All hail {winner.mention}!")
+        
+        winnings: int = 200
+        self.database.modify(winner.id, "rbucks", winnings, Operation.ADD)
+        await ctx.send(f"{winner.mention} has been awarded {winnings} RBUCKS for winning!")
 
         return winner
 
     async def handle_bet_results(self, ctx: Context, winner: Side | Member) -> None:
-        bet_results: dict = self.betting.get_bet_results(winner)
+        bet_results: dict[str, list[BetResult]] = self.betting.get_bet_results(winner)
 
         for name, bets in bet_results.items():
             for bet_result in bets:
-                if bet_result > 0:
+                if bet_result.win:
                     member: Member | None = get_discord_member_from_name(ctx, name)
                     if member is None:
                         continue
-                    self.database.modify(member.id, "rbucks", bet_result, Operation.ADD)
+                    
+                    # Add the original amount back that they staked.
+                    self.database.modify(member.id, "rbucks", int(bet_result.stake), Operation.ADD)
+                    
+                    # Add the winnings.
+                    self.database.modify(member.id, "rbucks", int(bet_result.winnings), Operation.ADD)
 
         if len(bet_results) > 0:
             report: str = self.betting.create_bet_report(bet_results)

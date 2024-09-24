@@ -216,3 +216,22 @@ class TestCalculateOdds:
         challenger_odds, opponent_odds = betting.calculate_challenge_odds(challenge)
         assert challenger_odds == 2.0
         assert opponent_odds == 2.0
+
+    @pytest.mark.asyncio
+    async def test_mmr_difference_greater_than_2000(self, bot: Bot) -> None:
+        db = MagicMock(spec=Database)
+        betting: Betting = cast(Betting, bot.get_cog("Betting"))
+        betting.database = db
+        challenger: Member = await dpytest.member_join(name="RBEEZAY")
+        opponent: Member = await dpytest.member_join(name="GEE")
+
+        challenger_record: Player = {"mmr": 2000}
+        opponent_record: Player = {"mmr": 4010}
+
+        db.get.side_effect = [challenger_record, opponent_record]
+
+        challenge: Challenge = Challenge(0, challenger, opponent)
+
+        challenger_odds, opponent_odds = betting.calculate_challenge_odds(challenge)
+        assert challenger_odds == 101.0
+        assert opponent_odds == 1.01
