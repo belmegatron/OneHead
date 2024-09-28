@@ -11,7 +11,7 @@ from onehead.challenge import ChallengeMode
 from onehead.common import Bet, Player, Roles, Side, get_discord_member_from_name, play_sound
 from onehead.game import Challenge, ClassicGame, Game
 from onehead.lobby import Lobby
-from onehead.protocols.database import Operation, PlayerDatabase
+from onehead.interfaces.database import PlayerDatabase
 from onehead.store import GameStore
 
 log: Logger = get_logger()
@@ -105,7 +105,7 @@ class Betting(Cog):
             await ctx.send(f"Unable to find {ctx.author.mention} in database.")
             return None
 
-        available_balance: int = record.get("rbucks")
+        available_balance: int = record.rbucks
         if available_balance == 0:
             await ctx.send(f"{ctx.author.mention} cannot bet as they have no available RBUCKS.")
             return
@@ -138,7 +138,9 @@ class Betting(Cog):
 
         bets: list[Bet] = current_game.get_bets()
         bets.append(bet)
-        self.database.modify(ctx.author.id, "rbucks", bet.stake, Operation.SUBTRACT)
+        
+        record.rbucks -= bet.stake
+        self.database.update(record)
 
         await play_sound(ctx, "bet.mp3")
 
@@ -161,7 +163,7 @@ class Betting(Cog):
         table: list[Player] = self.database.get_all()
 
         for player in table:
-            subset.append({"name": player["name"], "RBUCKS": player["rbucks"]})
+            subset.append({"name": player.name, "RBUCKS": player.rbucks})
 
         subset = sorted(subset, key=lambda d: d["RBUCKS"], reverse=True)  # type: ignore
         bucks_board: str = tabulate(subset, headers="keys", tablefmt="simple")
@@ -195,10 +197,12 @@ class Betting(Cog):
         for bet in active_bets:
             member: Member | None = get_discord_member_from_name(ctx, bet.bettor)
             if member:
-                self.database.modify(member.id, "rbucks", bet.stake, Operation.ADD)
+                record: Player | None = self.database.get(member.id)
+                if record:
+                    record.rbucks += bet.stake
+                    self.database.update(record)
 
         log.info("Refunded all bets.")
-
         await ctx.send("All bets have been refunded.")
 
     async def parse_bet_arguments(
@@ -234,7 +238,7 @@ class Betting(Cog):
                 )
                 return None
 
-        available_balance: int = record.get("rbucks", 0)
+        available_balance: int = record.rbucks
         stake: int = 0
 
         if amount == "all":
@@ -264,7 +268,7 @@ class Betting(Cog):
         if challenger is None or opponent is None:
             raise
 
-        mmr_difference: int = challenger["mmr"] - opponent["mmr"]
+        mmr_difference: int = challenger.mmr - opponent.mmr
 
         challenger_decimal_odds: float = 2.0
         opponent_decimal_odds: float = 2.0

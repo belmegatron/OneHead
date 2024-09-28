@@ -6,7 +6,7 @@ from tabulate import tabulate
 
 from onehead.common import Metadata, Roles, Side, get_player_names
 from onehead.game import Challenge, ClassicGame, Game
-from onehead.protocols.database import PlayerDatabase
+from onehead.interfaces.database import PlayerDatabase
 from version import __changelog__, __version__
 
 log: Logger = get_logger()
@@ -43,7 +43,7 @@ class GameStore(Cog):
                     metadata: Metadata = self.database.get_metadata()
 
                     await ctx.send(
-                        f"**Current Game** - Season `{metadata['season']}`, Game `{metadata['game_id']}` ```\n"
+                        f"**Current Game** - Season `{metadata.season}`, Game `{metadata.game_id}` ```\n"
                         f"{in_game_players}```"
                     )
             elif isinstance(self.current_game, Challenge):

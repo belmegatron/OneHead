@@ -22,14 +22,14 @@ from onehead.common import (
     voice_client_disconnect
 )
 from onehead.game import Challenge
-from onehead.protocols.database import PlayerDatabase
+from onehead.interfaces.database import PlayerDatabase
 
 log: Logger = get_logger()
 
 
 class ChallengeMode(Cog):
 
-    MAX_RATING_DIFFERENCE: int = 2000
+    MAX_RATING_DIFFERENCE: int = 4000
 
     counter = itertools.count()
 
@@ -82,7 +82,7 @@ class ChallengeMode(Cog):
                 f"Failed to obtain database record for {challenger.display_name if challenger_record is None else opponent.display_name}"
             )
 
-        if challenger_record["mmr"] - opponent_record["mmr"] > self.MAX_RATING_DIFFERENCE:
+        if challenger_record.mmr - opponent_record.mmr > self.MAX_RATING_DIFFERENCE:
             await play_sound(ctx, "bully.mp3")
             await ctx.send(
                 f"{challenger.mention}, your opponent must be within `{self.MAX_RATING_DIFFERENCE}` MMR of your MMR in order to duel them."

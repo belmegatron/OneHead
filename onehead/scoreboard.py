@@ -4,7 +4,7 @@ from discord.ext.commands import Cog, Context, command, has_role
 from tabulate import tabulate
 
 from onehead.common import OneHeadException, Player, Roles
-from onehead.protocols.database import PlayerDatabase
+from onehead.interfaces.database import PlayerDatabase
 from onehead.statistics import Statistics
 
 
@@ -57,35 +57,35 @@ class ScoreBoard(Cog):
         :param scoreboard: Unsorted scoreboard
         :return: Sorted scoreboard
         """
-        key_order: list[str] = [
-            "#",
-            "name",
-            "win",
-            "loss",
-            "%",
-            "rating",
-            "win_streak",
-            "loss_streak",
-            "behaviour",
-        ]
-        sorted_scoreboard: list[dict] = []
+    
+        sorted_records: list[dict] = []
 
-        for record in scoreboard:
-            sorted_record: dict[str, Any] = {k: record[k] for k in key_order}  # type: ignore
-            sorted_scoreboard.append(sorted_record)
+        for player in scoreboard:
+            record = {
+                "#": player.pos,
+                "name": player.name,
+                "win": player.win,
+                "loss": player.loss,
+                "%": player.win_percentage,
+                "rating": player.rating,
+                "win_streak": player.win_streak,
+                "loss_streak": player.loss_streak,
+                "behaviour": player.behaviour
+                }
+            
+            sorted_records.append(record)
 
-        return sorted_scoreboard
+        return sorted_records
 
     @staticmethod
-    def _calculate_positions(scoreboard: list[Player], sort_key: str) -> list[Player]:
+    def _calculate_positions(scoreboard: list[Player]) -> list[Player]:
         """
         Calculates the position for each player on the scoreboard based on a particular sort key.
 
         :param scoreboard: Scoreboard containing all IHL players.
-        :param sort_key: The key by which to sort the scoreboard.
         :return: Scoreboard sorted in descending order with additional '#' field.
         """
-        sorted_scoreboard: list[Player] = sorted(scoreboard, key=lambda k: k[sort_key], reverse=True)  # type: ignore
+        sorted_scoreboard: list[Player] = sorted(scoreboard, key=lambda x: x.rating, reverse=True)
         scoreboard_positions: list[Player] = []
 
         pos: int = 1
@@ -93,13 +93,13 @@ class ScoreBoard(Cog):
 
         for i, record in enumerate(sorted_scoreboard):
             if i != 0:
-                if sorted_scoreboard[i - 1][sort_key] > sorted_scoreboard[i][sort_key]:  # type: ignore
+                if sorted_scoreboard[i - 1].rating > sorted_scoreboard[i].rating:
                     pos += modifier
                     modifier = 1
                 else:
                     modifier += 1
 
-            record["#"] = pos
+            record.pos = pos
             scoreboard_positions.append(record)
 
         return scoreboard_positions
@@ -110,15 +110,15 @@ class ScoreBoard(Cog):
 
         :return: Scoreboard string to be displayed in Discord chat.
         """
-        scoreboard: list[Player] = self.database.get_all()
+        records: list[Player] = self.database.get_all()
 
-        if not scoreboard:
+        if not records:
             raise OneHeadException("No users found in database.")
 
-        Statistics.calculate_win_percentage(scoreboard)
-        Statistics.calculate_rating(scoreboard)
+        Statistics.calculate_win_percentage(records)
+        Statistics.calculate_rating(records)
 
-        scoreboard_sorted_rows: list[Player] = self._calculate_positions(scoreboard, "rating")
+        scoreboard_sorted_rows: list[Player] = self._calculate_positions(records)
         scoreboard_sorted_rows_and_columns: list[dict[str, Any]] = self._sort_scoreboard_key_order(
             scoreboard_sorted_rows
         )

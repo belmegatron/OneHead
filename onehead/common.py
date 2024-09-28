@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from logging import Logger
 from pathlib import Path
-from typing import TypedDict, cast
+from typing import cast
 
 from discord.channel import VocalGuildChannel
 from discord.errors import ClientException
@@ -19,38 +19,36 @@ log: Logger = get_logger()
 ROOT_DIR: Path = Path(__file__).resolve().parent.parent
 
 
-Player = TypedDict(
-    "Player",
-    {
-        "#": int,
-        "id": int,
-        "name": str,
-        "mmr": int,
-        "win": int,
-        "loss": int,
-        "rbucks": int,
-        "rating": int,
-        "adjusted_mmr": int,
-        "%": float,
-        "commends": int,
-        "reports": int,
-        "behaviour": int,
-    },
-)
+@dataclass
+class Player:
+    id: int
+    name: str
+    mmr: int
+    win: int = 0
+    loss: int = 0
+    win_streak: int = 0
+    loss_streak: int = 0
+    rbucks: int = 0
+    rating: int = 1500
+    commends: int = 0
+    reports: int = 0
+    behaviour: int = 10000
+    pos: int | None = None
+    adjusted_mmr: int | None = None
+    win_percentage: float | None = None
+
 
 Team = tuple[Player, Player, Player, Player, Player]
 TeamCombination = tuple[Team, Team]
 
-Metadata = TypedDict(
-    "Metadata",
-    {
-        "season": int,
-        "game_id": int,
-        "max_game_count": int,
-        "timestamp": float,
-    },
-)
 
+@dataclass 
+class Metadata:
+    timestamp: float
+    season: int = 1
+    game_id: int = 1
+    max_game_count: int = 50
+    
 
 class Roles(StrEnum):
     ADMIN = "IHL Admin"
@@ -88,8 +86,8 @@ def get_player_names(t1: "Team", t2: "Team") -> tuple[tuple[str, ...], tuple[str
     :param t2: Player Profiles for Team 2.
     :return: Names of players on each team.
     """
-    t1_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t1]))
-    t2_names: tuple[str, ...] = tuple(sorted([x["name"] for x in t2]))
+    t1_names: tuple[str, ...] = tuple(sorted([x.name for x in t1]))
+    t2_names: tuple[str, ...] = tuple(sorted([x.name for x in t2]))
 
     return t1_names, t2_names
 

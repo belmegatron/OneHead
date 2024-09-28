@@ -1,3 +1,4 @@
+import random
 from typing import AsyncGenerator, Sequence
 
 import discord.ext.test as dpytest
@@ -7,6 +8,7 @@ from discord.guild import Guild
 from discord.member import Member
 from discord.role import Role
 
+from onehead.common import Player, Team
 from onehead.config import load_config
 from onehead.core import bot_builder
 
@@ -46,3 +48,12 @@ async def add_ihl_role(bot: Bot, role: str, name: str | None = None) -> None:
     roles: Sequence[Role] = guild.roles
     ihl_role: Role = [x for x in roles if x.name == role][0]
     await dpytest.add_role(target_member, ihl_role)
+
+def create_fake_player() -> Player:
+    id: int = random.randint(0, 99999)
+    name: str = f"user_{id}"
+    mmr: int = random.randint(0, 9000) 
+    return Player(id=id, name=name, mmr=mmr)
+
+def create_fake_team() -> Team:
+    return create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player()

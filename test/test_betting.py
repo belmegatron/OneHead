@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import discord.ext.test as dpytest
 import pytest
-from conftest import add_ihl_role
+from conftest import add_ihl_role, create_fake_team, create_fake_player
 from discord.ext.commands import Bot, errors
 from discord.member import Member
 
@@ -73,7 +73,7 @@ class TestPlaceBet:
 
         betting: Betting = cast(Betting, bot.get_cog("Betting"))
         betting.database.get = Mock()
-        betting.database.get.return_value = {"name": "RBEEZAY", "rbucks": 0}
+        betting.database.get.return_value = Player(name="RBEEZAY", id=0, mmr=3000, rbucks=0)
 
         await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
         assert dpytest.verify().message().content("cannot bet as they have no available RBUCKS.").contains()
@@ -88,7 +88,7 @@ class TestPlaceBet:
 
         betting: Betting = cast(Betting, bot.get_cog("Betting"))
         betting.database.get = Mock()
-        betting.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
+        betting.database.get.return_value = Player(name="RBEEZAY", id=0, mmr=3000, rbucks=100)
 
         await dpytest.message("!bet derp all", 0, member)
         assert dpytest.verify().message().content(f"you must bet on either {Side.RADIANT} or {Side.DIRE}.").contains()
@@ -103,7 +103,7 @@ class TestPlaceBet:
 
         betting: Betting = cast(Betting, bot.get_cog("Betting"))
         betting.database.get = Mock()
-        betting.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
+        betting.database.get.return_value = Player(name="RBEEZAY", id=0, mmr=3000, rbucks=100)
 
         await dpytest.message(f"!bet {Side.RADIANT} foobar", 0, member)
         assert dpytest.verify().message().content("is not a valid number of RBUCKS").contains()
@@ -118,7 +118,7 @@ class TestPlaceBet:
 
         betting: Betting = cast(Betting, bot.get_cog("Betting"))
         betting.database.get = Mock()
-        betting.database.get.return_value = {"name": "RBEEZAY", "rbucks": 100}
+        betting.database.get.return_value = Player(name="RBEEZAY", id=0, mmr=3000, rbucks=100)
 
         await dpytest.message(f"!bet {Side.RADIANT} -100", 0, member)
         assert dpytest.verify().message().content("stake must be greater than 0.").contains()
@@ -133,10 +133,10 @@ class TestPlaceBet:
 
         betting: Betting = cast(Betting, bot.get_cog("Betting"))
         betting.database.get = Mock()
-        record = {"name": "RBEEZAY", "rbucks": 100}
+        record = Player(name="RBEEZAY", id=0, mmr=3000, rbucks=100)
         betting.database.get.return_value = record
 
-        stake: int = record["rbucks"] + 100
+        stake: int = record.rbucks + 100
         await dpytest.message(f"!bet {Side.RADIANT} {stake:.0f}", 0, member)
         assert dpytest.verify().message().content(f"Unable to place bet").contains()
 
@@ -150,9 +150,8 @@ class TestPlaceBet:
 
         betting: Betting = cast(Betting, bot.get_cog("Betting"))
         betting.database.get = Mock()
-        record = {"name": "RBEEZAY", "rbucks": 100}
-        betting.database.get.return_value = record
-        betting.database.modify = Mock()
+        betting.database.get.return_value = Player(name="RBEEZAY", id=0, mmr=3000, rbucks=100)
+        betting.database.update = Mock()
 
         with patch("onehead.betting.play_sound"):
             await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
@@ -168,16 +167,16 @@ class TestCalculateOdds:
         challenger: Member = await dpytest.member_join(name="RBEEZAY")
         opponent: Member = await dpytest.member_join(name="GEE")
 
-        challenger_record: Player = {"mmr": 3000}
-        opponent_record: Player = {"mmr": 2000}
-
+        challenger_record: Player = Player(name="RBEEZAY", id=0, mmr=3000, rbucks=100)
+        opponent_record: Player = Player(name="GEE", id=0, mmr=2000, rbucks=100)
+        
         db.get.side_effect = [challenger_record, opponent_record]
 
         challenge: Challenge = Challenge(0, challenger, opponent)
 
         challenger_odds, opponent_odds = betting.calculate_challenge_odds(challenge)
-        assert challenger_odds == 1.5
-        assert opponent_odds == 3.0
+        assert challenger_odds == 1.75
+        assert opponent_odds == 2.33
 
     @pytest.mark.asyncio
     async def test_opponent_favoured(self, bot: Bot) -> None:
@@ -187,16 +186,16 @@ class TestCalculateOdds:
         challenger: Member = await dpytest.member_join(name="RBEEZAY")
         opponent: Member = await dpytest.member_join(name="GEE")
 
-        challenger_record: Player = {"mmr": 2000}
-        opponent_record: Player = {"mmr": 3000}
+        challenger_record: Player = Player(name="RBEEZAY", id=0, mmr=2000, rbucks=100)
+        opponent_record: Player = Player(name="GEE", id=0, mmr=3000, rbucks=100)
 
         db.get.side_effect = [challenger_record, opponent_record]
 
         challenge: Challenge = Challenge(0, challenger, opponent)
 
         challenger_odds, opponent_odds = betting.calculate_challenge_odds(challenge)
-        assert challenger_odds == 3.0
-        assert opponent_odds == 1.5
+        assert challenger_odds == 2.33
+        assert opponent_odds == 1.75
 
     @pytest.mark.asyncio
     async def test_equal_odds(self, bot: Bot) -> None:
@@ -206,8 +205,8 @@ class TestCalculateOdds:
         challenger: Member = await dpytest.member_join(name="RBEEZAY")
         opponent: Member = await dpytest.member_join(name="GEE")
 
-        challenger_record: Player = {"mmr": 3000}
-        opponent_record: Player = {"mmr": 3000}
+        challenger_record: Player = Player(name="RBEEZAY", id=0, mmr=3000, rbucks=100)
+        opponent_record: Player = Player(name="GEE", id=0, mmr=3000, rbucks=100)
 
         db.get.side_effect = [challenger_record, opponent_record]
 
@@ -218,16 +217,16 @@ class TestCalculateOdds:
         assert opponent_odds == 2.0
 
     @pytest.mark.asyncio
-    async def test_mmr_difference_greater_than_2000(self, bot: Bot) -> None:
+    async def test_mmr_difference_greater_than_max_diff(self, bot: Bot) -> None:
         db = MagicMock(spec=Database)
         betting: Betting = cast(Betting, bot.get_cog("Betting"))
         betting.database = db
         challenger: Member = await dpytest.member_join(name="RBEEZAY")
         opponent: Member = await dpytest.member_join(name="GEE")
 
-        challenger_record: Player = {"mmr": 2000}
-        opponent_record: Player = {"mmr": 4010}
-
+        challenger_record: Player = Player(name="RBEEZAY", id=0, mmr=2000, rbucks=100)
+        opponent_record: Player = Player(name="GEE", id=0, mmr=6010, rbucks=100)
+        
         db.get.side_effect = [challenger_record, opponent_record]
 
         challenge: Challenge = Challenge(0, challenger, opponent)

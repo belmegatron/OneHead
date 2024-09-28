@@ -12,7 +12,7 @@ from tabulate import tabulate
 
 from onehead.common import OneHeadException, Player, Roles, get_discord_member_from_name, play_sound
 from onehead.game import Game
-from onehead.protocols.database import PlayerDatabase
+from onehead.interfaces.database import PlayerDatabase
 from onehead.store import GameStore
 
 log: Logger = get_logger()
@@ -108,12 +108,9 @@ class Lobby(Cog):
                     raise OneHeadException(f"Unable to find {signup} in database.")
 
                 players.append(player)
-
-            top_10_players_by_behaviour_score: list[Player] = sorted(
-                players, key=lambda d: d["behaviour"], reverse=True
-            )[:10]
-
-            top_10_names_by_behaviour_score = [player["name"] for player in top_10_players_by_behaviour_score]
+            
+            top_10_players_by_behaviour_score: list[Player] = sorted(players, key=lambda x: x.behaviour, reverse=True)[:10]
+            top_10_names_by_behaviour_score: list[str] = [player.name for player in top_10_players_by_behaviour_score]
             self._signups = {name: ts for name, ts in self._signups.items() if name in top_10_names_by_behaviour_score}
 
             benched_players: list[str] = [

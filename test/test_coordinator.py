@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import discord.ext.test as dpytest
 import pytest
-from conftest import add_ihl_role
+from conftest import add_ihl_role, create_fake_player, create_fake_team
 from discord.ext.commands import Bot, CommandInvokeError, errors
 
 from onehead.betting import Bet
@@ -56,17 +56,12 @@ class TestStart:
 
         lobby: Lobby = cast(Lobby, bot.get_cog("Lobby"))
         players: list[Player] = lobby.database.get_all()[:10]
-        lobby._signups = {player["name"]: datetime.now() for player in players}
+        lobby._signups = {player.name: datetime.now() for player in players}
 
         coordinator: GameCoordinator = cast(GameCoordinator, bot.get_cog("GameCoordinator"))
         balance: AsyncMock = AsyncMock()
-        balance.return_value = [{"name": "foo"}, {"name": "foo"}, {"name": "foo"}, {"name": "foo"}, {"name": "foo"}], [
-            {"name": "foo"},
-            {"name": "foo"},
-            {"name": "foo"},
-            {"name": "foo"},
-            {"name": "foo"},
-        ]
+        balance.return_value = create_fake_team(), create_fake_team()
+        
         coordinator.matchmaking.balance = balance
         coordinator.setup_team_channels = AsyncMock()
 
@@ -188,8 +183,8 @@ class TestResult:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.current_game = ClassicGame()
         store.current_game._in_progress = True
-        store.current_game.radiant = [Player(name="RBEEZAY")]
-        store.current_game.dire = []
+        store.current_game.radiant = Player(id=0, name="RBEEZAY", mmr=3000), create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player() 
+        store.current_game.dire = create_fake_team()
         store.current_game._bets = [
             Bet("RBEEZAY", Side.RADIANT, 100),
             Bet("RBEEZAY", Side.DIRE, 500),
@@ -199,7 +194,7 @@ class TestResult:
         coordinator.scoreboard.scoreboard = AsyncMock()
         coordinator.channels.move_back_to_lobby = AsyncMock()
         coordinator.reset = AsyncMock()
-        coordinator.database.modify = Mock()
+        coordinator.database.update = Mock()
 
         with patch("onehead.coordinator.play_sound"):
             await dpytest.message(f"!result {Side.RADIANT}")
@@ -226,20 +221,8 @@ class TestStatus:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.current_game = ClassicGame()
         store.current_game._in_progress = True
-        store.current_game.radiant = [
-            {"name": "A"},
-            {"name": "B"},
-            {"name": "C"},
-            {"name": "D"},
-            {"name": "E"},
-        ]
-        store.current_game.dire = [
-            {"name": "F"},
-            {"name": "G"},
-            {"name": "H"},
-            {"name": "I"},
-            {"name": "J"},
-        ]
-
+        store.current_game.radiant = create_fake_team()
+        store.current_game.dire = create_fake_team()
+        
         await dpytest.message("!status")
         assert dpytest.verify().message().content("**Current Game**").contains()

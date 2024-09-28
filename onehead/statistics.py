@@ -13,10 +13,10 @@ class Statistics:
         :param profiles: List of player profiles.
         """
         for record in profiles:
-            if record["win"] == 0:
-                record["%"] = 0
+            if record.win == 0:
+                record.win_percentage = 0
             else:
-                record["%"] = round(record["win"] / (record["win"] + record["loss"]) * 100, 1)
+                record.win_percentage = int(round(record.win / (record.win + record.loss) * 100, 1))
 
     @classmethod
     def calculate_rating(cls, profiles: list[Player]) -> None:
@@ -26,9 +26,9 @@ class Statistics:
         :param profiles: List of player profiles.
         """
         for record in profiles:
-            win_modifier: int = record["win"] * cls.MMR_DELTA
-            loss_modifier: int = record["loss"] * cls.MMR_DELTA
-            record["rating"] = cls.BASELINE_RATING + win_modifier - loss_modifier
+            win_modifier: int = record.win * cls.MMR_DELTA
+            loss_modifier: int = record.loss * cls.MMR_DELTA
+            record.rating = cls.BASELINE_RATING + win_modifier - loss_modifier
 
     @classmethod
     def calculate_adjusted_mmr(cls, profiles: list[Player]) -> None:
@@ -39,7 +39,5 @@ class Statistics:
         :param profiles: Scoreboard with added rating field.
         """
         for record in profiles:
-            rating: int = record["rating"]
-            mmr: int = record["mmr"]
-            difference: int = rating - cls.BASELINE_RATING
-            record["adjusted_mmr"] = mmr + difference
+            difference: int = record.rating - cls.BASELINE_RATING
+            record.adjusted_mmr = record.mmr + difference

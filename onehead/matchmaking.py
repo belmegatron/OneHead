@@ -8,10 +8,11 @@ from discord.member import Member
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination, get_discord_member_from_name
+from onehead.common import OneHeadException, Player, Player, Roles, Side, Team, TeamCombination, get_discord_member_from_name
 from onehead.lobby import Lobby
-from onehead.protocols.database import PlayerDatabase
+from onehead.interfaces.database import PlayerDatabase
 from onehead.statistics import Statistics
+
 
 log: Logger = get_logger()
 
@@ -75,7 +76,7 @@ class Matchmaking(Cog):
 
             unique_combination["rating_difference"] = abs(t1_rating - t2_rating)
 
-    def _calculate_balance(self, ctx: Context) -> dict:
+    def _calculate_balance(self, ctx: Context) -> tuple[Team, Team]:
         """
         Calculate balanced lineups for Radiant/Dire.
 
@@ -85,7 +86,7 @@ class Matchmaking(Cog):
         profiles: list[Player] = self._get_player_records(ctx)
         profile_count: int = len(profiles)
         if profile_count != 10:
-            raise OneHeadException(f"Error: Only `{profile_count}` profiles could be found in database.")
+            raise OneHeadException(f"Only `{profile_count}` profiles could be found in database.")
 
         Statistics.calculate_rating(profiles)
         Statistics.calculate_adjusted_mmr(profiles)
@@ -113,7 +114,7 @@ class Matchmaking(Cog):
         # Take the top 20 that are closest in terms of rating and pick one at random.
         balanced_teams: dict[str, Team] = random.choice(sorted_unique_combinations_dict[:20])
 
-        return balanced_teams
+        return balanced_teams[Side.RADIANT], balanced_teams[Side.DIRE]
 
     async def balance(self, ctx: Context) -> tuple[Team, Team]:
         """
@@ -128,13 +129,13 @@ class Matchmaking(Cog):
             err: str = f"Only `{signup_count}` Signups, require `{10 - signup_count}` more."
             await ctx.send(err)
 
-        balanced_teams: dict = self._calculate_balance(ctx)
+        radiant: Team
+        dire: Team
+        
+        radiant, dire = self._calculate_balance(ctx)
 
-        radiant: Team = balanced_teams[Side.RADIANT]
-        dire: Team = balanced_teams[Side.DIRE]
-
-        radiant_mmr: int = sum([x["adjusted_mmr"] for x in radiant])
-        dire_mmr: int = sum([x["adjusted_mmr"] for x in dire])
+        radiant_mmr: int = sum([player.adjusted_mmr for player in radiant if player.adjusted_mmr])
+        dire_mmr: int = sum([player.adjusted_mmr for player in dire if player.adjusted_mmr])
 
         log.info(f"Radiant MMR: {radiant_mmr}, Dire MMR: {dire_mmr}")
 
@@ -152,12 +153,12 @@ class Matchmaking(Cog):
 
         ratings: list[dict[str, Any]] = [
             {
-                "name": profile["name"],
-                "base": profile["mmr"],
-                "adjusted": profile["adjusted_mmr"],
+                "name": record.name,
+                "base": record.mmr,
+                "adjusted": record.adjusted_mmr,
             }
-            for profile in scoreboard
+            for record in scoreboard
         ]
-        sorted_ratings: list[dict[str, Any]] = sorted(ratings, key=lambda k: k["adjusted"], reverse=True)  # type: ignore
+        sorted_ratings: list[dict[str, Any]] = sorted(ratings, key=lambda k: k["adjusted"], reverse=True)
         tabulated_ratings: str = tabulate(sorted_ratings, headers="keys", tablefmt="simple")
         await ctx.send(f"**Internal MMR** ```\n{tabulated_ratings}```")

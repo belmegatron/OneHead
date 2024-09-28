@@ -6,7 +6,7 @@ from discord.member import Member
 from structlog import get_logger
 
 from onehead.common import OneHeadException, Player, Roles, get_discord_member_from_name
-from onehead.protocols.database import PlayerDatabase
+from onehead.interfaces.database import PlayerDatabase
 
 log: Logger = get_logger()
 
@@ -84,11 +84,13 @@ class Registration(Cog):
             await ctx.send(f"{name} is not a registered member.")
             return
 
-        player: Player | None = self.database.get(member.id)
-        if player is None:
+        record: Player | None = self.database.get(member.id)
+        if record is None:
             await ctx.send(f"Unable to recalibrate {member.mention} as they do not exist in the database.")
             return
 
-        self.database.modify(member.id, "mmr", new_mmr)
+        record.mmr = new_mmr
+        self.database.update(record)
+        
         log.info(f"{name} has had their MMR changed to {new_mmr} by {ctx.author.name}.")
         await ctx.send(f"{member.mention} has had their MMR changed to `{new_mmr}` by {ctx.author.mention}.")

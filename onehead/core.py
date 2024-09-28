@@ -11,13 +11,13 @@ from onehead.callbacks import on_message, on_presence_update, set_bot_instance
 from onehead.challenge import ChallengeMode
 from onehead.channels import Channels
 from onehead.common import Metadata, Roles
-from onehead.config import Config, load_config
+from onehead.config import Config
 from onehead.coordinator import GameCoordinator
 from onehead.database import Database
 from onehead.lobby import Lobby
 from onehead.matchmaking import Matchmaking
 from onehead.mental_health import MentalHealth
-from onehead.protocols.database import PlayerDatabase
+from onehead.interfaces.database import PlayerDatabase
 from onehead.registration import Registration
 from onehead.scoreboard import ScoreBoard
 from onehead.store import GameStore
@@ -56,7 +56,6 @@ async def bot_builder(config: Config) -> Bot:
     )
     core: Core = Core(database, lobby)
 
-    await bot.add_cog(database)
     await bot.add_cog(store)
     await bot.add_cog(lobby)
     await bot.add_cog(scoreboard)
@@ -110,10 +109,10 @@ class Core(Cog):
         Display info on the current IHL season.
         """
         metadata: Metadata = self.database.get_metadata()
-        dt: datetime = datetime.fromtimestamp(metadata["timestamp"], UTC)
+        dt: datetime = datetime.fromtimestamp(metadata.timestamp, UTC)
 
-        await ctx.send(f"Season `{metadata['season']}` started on: `{dt}`")
-        await ctx.send(f"`{metadata['max_game_count'] - metadata['game_id']}` games remaining for this season.")
+        await ctx.send(f"Season `{metadata.season}` started on: `{dt}`")
+        await ctx.send(f"`{1 + metadata.max_game_count - metadata.game_id}` games remaining for this season.")
 
     @has_role(Roles.ADMIN)
     @command(aliases=["sim"])

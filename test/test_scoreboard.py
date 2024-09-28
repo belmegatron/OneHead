@@ -1,3 +1,4 @@
+from typing import cast
 from unittest.mock import Mock
 
 import discord.ext.test as dpytest
@@ -19,7 +20,7 @@ class TestScoreboard:
     async def test_empty_scoreboard(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
-        scoreboard: ScoreBoard = bot.get_cog("ScoreBoard")
+        scoreboard: ScoreBoard = cast(ScoreBoard, bot.get_cog("ScoreBoard"))
         scoreboard.database.get_all = Mock()
         scoreboard.database.get_all.return_value = []
 
@@ -30,7 +31,7 @@ class TestScoreboard:
     async def test_success(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
 
-        scoreboard: ScoreBoard = bot.get_cog("ScoreBoard")
+        scoreboard: ScoreBoard = cast(ScoreBoard, bot.get_cog("ScoreBoard"))
         scoreboard.database.get_all = Mock()
         scoreboard.database.get_all.return_value = [
             {

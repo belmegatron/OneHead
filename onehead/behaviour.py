@@ -9,7 +9,7 @@ from structlog import get_logger
 
 from onehead.common import OneHeadException, Player, Roles, get_discord_member_from_name, get_player_names
 from onehead.game import ClassicGame, Game
-from onehead.protocols.database import Operation, PlayerDatabase
+from onehead.interfaces.database import PlayerDatabase
 from onehead.store import GameStore
 
 log: Logger = get_logger()
@@ -83,12 +83,12 @@ class Behaviour(Cog):
                 await ctx.send(f"{commendee.mention} could not be found in the database.")
                 return
 
-            current_behaviour_score: int = commendee_record["behaviour"]
-
+            current_behaviour_score: int = commendee_record.behaviour
             new_score: int = min(current_behaviour_score + self.COMMEND_MODIFIER, self.MAX_BEHAVIOUR_SCORE)
-
-            self.database.modify(commendee.id, "behaviour", new_score)
-            self.database.modify(commendee.id, "commends", 1, operation=Operation.ADD)
+            
+            commendee_record.behaviour = new_score
+            commendee_record.commends += 1
+            self.database.update(commendee_record)
 
             previous_game.add_commend(commender.display_name, commendee.display_name)
 
@@ -155,12 +155,12 @@ class Behaviour(Cog):
             await ctx.send(f"{reported.mention} could not be found in the database.")
             return
 
-        current_behaviour_score: int = reported_record["behaviour"]
-
+        current_behaviour_score: int = reported_record.behaviour
         new_score: int = max(current_behaviour_score + self.REPORT_MODIFIER, self.MIN_BEHAVIOUR_SCORE)
 
-        self.database.modify(reported.id, "behaviour", new_score)
-        self.database.modify(reported.id, "reports", 1, Operation.ADD)
+        reported_record.behaviour = new_score
+        reported_record.reports += 1
+        self.database.update(reported_record)
 
         previous_game.add_report(reporter.display_name, reported.display_name)
 

@@ -10,6 +10,7 @@ from onehead.betting import Betting, BetResult
 from onehead.challenge import ChallengeMode
 from onehead.channels import Channels
 from onehead.common import (
+    Player,
     Metadata,
     OneHeadException,
     Roles,
@@ -23,7 +24,7 @@ from onehead.common import (
 from onehead.game import Challenge, ClassicGame
 from onehead.lobby import Lobby
 from onehead.matchmaking import Matchmaking
-from onehead.protocols.database import Operation, PlayerDatabase
+from onehead.interfaces.database import PlayerDatabase
 from onehead.scoreboard import ScoreBoard
 from onehead.store import GameStore
 from onehead.transfers import Transfers
@@ -138,7 +139,12 @@ class GameCoordinator(Cog):
         await ctx.send(f"All hail {winner.mention}!")
         
         winnings: int = 200
-        self.database.modify(winner.id, "rbucks", winnings, Operation.ADD)
+        record: Player | None = self.database.get(winner.id)
+        if record is None:
+            raise OneHeadException(f"Unable to award winnings to {winner.mention} as they do not exist in the database")
+        
+        record.rbucks += winnings
+        self.database.update(record)
         await ctx.send(f"{winner.mention} has been awarded {winnings} RBUCKS for winning!")
 
         return winner
@@ -153,11 +159,13 @@ class GameCoordinator(Cog):
                     if member is None:
                         continue
                     
-                    # Add the original amount back that they staked.
-                    self.database.modify(member.id, "rbucks", int(bet_result.stake), Operation.ADD)
+                    record: Player | None = self.database.get(member.id)
+                    if record is None:
+                        raise OneHeadException(f"Unable to award find {member.mention} in database")
                     
-                    # Add the winnings.
-                    self.database.modify(member.id, "rbucks", int(bet_result.winnings), Operation.ADD)
+                    record.rbucks += int(bet_result.stake)
+                    record.rbucks += int(bet_result.winnings)
+                    self.database.update(record)
 
         if len(bet_results) > 0:
             report: str = self.betting.create_bet_report(bet_results)
@@ -223,7 +231,7 @@ class GameCoordinator(Cog):
 
         await play_sound(ctx, "start.mp3")
         metadata: Metadata = self.database.get_metadata()
-        await ctx.send(f"Starting game: `Season {metadata.get('season')}`, Game `{metadata.get('game_id')}`.")
+        await ctx.send(f"Starting game: `Season {metadata.season}`, Game `{metadata.game_id}`.")
 
         await self.lobby.select_players(ctx)
 
@@ -252,7 +260,7 @@ class GameCoordinator(Cog):
             dire: tuple[str, ...]
             radiant, dire = get_player_names(self.store.current_game.radiant, self.store.current_game.dire)
 
-            log.info(f"Season {metadata['season']}, Game {metadata['game_id']} has started.")
+            log.info(f"Season {metadata.season}, Game {metadata.game_id} has started.")
             log.info(f"Radiant: {', '.join(radiant)}, Dire: {', '.join(dire)}.")
 
     async def update_database_with_classic_result(self, ctx: Context, result: Side) -> None:
@@ -282,11 +290,16 @@ class GameCoordinator(Cog):
 
                 if member is None:
                     continue
-
-                self.database.modify(member.id, "win", 1, Operation.ADD)
-                self.database.modify(member.id, "win_streak", 1, Operation.ADD)
-                self.database.modify(member.id, "loss_streak", 0)
-                self.database.modify(member.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
+                
+                record: Player | None = self.database.get(member.id)
+                if record is None:
+                    continue
+                
+                record.win += 1
+                record.win_streak += 1
+                record.loss_streak = 0
+                record.rbucks += Betting.REWARD_ON_WIN
+                self.database.update(record)
 
             for player in dire_names:
                 member: Member | None = get_discord_member_from_name(ctx, player)
@@ -294,10 +307,15 @@ class GameCoordinator(Cog):
                 if member is None:
                     continue
 
-                self.database.modify(member.id, "loss", 1, Operation.ADD)
-                self.database.modify(member.id, "loss_streak", 1, Operation.ADD)
-                self.database.modify(member.id, "win_streak", 0)
-                self.database.modify(member.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
+                record: Player | None = self.database.get(member.id)
+                if record is None:
+                    continue
+
+                record.loss += 1
+                record.loss_streak += 1
+                record.win_streak = 0
+                record.rbucks += Betting.REWARD_ON_LOSS
+                self.database.update(record)
 
         elif result == Side.DIRE:
 
@@ -305,25 +323,34 @@ class GameCoordinator(Cog):
 
             for player in radiant_names:
                 member: Member | None = get_discord_member_from_name(ctx, player)
-
                 if member is None:
                     continue
 
-                self.database.modify(member.id, "loss", 1, Operation.ADD)
-                self.database.modify(member.id, "loss_streak", 1, Operation.ADD)
-                self.database.modify(member.id, "win_streak", 0)
-                self.database.modify(member.id, "rbucks", Betting.REWARD_ON_LOSS, Operation.ADD)
+                record: Player | None = self.database.get(member.id)
+                if record is None:
+                    continue
+                
+                record.loss += 1
+                record.loss_streak += 1
+                record.win_streak = 0
+                record.rbucks += Betting.REWARD_ON_LOSS
+                self.database.update(record)
 
             for player in dire_names:
                 member: Member | None = get_discord_member_from_name(ctx, player)
 
                 if member is None:
                     continue
-
-                self.database.modify(member.id, "win", 1, Operation.ADD)
-                self.database.modify(member.id, "win_streak", 1, Operation.ADD)
-                self.database.modify(member.id, "loss_streak", 0)
-                self.database.modify(member.id, "rbucks", Betting.REWARD_ON_WIN, Operation.ADD)
+                
+                record: Player | None = self.database.get(member.id)
+                if record is None:
+                    continue
+                
+                record.win += 1
+                record.win_streak += 1
+                record.loss_streak = 0
+                record.rbucks += Betting.REWARD_ON_WIN
+                self.database.update(record)
 
     async def handle_classic_game_result(self, ctx: Context, result: str) -> None:
         self.store.current_game = cast(ClassicGame, self.store.current_game)
@@ -359,7 +386,7 @@ class GameCoordinator(Cog):
 
         metadata: Metadata = self.database.get_metadata()
 
-        log.info(f"Game {metadata['game_id']} has ended.")
+        log.info(f"Game {metadata.game_id} has ended.")
 
         await play_sound(ctx, "result.mp3")
 
@@ -370,13 +397,13 @@ class GameCoordinator(Cog):
         if command:
             await Command.invoke(command, ctx)
 
-        metadata["game_id"] += 1
+        metadata.game_id += 1
         self.database.update_metadata(metadata)
 
         if self.is_end_of_season():
-            await ctx.send(f"Season `{metadata['season']}` has ended!")
-            metadata["season"] += 1
-            metadata["game_id"] = 1
+            await ctx.send(f"Season `{metadata.season}` has ended!")
+            metadata.season += 1
+            metadata.game_id = 1
             self.database.update_metadata(metadata)
             # TODO: Make a big song and dance about the end of an IHL season, present winners, go crazy.
 
@@ -397,4 +424,4 @@ class GameCoordinator(Cog):
 
     def is_end_of_season(self) -> bool:
         metadata: Metadata = self.database.get_metadata()
-        return metadata["game_id"] >= metadata["max_game_count"]
+        return metadata.game_id >= metadata.max_game_count

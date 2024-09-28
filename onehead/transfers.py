@@ -19,7 +19,7 @@ from onehead.common import (
 from onehead.game import ClassicGame
 from onehead.lobby import Lobby
 from onehead.matchmaking import Matchmaking
-from onehead.protocols.database import Operation, PlayerDatabase
+from onehead.interfaces.database import PlayerDatabase
 from onehead.store import GameStore
 
 log: Logger = get_logger()
@@ -48,7 +48,12 @@ class Transfers(Cog):
         for transfer in transfers:
             member: Member | None = get_discord_member_from_name(ctx, transfer.buyer)
             if member:
-                self.database.modify(member.id, "rbucks", transfer.amount, Operation.ADD)
+                record: Player | None = self.database.get(member.id)
+                if record is None:
+                    continue
+                
+                record.rbucks += transfer.amount
+                self.database.update(record)
 
         message: str = "All player transactions have been refunded."
         log.info(message)
@@ -82,12 +87,12 @@ class Transfers(Cog):
             )
             return
 
-        profile: Player | None = self.database.get(ctx.author.id)
-        if profile is None:
+        record: Player | None = self.database.get(ctx.author.id)
+        if record is None:
             await ctx.send(f"Unable to find {ctx.author.mention} in database.")
             return
 
-        current_balance: int = profile["rbucks"]
+        current_balance: int = record.rbucks
 
         if current_balance < self.SHUFFLE_COST:
             await ctx.send(
@@ -99,7 +104,8 @@ class Transfers(Cog):
         await play_sound(ctx, "transfer.mp3")
         await ctx.send(f"{ctx.author.mention} has spent **{Transfers.SHUFFLE_COST}** RBUCKS to **shuffle** the teams!")
 
-        self.database.modify(ctx.author.id, "rbucks", Transfers.SHUFFLE_COST, Operation.SUBTRACT)
+        record.rbucks -= Transfers.SHUFFLE_COST
+        self.database.update(record)
         transfers.append(PlayerTransfer(name, Transfers.SHUFFLE_COST))
 
         current_teams_names_only: tuple[tuple[str, ...], tuple[str, ...]] = get_player_names(
