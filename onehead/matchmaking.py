@@ -8,11 +8,10 @@ from discord.member import Member
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, Player, Player, Roles, Side, Team, TeamCombination, get_discord_member_from_name
-from onehead.lobby import Lobby
+from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination, get_discord_member_from_name
 from onehead.interfaces.database import PlayerDatabase
+from onehead.lobby import Lobby
 from onehead.statistics import Statistics
-
 
 log: Logger = get_logger()
 
@@ -131,7 +130,7 @@ class Matchmaking(Cog):
 
         radiant: Team
         dire: Team
-        
+
         radiant, dire = self._calculate_balance(ctx)
 
         radiant_mmr: int = sum([player.adjusted_mmr for player in radiant if player.adjusted_mmr])

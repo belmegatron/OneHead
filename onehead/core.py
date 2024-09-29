@@ -14,10 +14,10 @@ from onehead.common import Metadata, Roles
 from onehead.config import Config
 from onehead.coordinator import GameCoordinator
 from onehead.database import Database
+from onehead.interfaces.database import PlayerDatabase
 from onehead.lobby import Lobby
 from onehead.matchmaking import Matchmaking
 from onehead.mental_health import MentalHealth
-from onehead.interfaces.database import PlayerDatabase
 from onehead.registration import Registration
 from onehead.scoreboard import ScoreBoard
 from onehead.store import GameStore

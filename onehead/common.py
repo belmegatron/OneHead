@@ -42,13 +42,13 @@ Team = tuple[Player, Player, Player, Player, Player]
 TeamCombination = tuple[Team, Team]
 
 
-@dataclass 
+@dataclass
 class Metadata:
     timestamp: float
     season: int = 1
     game_id: int = 1
     max_game_count: int = 50
-    
+
 
 class Roles(StrEnum):
     ADMIN = "IHL Admin"
@@ -150,7 +150,7 @@ async def play_sound(ctx: Context, file_name: str) -> None:
     if voice_client is None:
         log.warning(f"Skipping playing {file_name} as {ctx.author.display_name} is not in a voice channel.")
         return
-        
+
     try:
         voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"))
     except ClientException as ex:

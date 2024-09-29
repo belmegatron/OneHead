@@ -10,8 +10,8 @@ from tabulate import tabulate
 from onehead.challenge import ChallengeMode
 from onehead.common import Bet, Player, Roles, Side, get_discord_member_from_name, play_sound
 from onehead.game import Challenge, ClassicGame, Game
-from onehead.lobby import Lobby
 from onehead.interfaces.database import PlayerDatabase
+from onehead.lobby import Lobby
 from onehead.store import GameStore
 
 log: Logger = get_logger()
@@ -55,11 +55,13 @@ class Betting(Cog):
                 winner_name = winner
 
             if bet.selection == winner_name:
-                bet_result: BetResult = BetResult(win=True, stake=bet.stake, winnings=(bet.stake * bet.price) - bet.stake)
+                bet_result: BetResult = BetResult(
+                    win=True, stake=bet.stake, winnings=(bet.stake * bet.price) - bet.stake
+                )
             else:
-                bet_result: BetResult = BetResult(win=False, winnings=(-1*bet.stake))
+                bet_result: BetResult = BetResult(win=False, winnings=(-1 * bet.stake))
             bet_results[bet.bettor].append(bet_result)
-            
+
         return bet_results
 
     @has_role(Roles.MEMBER)
@@ -138,7 +140,7 @@ class Betting(Cog):
 
         bets: list[Bet] = current_game.get_bets()
         bets.append(bet)
-        
+
         record.rbucks -= bet.stake
         self.database.update(record)
 
@@ -273,7 +275,7 @@ class Betting(Cog):
         challenger_decimal_odds: float = 2.0
         opponent_decimal_odds: float = 2.0
         scaled_difference: float = abs(float(mmr_difference / ChallengeMode.MAX_RATING_DIFFERENCE))
-        
+
         # Ensure that this does not exceed 0.99, otherwise we may calculate the favourted runner to have odds of <= 1.0.
         scaled_difference = min(scaled_difference, 0.99)
 

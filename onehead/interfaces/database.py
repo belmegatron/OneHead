@@ -1,11 +1,12 @@
 from abc import abstractmethod
 
 from discord.ext.commands import CogMeta
+
 from onehead.common import Metadata, Player
 
 
 class PlayerDatabase(metaclass=CogMeta):
-    
+
     @abstractmethod
     def get(self, id: int) -> Player | None:
         pass
@@ -23,10 +24,7 @@ class PlayerDatabase(metaclass=CogMeta):
         pass
 
     @abstractmethod
-    def update(
-        self,
-        modified: Player
-    ) -> None:
+    def update(self, modified: Player) -> None:
         pass
 
     @abstractmethod

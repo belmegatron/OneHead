@@ -17,9 +17,9 @@ from onehead.common import (
     play_sound
 )
 from onehead.game import ClassicGame
+from onehead.interfaces.database import PlayerDatabase
 from onehead.lobby import Lobby
 from onehead.matchmaking import Matchmaking
-from onehead.interfaces.database import PlayerDatabase
 from onehead.store import GameStore
 
 log: Logger = get_logger()
@@ -51,7 +51,7 @@ class Transfers(Cog):
                 record: Player | None = self.database.get(member.id)
                 if record is None:
                     continue
-                
+
                 record.rbucks += transfer.amount
                 self.database.update(record)
 

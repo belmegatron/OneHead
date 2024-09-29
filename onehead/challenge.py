@@ -136,10 +136,14 @@ class ChallengeMode(Cog):
         if challenge:
             if challenge.in_progress() is False:
                 challenge.start()
-                await ctx.send(f"{challenge.opponent.mention} has accepted their duel vs. {challenge.challenger.mention}!")
+                await ctx.send(
+                    f"{challenge.opponent.mention} has accepted their duel vs. {challenge.challenger.mention}!"
+                )
                 await ctx.send(f"Start this 1v1 duel by asking an admin to type `!start {challenge.id}`")
             else:
-                await ctx.send(f"{challenge.opponent.mention} has already accepted their duel vs. {challenge.challenger.mention}!")
+                await ctx.send(
+                    f"{challenge.opponent.mention} has already accepted their duel vs. {challenge.challenger.mention}!"
+                )
                 await ctx.send(f"To start the game, ask an admin to type `!start {challenge.id}`")
         else:
             await ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
@@ -158,11 +162,11 @@ class ChallengeMode(Cog):
             )
             await play_sound(ctx, "shame.mp3")
             if challenge.handle_expiration_task:
-                    challenge.handle_expiration_task.cancel()
+                challenge.handle_expiration_task.cancel()
             self.challenges.remove(challenge)
         else:
             await ctx.send(f"Unable to find challenge issued to {ctx.author.mention} by {name}.")
-        
+
         create_task(voice_client_disconnect(ctx))
 
     async def find_issued_challenge(self, ctx: Context, challenger_name: str) -> Challenge | None:

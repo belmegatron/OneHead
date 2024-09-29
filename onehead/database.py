@@ -1,7 +1,7 @@
-from dataclasses import asdict
 import time
+from dataclasses import asdict
 from pathlib import Path
-from typing import cast, Any
+from typing import Any, cast
 
 from dacite import from_dict
 from tinydb import Query, TinyDB
@@ -60,7 +60,7 @@ class Database(PlayerDatabase):
         for entry in table.values():
             record: Player = from_dict(Player, entry)
             records.append(record)
-            
+
         return records
 
     def get_metadata(self) -> Metadata:
@@ -68,7 +68,7 @@ class Database(PlayerDatabase):
         doc: Document | None = cast(Document | None, self.metadata.get(q.name == "season"))
         if doc is None:
             raise OneHeadException("Unable to retrieve metadata from database.")
-        
+
         document: dict[str, Any] = cast(dict[str, Any], doc)
         metadata: Metadata = from_dict(Metadata, document)
         return metadata

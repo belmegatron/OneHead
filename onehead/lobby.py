@@ -108,8 +108,10 @@ class Lobby(Cog):
                     raise OneHeadException(f"Unable to find {signup} in database.")
 
                 players.append(player)
-            
-            top_10_players_by_behaviour_score: list[Player] = sorted(players, key=lambda x: x.behaviour, reverse=True)[:10]
+
+            top_10_players_by_behaviour_score: list[Player] = sorted(players, key=lambda x: x.behaviour, reverse=True)[
+                :10
+            ]
             top_10_names_by_behaviour_score: list[str] = [player.name for player in top_10_players_by_behaviour_score]
             self._signups = {name: ts for name, ts in self._signups.items() if name in top_10_names_by_behaviour_score}
 

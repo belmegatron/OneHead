@@ -57,7 +57,7 @@ class ScoreBoard(Cog):
         :param scoreboard: Unsorted scoreboard
         :return: Sorted scoreboard
         """
-    
+
         sorted_records: list[dict] = []
 
         for player in scoreboard:
@@ -70,9 +70,9 @@ class ScoreBoard(Cog):
                 "rating": player.rating,
                 "win_streak": player.win_streak,
                 "loss_streak": player.loss_streak,
-                "behaviour": player.behaviour
-                }
-            
+                "behaviour": player.behaviour,
+            }
+
             sorted_records.append(record)
 
         return sorted_records

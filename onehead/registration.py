@@ -91,6 +91,6 @@ class Registration(Cog):
 
         record.mmr = new_mmr
         self.database.update(record)
-        
+
         log.info(f"{name} has had their MMR changed to {new_mmr} by {ctx.author.name}.")
         await ctx.send(f"{member.mention} has had their MMR changed to `{new_mmr}` by {ctx.author.mention}.")

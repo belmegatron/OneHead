@@ -6,13 +6,13 @@ from discord.ext.commands import BucketType, Cog, Command, Context, command, has
 from discord.member import Member
 from structlog import get_logger
 
-from onehead.betting import Betting, BetResult
+from onehead.betting import BetResult, Betting
 from onehead.challenge import ChallengeMode
 from onehead.channels import Channels
 from onehead.common import (
-    Player,
     Metadata,
     OneHeadException,
+    Player,
     Roles,
     Side,
     get_command_from_cog,
@@ -22,9 +22,9 @@ from onehead.common import (
     voice_client_disconnect
 )
 from onehead.game import Challenge, ClassicGame
+from onehead.interfaces.database import PlayerDatabase
 from onehead.lobby import Lobby
 from onehead.matchmaking import Matchmaking
-from onehead.interfaces.database import PlayerDatabase
 from onehead.scoreboard import ScoreBoard
 from onehead.store import GameStore
 from onehead.transfers import Transfers
@@ -137,12 +137,12 @@ class GameCoordinator(Cog):
         await play_sound(ctx, "winner.mp3")
         await ctx.send(f"{winner.mention} has emerged victorious!")
         await ctx.send(f"All hail {winner.mention}!")
-        
+
         winnings: int = 200
         record: Player | None = self.database.get(winner.id)
         if record is None:
             raise OneHeadException(f"Unable to award winnings to {winner.mention} as they do not exist in the database")
-        
+
         record.rbucks += winnings
         self.database.update(record)
         await ctx.send(f"{winner.mention} has been awarded {winnings} RBUCKS for winning!")
@@ -158,11 +158,11 @@ class GameCoordinator(Cog):
                     member: Member | None = get_discord_member_from_name(ctx, name)
                     if member is None:
                         continue
-                    
+
                     record: Player | None = self.database.get(member.id)
                     if record is None:
                         raise OneHeadException(f"Unable to award find {member.mention} in database")
-                    
+
                     record.rbucks += int(bet_result.stake)
                     record.rbucks += int(bet_result.winnings)
                     self.database.update(record)
@@ -208,16 +208,18 @@ class GameCoordinator(Cog):
                 await play_sound(ctx, "fight.mp3")
                 self.store.current_game = target_challenge
                 target_challenge.start()
-                
+
                 challenger_odds: float
                 opponent_odds: float
                 challenger_odds, opponent_odds = self.betting.calculate_challenge_odds(target_challenge)
-                
+
                 await ctx.send(
                     f"**Duel starting**: {target_challenge.challenger.mention} and {target_challenge.opponent.mention}, prepare to fight!"
                 )
-                
-                await ctx.send(f"**Bookie prices**: {target_challenge.challenger.mention} at `{challenger_odds}`, {target_challenge.opponent.mention} at `{opponent_odds}`")
+
+                await ctx.send(
+                    f"**Bookie prices**: {target_challenge.challenger.mention} at `{challenger_odds}`, {target_challenge.opponent.mention} at `{opponent_odds}`"
+                )
                 await self.store.current_game.open_betting_window(ctx)
                 await ctx.send("GL HF!")
             else:
@@ -276,38 +278,22 @@ class GameCoordinator(Cog):
         if self.store.current_game.radiant is None or self.store.current_game.dire is None:
             raise OneHeadException("Unable to update database due to invalid teams")
 
-        radiant_names: tuple[str, ...]
-        dire_names: tuple[str, ...]
-
-        radiant_names, dire_names = get_player_names(self.store.current_game.radiant, self.store.current_game.dire)
-
         if result == Side.RADIANT:
-
             await ctx.send("`Radiant` victory!")
 
-            for player in radiant_names:
-                member: Member | None = get_discord_member_from_name(ctx, player)
-
-                if member is None:
-                    continue
-                
-                record: Player | None = self.database.get(member.id)
+            for player in self.store.current_game.radiant:
+                record: Player | None = self.database.get(player.id)
                 if record is None:
                     continue
-                
+
                 record.win += 1
                 record.win_streak += 1
                 record.loss_streak = 0
                 record.rbucks += Betting.REWARD_ON_WIN
                 self.database.update(record)
 
-            for player in dire_names:
-                member: Member | None = get_discord_member_from_name(ctx, player)
-
-                if member is None:
-                    continue
-
-                record: Player | None = self.database.get(member.id)
+            for player in self.store.current_game.dire:
+                record: Player | None = self.database.get(player.id)
                 if record is None:
                     continue
 
@@ -318,34 +304,24 @@ class GameCoordinator(Cog):
                 self.database.update(record)
 
         elif result == Side.DIRE:
-
             await ctx.send("`Dire` victory!")
 
-            for player in radiant_names:
-                member: Member | None = get_discord_member_from_name(ctx, player)
-                if member is None:
-                    continue
-
-                record: Player | None = self.database.get(member.id)
+            for player in self.store.current_game.radiant:
+                record: Player | None = self.database.get(player.id)
                 if record is None:
                     continue
-                
+
                 record.loss += 1
                 record.loss_streak += 1
                 record.win_streak = 0
                 record.rbucks += Betting.REWARD_ON_LOSS
                 self.database.update(record)
 
-            for player in dire_names:
-                member: Member | None = get_discord_member_from_name(ctx, player)
-
-                if member is None:
-                    continue
-                
-                record: Player | None = self.database.get(member.id)
+            for player in self.store.current_game.dire:
+                record: Player | None = self.database.get(player.id)
                 if record is None:
                     continue
-                
+
                 record.win += 1
                 record.win_streak += 1
                 record.loss_streak = 0
