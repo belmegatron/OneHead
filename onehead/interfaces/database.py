@@ -1,36 +1,33 @@
-from abc import abstractmethod
-
-from discord.ext.commands import CogMeta
+from abc import abstractmethod, ABC
 
 from onehead.common import Metadata, Player
 
 
-class PlayerDatabase(metaclass=CogMeta):
-
+class PlayerDatabase(ABC):
     @abstractmethod
     def get(self, id: int) -> Player | None:
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def add(self, id: int, name: str, mmr: int) -> None:
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def remove(self, id: int) -> None:
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def get_all(self) -> list[Player]:
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def update(self, modified: Player) -> None:
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def get_metadata(self) -> Metadata:
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def update_metadata(self, data: Metadata) -> None:
-        pass
+        raise NotImplementedError()

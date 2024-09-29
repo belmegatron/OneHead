@@ -49,11 +49,13 @@ async def add_ihl_role(bot: Bot, role: str, name: str | None = None) -> None:
     ihl_role: Role = [x for x in roles if x.name == role][0]
     await dpytest.add_role(target_member, ihl_role)
 
+
 def create_fake_player() -> Player:
     id: int = random.randint(0, 99999)
     name: str = f"user_{id}"
-    mmr: int = random.randint(0, 9000) 
+    mmr: int = random.randint(0, 9000)
     return Player(id=id, name=name, mmr=mmr)
+
 
 def create_fake_team() -> Team:
     return create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player()

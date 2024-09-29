@@ -3,9 +3,10 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import discord.ext.test as dpytest
 import pytest
-from conftest import TEST_USER, add_ihl_role
+from conftest import TEST_USER, add_ihl_role, create_fake_team
 from discord.ext.commands import Bot, CommandInvokeError, errors
 
+from onehead.common import Player
 from onehead.game import ClassicGame
 from onehead.store import GameStore
 from onehead.transfers import Transfers
@@ -72,7 +73,12 @@ class TestShuffle:
         transfers.lobby.get_signups.return_value = [TEST_USER]
 
         transfers.database.get = Mock()
-        transfers.database.get.return_value = {"rbucks": 0}
+        transfers.database.get.return_value = Player(
+            id=262570465212497920,
+            name="HARRY",
+            mmr=4750,
+            rbucks=0,
+        )
 
         await dpytest.message("!shuffle")
         assert dpytest.verify().message().content("cannot shuffle as they only have 0 RBUCKS").contains()
@@ -92,11 +98,16 @@ class TestShuffle:
         transfers.lobby.get_signups.return_value = [TEST_USER]
 
         transfers.database.get = Mock()
-        transfers.database.get.return_value = {"rbucks": Transfers.SHUFFLE_COST + 100}
-        transfers.database.modify = Mock()
+        transfers.database.get.return_value = Player(
+            id=262570465212497920,
+            name="HARRY",
+            mmr=4750,
+            rbucks=Transfers.SHUFFLE_COST + 100,
+        )
+        transfers.database.update = Mock()
 
         transfers.matchmaking.balance = AsyncMock()
-        transfers.matchmaking.balance.return_value = [{"name": "A"}], [{"name": "B"}]
+        transfers.matchmaking.balance.return_value = create_fake_team(), create_fake_team()
 
         with patch("onehead.transfers.play_sound"):
             await dpytest.message("!shuffle")

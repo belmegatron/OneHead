@@ -19,7 +19,7 @@ from onehead.common import (
     get_discord_member_from_name,
     get_player_names,
     play_sound,
-    voice_client_disconnect
+    voice_client_disconnect,
 )
 from onehead.game import Challenge, ClassicGame
 from onehead.interfaces.database import PlayerDatabase

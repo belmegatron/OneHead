@@ -61,7 +61,7 @@ class TestStart:
         coordinator: GameCoordinator = cast(GameCoordinator, bot.get_cog("GameCoordinator"))
         balance: AsyncMock = AsyncMock()
         balance.return_value = create_fake_team(), create_fake_team()
-        
+
         coordinator.matchmaking.balance = balance
         coordinator.setup_team_channels = AsyncMock()
 
@@ -183,11 +183,185 @@ class TestResult:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.current_game = ClassicGame()
         store.current_game._in_progress = True
-        store.current_game.radiant = Player(id=0, name="RBEEZAY", mmr=3000), create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player() 
-        store.current_game.dire = create_fake_team()
+        store.current_game.radiant = (
+            Player(
+                id=262570465212497920,
+                name="HARRY",
+                mmr=4750,
+                win=11,
+                loss=11,
+                win_streak=1,
+                loss_streak=0,
+                rbucks=100,
+                rating=1500,
+                commends=0,
+                reports=1,
+                behaviour=9800,
+                pos=None,
+                adjusted_mmr=None,
+                win_percentage=None,
+            ),
+            Player(
+                id=252408793978241020,
+                name="JEFFERIES",
+                mmr=2706,
+                win=12,
+                loss=14,
+                win_streak=1,
+                loss_streak=0,
+                rbucks=450,
+                rating=1500,
+                commends=0,
+                reports=0,
+                behaviour=10000,
+                pos=None,
+                adjusted_mmr=None,
+                win_percentage=None,
+            ),
+            Player(
+                id=213767888438427650,
+                name="RUGOR",
+                mmr=2100,
+                win=10,
+                loss=5,
+                win_streak=0,
+                loss_streak=1,
+                rbucks=150,
+                rating=1500,
+                commends=1,
+                reports=0,
+                behaviour=10000,
+                pos=None,
+                adjusted_mmr=None,
+                win_percentage=None,
+            ),
+            Player(
+                id=141986719309234180,
+                name="GEE",
+                mmr=2524,
+                win=18,
+                loss=17,
+                win_streak=0,
+                loss_streak=1,
+                rbucks=300,
+                rating=1500,
+                commends=1,
+                reports=0,
+                behaviour=10000,
+                pos=None,
+                adjusted_mmr=None,
+                win_percentage=None,
+            ),
+            Player(
+                id=880082547789430900,
+                name="JORDAN",
+                mmr=1215,
+                win=15,
+                loss=11,
+                win_streak=1,
+                loss_streak=0,
+                rbucks=150,
+                rating=1500,
+                commends=0,
+                reports=0,
+                behaviour=10000,
+                pos=None,
+                adjusted_mmr=None,
+                win_percentage=None,
+            ),
+        )
+
+        store.current_game.dire = (
+            Player(
+                id=525045015093706750,
+                name="LUKE",
+                mmr=3200,
+                win=11,
+                loss=3,
+                win_streak=5,
+                loss_streak=0,
+                rbucks=500,
+                rating=1500,
+                commends=1,
+                reports=0,
+                behaviour=10000,
+                pos=None,
+                adjusted_mmr=None,
+                win_percentage=None,
+            ),
+            Player(
+                id=252414167871389700,
+                name="TOCCO",
+                mmr=1950,
+                win=8,
+                loss=19,
+                win_streak=2,
+                loss_streak=0,
+                rbucks=550,
+                rating=1500,
+                commends=1,
+                reports=0,
+                behaviour=10000,
+                pos=None,
+                adjusted_mmr=None,
+                win_percentage=None,
+            ),
+            Player(
+                id=210079807906643970,
+                name="RBEEZAY",
+                mmr=3700,
+                win=14,
+                loss=11,
+                win_streak=1,
+                loss_streak=0,
+                rbucks=3948,
+                rating=1500,
+                commends=0,
+                reports=0,
+                behaviour=10000,
+                pos=None,
+                adjusted_mmr=None,
+                win_percentage=None,
+            ),
+            Player(
+                id=211554012082733060,
+                name="ZEE",
+                mmr=2995,
+                win=6,
+                loss=13,
+                win_streak=0,
+                loss_streak=2,
+                rbucks=300,
+                rating=1500,
+                commends=0,
+                reports=0,
+                behaviour=10000,
+                pos=None,
+                adjusted_mmr=None,
+                win_percentage=None,
+            ),
+            Player(
+                id=432258130664095740,
+                name="EDD",
+                mmr=4224,
+                win=7,
+                loss=7,
+                win_streak=0,
+                loss_streak=1,
+                rbucks=550,
+                rating=1500,
+                commends=0,
+                reports=0,
+                behaviour=10000,
+                pos=None,
+                adjusted_mmr=None,
+                win_percentage=None,
+            ),
+        )
+
         store.current_game._bets = [
-            Bet("RBEEZAY", Side.RADIANT, 100),
-            Bet("RBEEZAY", Side.DIRE, 500),
+            Bet("HARRY", Side.RADIANT, 100),
+            Bet("HARRY", Side.DIRE, 500),
         ]
 
         coordinator: GameCoordinator = cast(GameCoordinator, bot.get_cog("GameCoordinator"))
@@ -223,6 +397,6 @@ class TestStatus:
         store.current_game._in_progress = True
         store.current_game.radiant = create_fake_team()
         store.current_game.dire = create_fake_team()
-        
+
         await dpytest.message("!status")
         assert dpytest.verify().message().content("**Current Game**").contains()

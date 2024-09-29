@@ -46,7 +46,13 @@ class TestCommend:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.previous_game = ClassicGame()
         store.previous_game = cast(ClassicGame, store.previous_game)
-        store.previous_game.radiant = Player(name=TEST_USER, id=0, mmr=3000), create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player()
+        store.previous_game.radiant = (
+            Player(name=TEST_USER, id=0, mmr=3000),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+        )
         store.previous_game.dire = create_fake_team()
 
         await add_ihl_role(bot, "IHL")
@@ -58,7 +64,13 @@ class TestCommend:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.previous_game = ClassicGame()
         store.previous_game = cast(ClassicGame, store.previous_game)
-        store.previous_game.radiant = Player(name=TEST_USER, id=0, mmr=3000), create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player()
+        store.previous_game.radiant = (
+            Player(name=TEST_USER, id=0, mmr=3000),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+        )
         store.previous_game.dire = create_fake_team()
 
         await dpytest.member_join(name="RBEEZAY")
@@ -77,7 +89,13 @@ class TestCommend:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.previous_game = ClassicGame()
         store.previous_game = cast(ClassicGame, store.previous_game)
-        store.previous_game.radiant =  Player(name=TEST_USER, id=0, mmr=3000), Player(name="RBEEZAY", id=1, mmr=3000), create_fake_player(), create_fake_player(), create_fake_player()
+        store.previous_game.radiant = (
+            Player(name=TEST_USER, id=0, mmr=3000),
+            Player(name="RBEEZAY", id=1, mmr=3000),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+        )
         store.previous_game.dire = create_fake_team()
         store.previous_game._commends["RBEEZAY"] = [TEST_USER]
 
@@ -91,7 +109,13 @@ class TestCommend:
     async def test_success(self, bot: Bot) -> None:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.previous_game = ClassicGame()
-        store.previous_game.radiant =  Player(name=TEST_USER, id=0, mmr=3000), Player(name="RBEEZAY", id=1, mmr=3000), create_fake_player(), create_fake_player(), create_fake_player()
+        store.previous_game.radiant = (
+            Player(name=TEST_USER, id=0, mmr=3000),
+            Player(name="RBEEZAY", id=1, mmr=3000),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+        )
         store.previous_game.dire = create_fake_team()
 
         behaviour: Behaviour = cast(Behaviour, bot.get_cog("Behaviour"))
@@ -129,7 +153,13 @@ class TestReport:
     async def test_reporter_did_not_play(self, bot: Bot) -> None:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.previous_game = ClassicGame()
-        store.previous_game.radiant = Player(name="RBEEZAY", id=0, mmr=3000), create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player()
+        store.previous_game.radiant = (
+            Player(name="RBEEZAY", id=0, mmr=3000),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+        )
         store.previous_game.dire = create_fake_team()
 
         await dpytest.member_join(name="RBEEZAY")
@@ -146,7 +176,13 @@ class TestReport:
     async def test_report_self(self, bot: Bot) -> None:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.previous_game = ClassicGame()
-        store.previous_game.radiant = Player(name=TEST_USER, id=0, mmr=3000), create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player()
+        store.previous_game.radiant = (
+            Player(name=TEST_USER, id=0, mmr=3000),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+        )
         store.previous_game.dire = create_fake_team()
 
         await dpytest.member_join(name="RBEEZAY")
@@ -158,9 +194,15 @@ class TestReport:
     async def test_reportee_did_not_play(self, bot: Bot) -> None:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.previous_game = ClassicGame()
-        store.previous_game.radiant = Player(name=TEST_USER, id=0, mmr=3000), create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player()
+        store.previous_game.radiant = (
+            Player(name=TEST_USER, id=0, mmr=3000),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+        )
         store.previous_game.dire = create_fake_team()
-        
+
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!report RBEEZAY abandon")
@@ -175,7 +217,13 @@ class TestReport:
     async def test_reported_previously(self, bot: Bot) -> None:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.previous_game = ClassicGame()
-        store.previous_game.radiant =  Player(name=TEST_USER, id=0, mmr=3000), Player(name="RBEEZAY", id=1, mmr=3000), create_fake_player(), create_fake_player(), create_fake_player()
+        store.previous_game.radiant = (
+            Player(name=TEST_USER, id=0, mmr=3000),
+            Player(name="RBEEZAY", id=1, mmr=3000),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+        )
         store.previous_game.dire = create_fake_team()
         store.previous_game._reports["RBEEZAY"] = [TEST_USER]
 
@@ -188,7 +236,13 @@ class TestReport:
     async def test_success(self, bot: Bot) -> None:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.previous_game = ClassicGame()
-        store.previous_game.radiant =  Player(name=TEST_USER, id=0, mmr=3000), Player(name="RBEEZAY", id=1, mmr=3000), create_fake_player(), create_fake_player(), create_fake_player()
+        store.previous_game.radiant = (
+            Player(name=TEST_USER, id=0, mmr=3000),
+            Player(name="RBEEZAY", id=1, mmr=3000),
+            create_fake_player(),
+            create_fake_player(),
+            create_fake_player(),
+        )
         store.previous_game.dire = create_fake_team()
 
         behaviour: Behaviour = cast(Behaviour, bot.get_cog("Behaviour"))

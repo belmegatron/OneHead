@@ -169,7 +169,7 @@ class TestCalculateOdds:
 
         challenger_record: Player = Player(name="RBEEZAY", id=0, mmr=3000, rbucks=100)
         opponent_record: Player = Player(name="GEE", id=0, mmr=2000, rbucks=100)
-        
+
         db.get.side_effect = [challenger_record, opponent_record]
 
         challenge: Challenge = Challenge(0, challenger, opponent)
@@ -226,7 +226,7 @@ class TestCalculateOdds:
 
         challenger_record: Player = Player(name="RBEEZAY", id=0, mmr=2000, rbucks=100)
         opponent_record: Player = Player(name="GEE", id=0, mmr=6010, rbucks=100)
-        
+
         db.get.side_effect = [challenger_record, opponent_record]
 
         challenge: Challenge = Challenge(0, challenger, opponent)

@@ -14,7 +14,7 @@ from onehead.common import (
     get_command_from_cog,
     get_discord_member_from_name,
     get_player_names,
-    play_sound
+    play_sound,
 )
 from onehead.game import ClassicGame
 from onehead.interfaces.database import PlayerDatabase
