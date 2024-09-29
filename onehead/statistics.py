@@ -16,7 +16,15 @@ class Statistics:
             if record.win == 0:
                 record.win_percentage = 0
             else:
-                record.win_percentage = int(round(record.win / (record.win + record.loss) * 100, 1))
+                record.win_percentage = round(record.win / (record.win + record.loss) * 100, 1)
+
+    @staticmethod
+    def calculate_duel_win_percentage(profiles: list[Player]) -> None:
+        for record in profiles:
+            if record.duel_win == 0:
+                record.duel_win_percentage = 0
+            else:
+                record.duel_win_percentage = round(record.duel_win / (record.duel_win + record.duel_loss) * 100, 1)
 
     @classmethod
     def calculate_rating(cls, profiles: list[Player]) -> None:
@@ -29,6 +37,18 @@ class Statistics:
             win_modifier: int = record.win * cls.MMR_DELTA
             loss_modifier: int = record.loss * cls.MMR_DELTA
             record.rating = cls.BASELINE_RATING + win_modifier - loss_modifier
+
+    @classmethod
+    def calculate_duel_rating(cls, profiles: list[Player]) -> None:
+        """
+        Calculates the IHL rating for each profile in profiles.
+
+        :param profiles: List of player profiles.
+        """
+        for record in profiles:
+            win_modifier: int = record.duel_win * cls.MMR_DELTA
+            loss_modifier: int = record.duel_loss * cls.MMR_DELTA
+            record.duel_rating = cls.BASELINE_RATING + win_modifier - loss_modifier
 
     @classmethod
     def calculate_adjusted_mmr(cls, profiles: list[Player]) -> None:

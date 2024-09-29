@@ -357,30 +357,13 @@ class TestScoreboard:
                 adjusted_mmr=None,
                 win_percentage=None,
             ),
-            Player(
-                id=216679309052477440,
-                name="TOM",
-                mmr=2000,
-                win=1,
-                loss=0,
-                win_streak=1,
-                loss_streak=0,
-                rbucks=200,
-                rating=1500,
-                commends=0,
-                reports=0,
-                behaviour=10000,
-                pos=None,
-                adjusted_mmr=None,
-                win_percentage=None,
-            ),
         ]
 
         await dpytest.message("!sb")
         assert (
             dpytest.verify()
             .message()
-            .content("name         win    loss    %    rating    win_streak    loss_streak    behaviour\n")
+            .content("#  name         win    loss      %    rating    win_streak    loss_streak    behaviour")
             .contains()
         )
 
@@ -754,6 +737,6 @@ class TestScoreboard:
         assert (
             dpytest.verify()
             .message()
-            .content("name         win    loss    %    rating    win_streak    loss_streak    behaviour\n")
+            .content("#  name         win    loss      %    rating    win_streak    loss_streak    behaviour")
         ).contains()
         assert dpytest.verify().message().content("DOG").contains()

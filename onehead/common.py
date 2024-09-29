@@ -36,6 +36,10 @@ class Player:
     pos: int | None = None
     adjusted_mmr: int | None = None
     win_percentage: float | None = None
+    duel_win: int = 0
+    duel_loss: int = 0
+    duel_win_percentage: float | None = None
+    duel_rating: int = 0
 
 
 Team = tuple[Player, Player, Player, Player, Player]

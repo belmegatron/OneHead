@@ -39,15 +39,21 @@ class ScoreBoard(Cog):
 
     @has_role(Roles.MEMBER)
     @command(aliases=["sb"])
-    async def scoreboard(self, ctx: Context) -> None:
+    async def scoreboard(self, ctx: Context, scoreboard_type: str = "") -> None:
         """
         Shows the current rankings for the IGC IHL Leaderboard.
         """
-        scoreboard: str = self._get_scoreboard()
+        if scoreboard_type == "duel":
+            scoreboard: str = self._get_duel_scoreboard()
+            scoreboard_name: str = "**IGC Duel Leaderboard**"
+        else:
+            scoreboard: str = self._get_scoreboard()
+            scoreboard_name: str = "**IGC Leaderboard**"
+
         chunked_scoreboard: tuple[str, ...] = self._chunk_scoreboard(scoreboard)
 
         for chunk in chunked_scoreboard:
-            await ctx.send(f"**IGC Leaderboard** ```\n{chunk}```")
+            await ctx.send(f"{scoreboard_name} ```\n{chunk}```")
 
     @staticmethod
     def _sort_scoreboard_key_order(scoreboard: list[Player]) -> list[dict[str, Any]]:
@@ -120,6 +126,63 @@ class ScoreBoard(Cog):
 
         scoreboard_sorted_rows: list[Player] = self._calculate_positions(records)
         scoreboard_sorted_rows_and_columns: list[dict[str, Any]] = self._sort_scoreboard_key_order(
+            scoreboard_sorted_rows
+        )
+
+        sorted_scoreboard: str = tabulate(scoreboard_sorted_rows_and_columns, headers="keys", tablefmt="simple")
+
+        return sorted_scoreboard
+
+    @staticmethod
+    def _sort_duel_scoreboard_key_order(scoreboard: list[Player]) -> list[dict[str, Any]]:
+        sorted_records: list[dict] = []
+
+        for player in scoreboard:
+            record = {
+                "#": player.pos,
+                "name": player.name,
+                "win": player.duel_win,
+                "loss": player.duel_loss,
+                "%": player.duel_win_percentage,
+                "rating": player.duel_rating,
+            }
+
+            sorted_records.append(record)
+
+        return sorted_records
+
+    @staticmethod
+    def _calculate_duel_positions(scoreboard: list[Player]) -> list[Player]:
+        sorted_scoreboard: list[Player] = sorted(scoreboard, key=lambda x: x.duel_rating, reverse=True)
+        scoreboard_positions: list[Player] = []
+
+        pos: int = 1
+        modifier: int = 1
+
+        for i, record in enumerate(sorted_scoreboard):
+            if i != 0:
+                if sorted_scoreboard[i - 1].duel_rating > sorted_scoreboard[i].duel_rating:
+                    pos += modifier
+                    modifier = 1
+                else:
+                    modifier += 1
+
+            record.pos = pos
+            scoreboard_positions.append(record)
+
+        return scoreboard_positions
+
+    def _get_duel_scoreboard(self) -> str:
+        records: list[Player] = self.database.get_all()
+
+        if not records:
+            raise OneHeadException("No users found in database.")
+
+        Statistics.calculate_duel_win_percentage(records)
+        Statistics.calculate_duel_rating(records)
+
+        scoreboard_sorted_rows: list[Player] = self._calculate_duel_positions(records)
+        scoreboard_sorted_rows_and_columns: list[dict[str, Any]] = self._sort_duel_scoreboard_key_order(
             scoreboard_sorted_rows
         )
 

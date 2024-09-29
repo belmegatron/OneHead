@@ -139,12 +139,31 @@ class GameCoordinator(Cog):
         await ctx.send(f"All hail {winner.mention}!")
 
         winnings: int = 200
-        record: Player | None = self.database.get(winner.id)
-        if record is None:
-            raise OneHeadException(f"Unable to award winnings to {winner.mention} as they do not exist in the database")
+        winner_record: Player | None = self.database.get(winner.id)
+        if winner_record is None:
+            raise OneHeadException(
+                f"Unable to award winnings to {winner.display_name} as they do not exist in the database"
+            )
 
-        record.rbucks += winnings
-        self.database.update(record)
+        winner_record.rbucks += winnings
+        winner_record.duel_win += 1
+        self.database.update(winner_record)
+
+        loser: Member = cast(
+            Member,
+            (
+                self.store.current_game.opponent
+                if self.store.current_game.challenger == winner
+                else self.store.current_game.challenger
+            ),
+        )
+        loser_record: Player | None = self.database.get(loser.id)
+        if loser_record is None:
+            raise OneHeadException(f"Unable to find {loser.display_name} in the database")
+
+        loser_record.duel_loss += 1
+        self.database.update(loser_record)
+
         await ctx.send(f"{winner.mention} has been awarded {winnings} RBUCKS for winning!")
 
         return winner

@@ -47,8 +47,8 @@ class TestShuffle:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.current_game = ClassicGame()
         store.current_game._transfer_window_open = True
-        store.current_game.radiant = []
-        store.current_game.dire = []
+        store.current_game.radiant = create_fake_team()
+        store.current_game.dire = create_fake_team()
 
         await dpytest.message("!shuffle")
         assert (
@@ -65,8 +65,8 @@ class TestShuffle:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.current_game = ClassicGame()
         store.current_game._transfer_window_open = True
-        store.current_game.radiant = []
-        store.current_game.dire = []
+        store.current_game.radiant = create_fake_team()
+        store.current_game.dire = create_fake_team()
 
         transfers: Transfers = cast(Transfers, bot.get_cog("Transfers"))
         transfers.lobby.get_signups = Mock()
@@ -90,8 +90,8 @@ class TestShuffle:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.current_game = ClassicGame()
         store.current_game._transfer_window_open = True
-        store.current_game.radiant = []
-        store.current_game.dire = []
+        store.current_game.radiant = create_fake_team()
+        store.current_game.dire = create_fake_team()
 
         transfers: Transfers = cast(Transfers, bot.get_cog("Transfers"))
         transfers.lobby.get_signups = Mock()
