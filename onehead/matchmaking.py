@@ -63,19 +63,25 @@ class Matchmaking(Cog):
         return unique_combinations
 
     @staticmethod
-    def _calculate_rating_differences(all_unique_combinations: list) -> None:
+    def _calculate_rating_differences(unique_combinations: list[TeamCombination]) -> list[int]:
         """
         Calculates the net rating difference for each unique combination of teams based on their adjusted mmr.
 
         :param all_unique_combinations: All 5v5 unique combinations.
+        :return: List total rating difference for each unique combination.
         """
-        for unique_combination in all_unique_combinations:
-            t1_rating: int = sum([player["adjusted_mmr"] for player in unique_combination[Side.RADIANT]])
-            t2_rating: int = sum([player["adjusted_mmr"] for player in unique_combination[Side.DIRE]])
+        
+        rating_differences: list[int] = []
+        
+        for combination in unique_combinations:
+            t1_rating: int = sum([player.adjusted_mmr for player in combination[0] if player.adjusted_mmr])
+            t2_rating: int = sum([player.adjusted_mmr for player in combination[1] if player.adjusted_mmr])
 
-            unique_combination["rating_difference"] = abs(t1_rating - t2_rating)
+            rating_differences.append(abs(t1_rating - t2_rating))
+        
+        return rating_differences
 
-    def _calculate_balance(self, ctx: Context) -> tuple[Team, Team]:
+    def _calculate_balance(self, ctx: Context) -> TeamCombination:
         """
         Calculate balanced lineups for Radiant/Dire.
 
@@ -99,21 +105,15 @@ class Matchmaking(Cog):
         if not unique_combinations:
             raise OneHeadException("No valid matchups could be calculated. Possible duplicate player name.")
 
-        unique_combinations_dict: list[dict[str, Team]] = [
-            {Side.RADIANT: combination[0], Side.DIRE: combination[1]} for combination in unique_combinations
-        ]
-
-        self._calculate_rating_differences(unique_combinations_dict)
+        rating_differences: list[int] = self._calculate_rating_differences(unique_combinations)
 
         # Sort by ascending rating difference
-        sorted_unique_combinations_dict: list[dict[str, Team]] = sorted(
-            unique_combinations_dict, key=lambda d: d["rating_difference"]
-        )
-
+        sorted_unique_combinations: list[TeamCombination] = [combo for _, combo in sorted(zip(rating_differences, unique_combinations))]
+        
         # Take the top 20 that are closest in terms of rating and pick one at random.
-        balanced_teams: dict[str, Team] = random.choice(sorted_unique_combinations_dict[:20])
+        balanced_teams: TeamCombination = random.choice(sorted_unique_combinations[:20])
 
-        return balanced_teams[Side.RADIANT], balanced_teams[Side.DIRE]
+        return balanced_teams
 
     async def balance(self, ctx: Context) -> tuple[Team, Team]:
         """
@@ -127,7 +127,7 @@ class Matchmaking(Cog):
         if signup_count != 10:
             err: str = f"Only `{signup_count}` Signups, require `{10 - signup_count}` more."
             await ctx.send(err)
-
+        
         radiant: Team
         dire: Team
 

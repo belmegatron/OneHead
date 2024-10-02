@@ -10,9 +10,6 @@ from onehead.config import Config, load_config
 from onehead.core import bot_builder
 
 
-handler = logging.FileHandler(filename="discord.log", encoding="utf-8", mode="w")
-
-
 log: logging.Logger = get_logger()
 
 
@@ -20,7 +17,7 @@ async def main() -> None:
     config: Config = load_config()
     bot: Bot = await bot_builder(config)
     
-    setup_logging(level=logging.INFO, root=False, handler=handler)
+    setup_logging(level=logging.INFO, root=True)
     
     loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
     loop.set_exception_handler(global_exception_handler)
