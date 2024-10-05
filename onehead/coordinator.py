@@ -28,7 +28,7 @@ from onehead.matchmaking import Matchmaking
 from onehead.scoreboard import ScoreBoard
 from onehead.store import GameStore
 from onehead.transfers import Transfers
-from version import __changelog__, __version__
+from onehead.version import __changelog__, __version__
 
 log: Logger = get_logger()
 

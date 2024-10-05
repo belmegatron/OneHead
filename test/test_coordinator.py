@@ -4,14 +4,13 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import discord.ext.test as dpytest
 import pytest
-from conftest import add_ihl_role, create_fake_player, create_fake_team
+from conftest import add_ihl_role, create_fake_team
 from discord.ext.commands import Bot, CommandInvokeError, errors
 
 from onehead.betting import Bet
 from onehead.common import Player, Side
 from onehead.coordinator import GameCoordinator
-from onehead.core import Core
-from onehead.game import ClassicGame, Game
+from onehead.game import ClassicGame
 from onehead.lobby import Lobby
 from onehead.store import GameStore
 

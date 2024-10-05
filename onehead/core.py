@@ -22,7 +22,7 @@ from onehead.registration import Registration
 from onehead.scoreboard import ScoreBoard
 from onehead.store import GameStore
 from onehead.transfers import Transfers
-from version import __changelog__, __version__
+from onehead.version import __changelog__, __version__
 
 log: Logger = get_logger()
 
@@ -124,15 +124,15 @@ class Core(Cog):
 
         self.lobby._signups.update(
             {
-                "ERIC": now,
-                "GEE": now,
-                "JEFFERIES": now,
+                "RBEEZAY": now,
                 "JORDAN": now,
-                "EDD": now,
-                "LAURENCE": now,
-                "TOCCO": now,
-                "JAMES": now,
-                "LUKE": now,
                 "ZEE": now,
+                "LAURENCE": now,
+                "PECRO": now,
+                "HARRY": now,
+                "RUGOR": now,
+                "RICH": now,
+                "TOCCO": now,
+                "JEFFERIES": now,
             }
         )

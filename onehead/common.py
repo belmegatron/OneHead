@@ -40,8 +40,26 @@ class Player:
     duel_loss: int = 0
     duel_win_percentage: float | None = None
     duel_rating: int = 0
-
-
+    
+    def __lt__(self, other) -> bool:
+        return self.rating < other.rating
+    
+    def __le__(self, other) -> bool:
+        return self.rating <= other.rating
+    
+    def __gt__(self, other) -> bool:
+        return self.rating > other.rating
+    
+    def __ge__(self, other) -> bool:
+        return self.rating >= other.rating
+    
+    def __eq__(self, other) -> bool:
+        return self.id == other.id
+    
+    def __ne__(self, other) -> bool:
+        return self.id != other.id
+ 
+ 
 Team = tuple[Player, Player, Player, Player, Player]
 TeamCombination = tuple[Team, Team]
 

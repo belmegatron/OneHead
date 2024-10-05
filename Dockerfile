@@ -7,7 +7,6 @@ WORKDIR /app
 COPY onehead onehead/
 COPY pyproject.toml .
 COPY run.py .
-COPY version.py .
 
 RUN pip install virtualenv
 ENV VIRTUAL_ENV=/opt/venv

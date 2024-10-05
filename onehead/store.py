@@ -7,7 +7,7 @@ from tabulate import tabulate
 from onehead.common import Metadata, Roles, Side, get_player_names
 from onehead.game import Challenge, ClassicGame, Game
 from onehead.interfaces.database import PlayerDatabase
-from version import __changelog__, __version__
+from onehead.version import __changelog__, __version__
 
 log: Logger = get_logger()
 
