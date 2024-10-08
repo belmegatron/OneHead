@@ -8,7 +8,7 @@ from discord.member import Member
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, Player, Roles, Side, Team, TeamCombination, get_discord_member_from_name
+from onehead.common import OneHeadException, Player, Roles, Team, TeamCombination, get_discord_member_from_name
 from onehead.interfaces.database import PlayerDatabase
 from onehead.lobby import Lobby
 from onehead.statistics import Statistics
@@ -136,7 +136,9 @@ class Matchmaking(Cog):
         radiant_mmr: int = sum([player.adjusted_mmr for player in radiant if player.adjusted_mmr])
         dire_mmr: int = sum([player.adjusted_mmr for player in dire if player.adjusted_mmr])
 
-        log.info(f"Radiant MMR: {radiant_mmr}, Dire MMR: {dire_mmr}")
+        mmr_message: str = f"Radiant: `{radiant_mmr}` MMR, Dire: `{dire_mmr}` MMR."
+        log.info(mmr_message)
+        await ctx.send(mmr_message)
 
         return radiant, dire
 

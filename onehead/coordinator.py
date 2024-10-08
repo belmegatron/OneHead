@@ -401,18 +401,19 @@ class GameCoordinator(Cog):
             metadata.game_id = 1
             self.database.update_metadata(metadata)
             # TODO: Make a big song and dance about the end of an IHL season, present winners, go crazy.
+            # TODO: Wipe scoreboard.
 
     async def reset(self, ctx: Context, game_cancelled=False) -> None:
         if self.store.current_game and isinstance(self.store.current_game, Challenge):
             self.challenge_mode.challenges.remove(self.store.current_game)
 
         if game_cancelled:
-            self.previous_game = None
+            self.store.previous_game = None
         else:
-            self.previous_game = self.store.current_game
+            self.store.previous_game = self.store.current_game
 
         self.store.current_game = None
-        if isinstance(self.previous_game, ClassicGame):
+        if isinstance(self.store.previous_game, ClassicGame):
             self.lobby.clear_signups()
 
         create_task(voice_client_disconnect(ctx))
