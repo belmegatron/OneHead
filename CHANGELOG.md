@@ -4,10 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.56.0] - 2024-09-17
+## [1.56.0] - 2024-10-08
 
 ### Added
 - Added challenge mode. Players can now challenge each other to 1v1 duels.
+- Bets now include a price. By default this is 2.0 for classic games and can vary between 1.01 and 101 for challenges.
+
+### Changed
+- Replaced database protocol with ABC.
+- Simplified database API.
+- Replaced all uses of TypedDict with Dataclass for consistency.
+- Game state is now stored in the GameStore.
 
 ## [1.55.3] - 2024-08-26
 
