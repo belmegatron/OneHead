@@ -14,13 +14,13 @@ from onehead.lobby import Lobby
 from onehead.statistics import Statistics
 
 log: Logger = get_logger()
-
+grief_list = ['RICH', 'TOCCO']
 
 class Matchmaking(Cog):
     def __init__(self, database: PlayerDatabase, lobby: Lobby) -> None:
         self.database: PlayerDatabase = database
         self.lobby: Lobby = lobby
-
+        self.unite_grief = True
     def _get_player_records(self, ctx: Context) -> list[Player]:
         """
         Obtains player records for all players that have signed up to play.
@@ -80,6 +80,12 @@ class Matchmaking(Cog):
             rating_differences.append(abs(t1_rating - t2_rating))
         
         return rating_differences
+    
+    def _griefers_unite(self, combinations, griefers:tuple):
+        grief_combos = [team_combinations  for team_combinations in combinations if griefers.issubset(set(griefers)) ]
+
+        return grief_combos
+    
 
     def _calculate_balance(self, ctx: Context) -> TeamCombination:
         """
@@ -101,6 +107,9 @@ class Matchmaking(Cog):
         matchup_combinations: list[TeamCombination] = list(itertools.combinations(team_combinations, 2))
 
         unique_combinations: list[TeamCombination] = self._calculate_unique_team_combinations(matchup_combinations)
+
+        if self.unite_grief:
+            unique_combinations = self._griefers_unite(unique_combinations, grief_list)
 
         if not unique_combinations:
             raise OneHeadException("No valid matchups could be calculated. Possible duplicate player name.")
