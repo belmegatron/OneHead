@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.56.1] - 2024-11-24
+
+### Changed
+- Fixed bug where calling a command that invoked the `play_sound` function caused an `AttributeError` to be thrown.
+- Fixed bug where if an admin executed the  `!stop` command while the game was during the transfer/betting phase, the bot would not reset to a clean state.
+- Fixed bug where bets were not being formatted as integers when displaying bet results.
+
 ## [1.56.0] - 2024-10-08
 
 ### Added

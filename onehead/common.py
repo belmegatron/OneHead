@@ -10,6 +10,7 @@ from discord.errors import ClientException
 from discord.ext.commands import Cog, Command, Context
 from discord.member import Member, VoiceState
 from discord.player import FFmpegPCMAudio
+from discord.user import User
 from discord.voice_client import VoiceClient
 from structlog import get_logger
 
@@ -155,27 +156,30 @@ def get_discord_id_from_mention(mention: str) -> int:
 
 async def play_sound(ctx: Context, file_name: str) -> None:
     voice_client: VoiceClient | None = cast(VoiceClient | None, ctx.voice_client)
-    if voice_client is None:
-        member: Member = cast(Member, ctx.author)
-        voice_state: VoiceState | None = cast(VoiceState, member.voice)
-        voice_channel: VocalGuildChannel | None = None
-
-        if voice_state:
-            voice_channel = voice_state.channel
-
-        if voice_channel:
-            voice_client = await voice_channel.connect()
-
-    elif voice_client.channel.name != ctx.author.voice.channel.name:
-        await voice_client.move_to(ctx.author.voice.channel)
-
-    if voice_client is None:
-        log.warning(f"Skipping playing {file_name} as {ctx.author.display_name} is not in a voice channel.")
-        return
-
+    voice_channel: VocalGuildChannel | None = None
+    member: User | Member = cast(Member, ctx.author)
+    voice_state: VoiceState | None = cast(VoiceState, member.voice)
+    
     try:
+        if voice_client is None:
+            if voice_state:
+                voice_channel = voice_state.channel
+                if voice_channel:
+                    voice_client = await voice_channel.connect()
+        else:
+            if voice_state:
+                voice_channel = voice_state.channel
+            
+            if voice_channel and voice_client.channel.name != voice_channel.name:
+                await voice_client.move_to(voice_channel)
+
+        if voice_client is None:
+            log.warning(f"Skipping playing {file_name} as {member.display_name} is not in a voice channel.")
+            return
+
         voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"))
-    except ClientException as ex:
+    
+    except Exception as ex:
         log.error(f"Failed to play sound '{file_name}' due to {ex}.")
 
 

@@ -11,7 +11,6 @@ from onehead.common import Bet, PlayerTransfer, Team
 class Game:
     def __init__(self) -> None:
         self._in_progress: bool = False
-        self._cancel_event: asyncio.Event = asyncio.Event()
 
         self._betting_window_open: bool = False
         self._bets: list[Bet] = []
@@ -23,7 +22,6 @@ class Game:
         self._in_progress = True
 
     def cancel(self) -> None:
-        self._cancel_event.set()
         self._in_progress: bool = False
 
     async def open_betting_window(self, ctx: Context) -> None:
@@ -31,17 +29,12 @@ class Game:
 
         await ctx.send("Bets are now open for `1` minute!")
 
-        try:
-            await asyncio.wait_for(self._cancel_event.wait(), timeout=30)
-        except asyncio.TimeoutError:
-            await ctx.send("`30` seconds remaining for bets!")
-            try:
-                await asyncio.wait_for(self._cancel_event.wait(), timeout=30)
-            except asyncio.TimeoutError:
-                pass
-        finally:
-            self._betting_window_open = False
-            await ctx.send("Bets are now closed!")
+        await asyncio.sleep(30)
+        await ctx.send("`30` seconds remaining for bets!")
+        await asyncio.sleep(30)
+        
+        self._betting_window_open = False
+        await ctx.send("Bets are now closed!")
 
     def betting_window_open(self) -> bool:
         return self._betting_window_open
@@ -65,17 +58,12 @@ class ClassicGame(Game):
         self._transfer_window_open = True
         await ctx.send("Player transfer window is now open for `1` minute!")
 
-        try:
-            await asyncio.wait_for(self._cancel_event.wait(), timeout=30)
-        except asyncio.TimeoutError:
-            await ctx.send("`30` seconds remaining for transfers!")
-            try:
-                await asyncio.wait_for(self._cancel_event.wait(), timeout=30)
-            except asyncio.TimeoutError:
-                pass
-        finally:
-            self._transfer_window_open = False
-            await ctx.send("Player transfer window has now closed!")
+        await asyncio.sleep(30)
+        await ctx.send("`30` seconds remaining for transfers!")
+        await asyncio.sleep(30)
+        
+        self._transfer_window_open = False
+        await ctx.send("Player transfer window has now closed!")
 
     def transfer_window_open(self) -> bool:
         return self._transfer_window_open
