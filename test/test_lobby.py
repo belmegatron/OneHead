@@ -70,7 +70,7 @@ class TestSignup:
         lobby.database.get.return_value = {"name": TEST_USER}
 
         await dpytest.message("!su")
-        assert dpytest.verify().message().content(f"is already signed up.").contains()
+        assert dpytest.verify().message().content("is already signed up.").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -104,7 +104,7 @@ class TestSignout:
     async def test_not_signed_in(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!so")
-        assert dpytest.verify().message().content(f"is not currently signed up.").contains()
+        assert dpytest.verify().message().content("is not currently signed up.").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -147,7 +147,7 @@ class TestReady:
     async def test_not_signed_in(self, bot: Bot) -> None:
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!ready")
-        assert dpytest.verify().message().content(f"needs to sign in first.").contains()
+        assert dpytest.verify().message().content("needs to sign in first.").contains()
 
     @pytest.mark.asyncio
     async def test_ready_check_not_in_progress(self, bot: Bot) -> None:
@@ -164,7 +164,7 @@ class TestReady:
         lobby._signups[TEST_USER] = datetime.now()
         lobby._ready_check_in_progress = True
         await dpytest.message("!ready")
-        assert dpytest.verify().message().content(f"is ready.").contains()
+        assert dpytest.verify().message().content("is ready.").contains()
 
 
 class TestReadyCheck:

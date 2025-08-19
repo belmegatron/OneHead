@@ -32,7 +32,7 @@ class Game:
         await asyncio.sleep(30)
         await ctx.send("`30` seconds remaining for bets!")
         await asyncio.sleep(30)
-        
+
         self._betting_window_open = False
         await ctx.send("Bets are now closed!")
 
@@ -61,7 +61,7 @@ class ClassicGame(Game):
         await asyncio.sleep(30)
         await ctx.send("`30` seconds remaining for transfers!")
         await asyncio.sleep(30)
-        
+
         self._transfer_window_open = False
         await ctx.send("Player transfer window has now closed!")
 

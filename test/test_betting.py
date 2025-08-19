@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import discord.ext.test as dpytest
 import pytest
-from conftest import add_ihl_role, create_fake_team, create_fake_player
+from conftest import add_ihl_role
 from discord.ext.commands import Bot, errors
 from discord.member import Member
 
@@ -61,7 +61,7 @@ class TestPlaceBet:
         store.current_game = ClassicGame()
         store.current_game._betting_window_open = True
         await dpytest.message(f"!bet {Side.RADIANT} all")
-        assert dpytest.verify().message().content(f"Unable to find").contains()
+        assert dpytest.verify().message().content("Unable to find").contains()
 
     @pytest.mark.asyncio
     async def test_available_balance_is_zero(self, bot: Bot) -> None:
@@ -138,7 +138,7 @@ class TestPlaceBet:
 
         stake: int = record.rbucks + 100
         await dpytest.message(f"!bet {Side.RADIANT} {stake:.0f}", 0, member)
-        assert dpytest.verify().message().content(f"Unable to place bet").contains()
+        assert dpytest.verify().message().content("Unable to place bet").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -155,7 +155,7 @@ class TestPlaceBet:
 
         with patch("onehead.betting.play_sound"):
             await dpytest.message(f"!bet {Side.RADIANT} all", 0, member)
-            assert dpytest.verify().message().content(f"has placed a bet").contains()
+            assert dpytest.verify().message().content("has placed a bet").contains()
 
 
 class TestCalculateOdds:

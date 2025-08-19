@@ -7,7 +7,7 @@ from conftest import TEST_USER, add_ihl_role, create_fake_player, create_fake_te
 from discord.ext.commands import Bot, errors
 
 from onehead.behaviour import Behaviour
-from onehead.common import Team, Player
+from onehead.common import Player, Team
 from onehead.game import ClassicGame
 from onehead.store import GameStore
 
@@ -37,7 +37,7 @@ class TestCommend:
         assert (
             dpytest.verify()
             .message()
-            .content(f"did not participate in the previous game and therefore cannot commend another player.")
+            .content("did not participate in the previous game and therefore cannot commend another player.")
             .contains()
         )
 
@@ -57,7 +57,7 @@ class TestCommend:
 
         await add_ihl_role(bot, "IHL")
         await dpytest.message(f"!commend {TEST_USER}")
-        assert dpytest.verify().message().content(f"you cannot commend yourself, nice try...").contains()
+        assert dpytest.verify().message().content("you cannot commend yourself, nice try...").contains()
 
     @pytest.mark.asyncio
     async def test_commendee_did_not_play(self, bot: Bot) -> None:
@@ -103,7 +103,7 @@ class TestCommend:
 
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!commend RBEEZAY")
-        assert dpytest.verify().message().content(f"has already been commended by").contains()
+        assert dpytest.verify().message().content("has already been commended by").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:
@@ -230,7 +230,7 @@ class TestReport:
         await dpytest.member_join(name="RBEEZAY")
         await add_ihl_role(bot, "IHL")
         await dpytest.message("!report RBEEZAY abandon")
-        assert dpytest.verify().message().content(f"has already been reported by").contains()
+        assert dpytest.verify().message().content("has already been reported by").contains()
 
     @pytest.mark.asyncio
     async def test_success(self, bot: Bot) -> None:

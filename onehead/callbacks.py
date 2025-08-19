@@ -66,11 +66,11 @@ def get_supported_bot_commands(bot: Bot) -> list[str]:
 
 async def allow_message(message: Message, bot: Bot) -> bool:
     split_message: list[str] = message.content.split()
-    
+
     # Appears to be true when an embedded image is sent.
     if len(split_message) == 0:
         return True
-    
+
     user_command: str = split_message[0]
 
     prefix: str = user_command[0]

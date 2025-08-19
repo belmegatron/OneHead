@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import cast
 
 from discord.channel import VocalGuildChannel
-from discord.errors import ClientException
 from discord.ext.commands import Cog, Command, Context
 from discord.member import Member, VoiceState
 from discord.player import FFmpegPCMAudio
@@ -41,26 +40,26 @@ class Player:
     duel_loss: int = 0
     duel_win_percentage: float | None = None
     duel_rating: int = 0
-    
+
     def __lt__(self, other) -> bool:
         return self.rating < other.rating
-    
+
     def __le__(self, other) -> bool:
         return self.rating <= other.rating
-    
+
     def __gt__(self, other) -> bool:
         return self.rating > other.rating
-    
+
     def __ge__(self, other) -> bool:
         return self.rating >= other.rating
-    
+
     def __eq__(self, other) -> bool:
         return self.id == other.id
-    
+
     def __ne__(self, other) -> bool:
         return self.id != other.id
- 
- 
+
+
 Team = tuple[Player, Player, Player, Player, Player]
 TeamCombination = tuple[Team, Team]
 
@@ -159,7 +158,7 @@ async def play_sound(ctx: Context, file_name: str) -> None:
     voice_channel: VocalGuildChannel | None = None
     member: User | Member = cast(Member, ctx.author)
     voice_state: VoiceState | None = cast(VoiceState, member.voice)
-    
+
     try:
         if voice_client is None:
             if voice_state:
@@ -169,7 +168,7 @@ async def play_sound(ctx: Context, file_name: str) -> None:
         else:
             if voice_state:
                 voice_channel = voice_state.channel
-            
+
             if voice_channel and voice_client.channel.name != voice_channel.name:
                 await voice_client.move_to(voice_channel)
 
@@ -178,7 +177,7 @@ async def play_sound(ctx: Context, file_name: str) -> None:
             return
 
         voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"))
-    
+
     except Exception as ex:
         log.error(f"Failed to play sound '{file_name}' due to {ex}.")
 

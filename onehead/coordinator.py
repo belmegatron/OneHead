@@ -1,4 +1,4 @@
-from asyncio import create_task, Task
+from asyncio import Task, create_task
 from logging import Logger
 from typing import cast
 
@@ -19,7 +19,7 @@ from onehead.common import (
     get_discord_member_from_name,
     get_player_names,
     play_sound,
-    voice_client_disconnect,
+    voice_client_disconnect
 )
 from onehead.game import Challenge, ClassicGame
 from onehead.interfaces.database import PlayerDatabase
@@ -28,7 +28,6 @@ from onehead.matchmaking import Matchmaking
 from onehead.scoreboard import ScoreBoard
 from onehead.store import GameStore
 from onehead.transfers import Transfers
-from onehead.version import __changelog__, __version__
 
 log: Logger = get_logger()
 
@@ -74,7 +73,7 @@ class GameCoordinator(Cog):
             start_task: Task = create_task(self.start_challenge(ctx, duel_id))
         else:
             start_task: Task = create_task(self.start_classic_game(ctx))
-        
+
         self.start_tasks.add(start_task)
         start_task.add_done_callback(self.start_tasks.discard)
 
@@ -89,7 +88,7 @@ class GameCoordinator(Cog):
             if len(self.start_tasks) > 0:
                 task: Task = self.start_tasks.pop()
                 task.cancel()
-            
+
             log.info(f"Game cancelled by {ctx.author.display_name}.")
             await ctx.send(f"Game cancelled by {ctx.author.mention}.")
             await self.betting.refund_all_bets(ctx)
@@ -133,7 +132,11 @@ class GameCoordinator(Cog):
             )
             return
 
-        winner = get_discord_member_from_name(ctx, result)
+        winner: Side | Member | None = get_discord_member_from_name(ctx, result)
+
+        if winner is None:
+            await ctx.send(f"Unable to find discord member for {result}")
+            return
 
         if winner not in (self.store.current_game.challenger, self.store.current_game.opponent):
             await ctx.send(

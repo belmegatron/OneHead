@@ -129,7 +129,7 @@ class TestResult:
 
         with pytest.raises(CommandInvokeError):
             await dpytest.message(f"!result {Side.RADIANT}")
-            
+
         assert (
             dpytest.verify()
             .message()
@@ -148,7 +148,7 @@ class TestResult:
 
         with pytest.raises(CommandInvokeError):
             await dpytest.message(f"!result {Side.RADIANT}")
-            
+
         assert (
             dpytest.verify()
             .message()
@@ -162,10 +162,10 @@ class TestResult:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.current_game = ClassicGame()
         store.current_game._in_progress = True
-        
+
         with pytest.raises(CommandInvokeError):
             await dpytest.message("!result derp")
-            
+
         assert dpytest.verify().message().content(f"Must be either {Side.RADIANT} or {Side.DIRE}.")
 
     @pytest.mark.asyncio

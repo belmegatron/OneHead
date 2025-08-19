@@ -70,15 +70,15 @@ class Matchmaking(Cog):
         :param all_unique_combinations: All 5v5 unique combinations.
         :return: List total rating difference for each unique combination.
         """
-        
+
         rating_differences: list[int] = []
-        
+
         for combination in unique_combinations:
             t1_rating: int = sum([player.adjusted_mmr for player in combination[0] if player.adjusted_mmr])
             t2_rating: int = sum([player.adjusted_mmr for player in combination[1] if player.adjusted_mmr])
 
             rating_differences.append(abs(t1_rating - t2_rating))
-        
+
         return rating_differences
 
     def _calculate_balance(self, ctx: Context) -> TeamCombination:
@@ -108,8 +108,10 @@ class Matchmaking(Cog):
         rating_differences: list[int] = self._calculate_rating_differences(unique_combinations)
 
         # Sort by ascending rating difference
-        sorted_unique_combinations: list[TeamCombination] = [combo for _, combo in sorted(zip(rating_differences, unique_combinations))]
-        
+        sorted_unique_combinations: list[TeamCombination] = [
+            combo for _, combo in sorted(zip(rating_differences, unique_combinations))
+        ]
+
         # Take the top 20 that are closest in terms of rating and pick one at random.
         balanced_teams: TeamCombination = random.choice(sorted_unique_combinations[:20])
 
@@ -127,7 +129,7 @@ class Matchmaking(Cog):
         if signup_count != 10:
             err: str = f"Only `{signup_count}` Signups, require `{10 - signup_count}` more."
             await ctx.send(err)
-        
+
         radiant: Team
         dire: Team
 
