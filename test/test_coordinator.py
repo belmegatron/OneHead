@@ -102,7 +102,6 @@ class TestStop:
         await dpytest.message("!stop")
         coordinator.betting.refund_all_bets.assert_called()
         coordinator.transfers.refund_transfers.assert_called()
-        coordinator.channels.move_back_to_lobby.assert_called()
         coordinator.reset.assert_called()
 
 

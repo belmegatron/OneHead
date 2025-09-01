@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.57.0] - 2025-09-01
+
+### Added
+- Added `!clear` command to permit an admin to remove everyone from the current signups.
+
+### Changed
+- Moving discord members from channels is now handled in a separate async task. This should hopefully result in a snappier start and end to a game.
+
 ## [1.56.2] - 2025-08-19
 
 ### Changed
