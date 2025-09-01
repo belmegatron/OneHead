@@ -3,6 +3,7 @@ from logging import Logger
 from typing import cast
 
 from discord.ext.commands import BucketType, Cog, Command, Context, command, has_role, max_concurrency
+from discord.guild import Guild
 from discord.member import Member
 from structlog import get_logger
 
@@ -21,7 +22,7 @@ from onehead.common import (
     play_sound,
     voice_client_disconnect
 )
-from onehead.game import Challenge, ClassicGame
+from onehead.game import Challenge, ClassicGame, Game
 from onehead.interfaces.database import PlayerDatabase
 from onehead.lobby import Lobby
 from onehead.matchmaking import Matchmaking
@@ -89,15 +90,15 @@ class GameCoordinator(Cog):
                 task: Task = self.start_tasks.pop()
                 task.cancel()
 
-            log.info(f"Game cancelled by {ctx.author.display_name}.")
-            await ctx.send(f"Game cancelled by {ctx.author.mention}.")
             await self.betting.refund_all_bets(ctx)
 
             if isinstance(self.store.current_game, ClassicGame):
                 await self.transfers.refund_transfers(ctx)
-                await self.channels.move_back_to_lobby(ctx)
 
             await self.reset(ctx, game_cancelled=True)
+
+            await ctx.send(f"Game cancelled by {ctx.author.mention}.")
+            log.info(f"Game cancelled by {ctx.author.display_name}.")
         else:
             await ctx.send("No currently active game.")
 
@@ -219,7 +220,7 @@ class GameCoordinator(Cog):
                     f"Expected valid teams: {self.store.current_game.radiant}, {self.store.current_game.dire}"
                 )
 
-            await self.channels.move_discord_channels(ctx)
+            create_task(self.channels.move_discord_channels(ctx, self.get_discord_members(ctx)))
 
     async def start_challenge(self, ctx: Context, duel_id: str) -> None:
         try:
@@ -412,13 +413,39 @@ class GameCoordinator(Cog):
             # TODO: Make a big song and dance about the end of an IHL season, present winners, go crazy.
             # TODO: Wipe scoreboard.
 
+    def get_discord_members(self, ctx: Context) -> tuple[list[Member], list[Member]]:
+        current_game: Game | None = self.store.current_game
+
+        guild: Guild | None = ctx.guild
+        if guild is None:
+            raise OneHeadException("No Guild associated with Discord Context")
+
+        if isinstance(current_game, ClassicGame) is False:
+            raise OneHeadException("Attempted to retrieve radiant/dire members but current game is not a ClassicGame")
+
+        current_game = cast(ClassicGame, current_game)
+
+        if current_game is None or current_game.radiant is None or current_game.dire is None:
+            raise OneHeadException("Unable to get discord members due to invalid game state.")
+
+        t1_names: tuple[str, ...]
+        t2_names: tuple[str, ...]
+
+        t1_names, t2_names = get_player_names(current_game.radiant, current_game.dire)
+
+        t1_discord_members: list[Member] = [x for x in guild.members if x.display_name in t1_names]
+        t2_discord_members: list[Member] = [x for x in guild.members if x.display_name in t2_names]
+
+        return t1_discord_members, t2_discord_members
+
+
     async def reset(self, ctx: Context, game_cancelled=False) -> None:
         if self.store.current_game:
             if isinstance(self.store.current_game, Challenge):
                 self.challenge_mode.challenges.remove(self.store.current_game)
             elif isinstance(self.store.current_game, ClassicGame):
                 self.lobby.clear_signups()
-                await self.channels.move_back_to_lobby(ctx)
+                create_task(self.channels.move_back_to_lobby(ctx, self.get_discord_members(ctx)))
 
         if game_cancelled:
             self.store.previous_game = None

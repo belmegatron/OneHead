@@ -69,6 +69,12 @@ class Lobby(Cog):
             return True
 
         return False
+    
+    @has_role(Roles.ADMIN)
+    @command()
+    async def clear(self, ctx: Context) -> None:
+        self._signups.clear()
+        await ctx.send("Cleared signups.")
 
     async def select_players(self, ctx: Context) -> None:
         """
