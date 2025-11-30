@@ -1,17 +1,14 @@
-FROM python:3.12.7-bookworm
+FROM python:3.12-slim-trixie
 
 RUN apt update && apt upgrade -y && apt install ffmpeg -y
 
+RUN apt install -y --no-install-recommends curl ca-certificates
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+RUN sh /uv-installer.sh && rm /uv-installer.sh
+ENV PATH="/root/.local/bin/:$PATH"
+
 WORKDIR /app
-
 COPY onehead onehead/
-COPY pyproject.toml .
-COPY run.py .
+COPY uv.lock pyproject.toml run.py .
 
-RUN pip install virtualenv
-ENV VIRTUAL_ENV=/opt/venv
-RUN python -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-RUN pip install .
-
-ENTRYPOINT python run.py
+ENTRYPOINT uv run run.py

@@ -178,7 +178,7 @@ class Betting(Cog):
         for name, results in bet_results.items():
             for result in results:
                 won_or_lost: str = "won" if result.win else "lost"
-                line: str = f"{name} {won_or_lost} {abs(result.winnings)} RBUCKS!"
+                line: str = f"{name} {won_or_lost} {abs(result.winnings):.0f} RBUCKS!"
                 log.info(line)
                 contents += line
                 contents += "\n"

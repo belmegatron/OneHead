@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import cast
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from discord.ext.commands import Bot
 import pytest
+from discord.ext.commands import Bot
 
 from onehead.common import Player
 from onehead.matchmaking import Matchmaking
@@ -14,23 +14,24 @@ class TestBalance:
     async def test_success(self, bot: Bot) -> None:
         mm: Matchmaking = cast(Matchmaking, bot.get_cog("Matchmaking"))
         now: datetime = datetime.now()
-        
+
         mm.lobby = MagicMock()
         signups: dict[str, datetime] = {
-                    "ERIC": now,
-                    "GEE": now,
-                    "JEFFERIES": now,
-                    "JORDAN": now,
-                    "EDD": now,
-                    "LAURENCE": now,
-                    "TOCCO": now,
-                    "JAMES": now,
-                    "LUKE": now,
-                    "ZEE": now,
-                }
-        
+            "ERIC": now,
+            "GEE": now,
+            "JEFFERIES": now,
+            "JORDAN": now,
+            "EDD": now,
+            "LAURENCE": now,
+            "TOCCO": now,
+            "JAMES": now,
+            "LUKE": now,
+            "ZEE": now,
+        }
+
         mm.lobby.get_signups.return_value = list(signups.keys())
-        players: tuple[Player, ...] = (Player(
+        players: tuple[Player, ...] = (
+            Player(
                 id=262570465212497920,
                 name="HARRY",
                 mmr=4750,
@@ -199,12 +200,10 @@ class TestBalance:
                 pos=None,
                 adjusted_mmr=None,
                 win_percentage=None,
-            )
+            ),
         )
-        
+
         with patch("onehead.matchmaking.Matchmaking._get_player_records") as mock_get_player_records:
             ctx = AsyncMock()
             mock_get_player_records.return_value = players
             await mm.balance(ctx)
-        
-        

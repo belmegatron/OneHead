@@ -102,7 +102,6 @@ class TestStop:
         await dpytest.message("!stop")
         coordinator.betting.refund_all_bets.assert_called()
         coordinator.transfers.refund_transfers.assert_called()
-        coordinator.channels.move_back_to_lobby.assert_called()
         coordinator.reset.assert_called()
 
 
@@ -127,7 +126,9 @@ class TestResult:
         store.current_game._transfer_window_open = True
         store.current_game._betting_window_open = False
 
-        await dpytest.message(f"!result {Side.RADIANT}")
+        with pytest.raises(CommandInvokeError):
+            await dpytest.message(f"!result {Side.RADIANT}")
+
         assert (
             dpytest.verify()
             .message()
@@ -144,7 +145,9 @@ class TestResult:
         store.current_game._transfer_window_open = False
         store.current_game._betting_window_open = True
 
-        await dpytest.message(f"!result {Side.RADIANT}")
+        with pytest.raises(CommandInvokeError):
+            await dpytest.message(f"!result {Side.RADIANT}")
+
         assert (
             dpytest.verify()
             .message()
@@ -158,7 +161,10 @@ class TestResult:
         store: GameStore = cast(GameStore, bot.get_cog("GameStore"))
         store.current_game = ClassicGame()
         store.current_game._in_progress = True
-        await dpytest.message("!result derp")
+
+        with pytest.raises(CommandInvokeError):
+            await dpytest.message("!result derp")
+
         assert dpytest.verify().message().content(f"Must be either {Side.RADIANT} or {Side.DIRE}.")
 
     @pytest.mark.asyncio
@@ -365,14 +371,12 @@ class TestResult:
 
         coordinator: GameCoordinator = cast(GameCoordinator, bot.get_cog("GameCoordinator"))
         coordinator.scoreboard.scoreboard = AsyncMock()
-        coordinator.channels.move_back_to_lobby = AsyncMock()
         coordinator.reset = AsyncMock()
         coordinator.database.update = Mock()
 
         with patch("onehead.coordinator.play_sound"):
             await dpytest.message(f"!result {Side.RADIANT}")
 
-        coordinator.channels.move_back_to_lobby.assert_called_once()
         coordinator.reset.assert_called_once()
 
 

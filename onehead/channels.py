@@ -1,5 +1,4 @@
 from logging import Logger
-from typing import cast
 
 from discord import VoiceChannel
 from discord.errors import HTTPException
@@ -8,9 +7,8 @@ from discord.guild import Guild
 from discord.member import Member
 from structlog import get_logger
 
-from onehead.common import OneHeadException, get_player_names
+from onehead.common import OneHeadException
 from onehead.config import Config, DiscordChannelConfig
-from onehead.game import ClassicGame, Game
 from onehead.store import GameStore
 
 log: Logger = get_logger()
@@ -23,31 +21,6 @@ class Channels(Cog):
         self.channel_names: list[str] = [f"{channel_config_settings.match} #{x}" for x in (1, 2)]
         self.lobby_name: str = channel_config_settings.lobby
         self.ihl_discord_channels: list[VoiceChannel]
-
-    def get_discord_members(self, ctx: Context) -> tuple[list[Member], list[Member]]:
-        current_game: Game | None = self.store.current_game
-
-        guild: Guild | None = ctx.guild
-        if guild is None:
-            raise OneHeadException("No Guild associated with Discord Context")
-
-        if isinstance(current_game, ClassicGame) is False:
-            raise OneHeadException("Attempted to retrieve radiant/dire members but current game is not a ClassicGame")
-
-        current_game = cast(ClassicGame, current_game)
-
-        if current_game is None or current_game.radiant is None or current_game.dire is None:
-            raise OneHeadException("Unable to get discord members due to invalid game state.")
-
-        t1_names: tuple[str, ...]
-        t2_names: tuple[str, ...]
-
-        t1_names, t2_names = get_player_names(current_game.radiant, current_game.dire)
-
-        t1_discord_members: list[Member] = [x for x in guild.members if x.display_name in t1_names]
-        t2_discord_members: list[Member] = [x for x in guild.members if x.display_name in t2_names]
-
-        return t1_discord_members, t2_discord_members
 
     async def create_discord_channels(self, ctx: Context) -> None:
         """
@@ -68,7 +41,7 @@ class Channels(Cog):
 
         self.ihl_discord_channels = [x for x in guild.voice_channels if x.name in self.channel_names]
 
-    async def move_back_to_lobby(self, ctx: Context) -> None:
+    async def move_back_to_lobby(self, ctx: Context, members: tuple[list[Member], list[Member]]) -> None:
         """
         Move players back from IHL Team Channels to a communal channel.
 
@@ -84,19 +57,14 @@ class Channels(Cog):
 
         lobby: VoiceChannel = selected_channels[0]
 
-        t1_discord_members: list[Member]
-        t2_discord_members: list[Member]
-
-        t1_discord_members, t2_discord_members = self.get_discord_members(ctx)
-
-        for team in (t1_discord_members, t2_discord_members):
+        for team in members:
             for player in team:
                 try:
                     await player.move_to(lobby)
                 except HTTPException as ex:
                     log.error(f"Failed to move {player.display_name} to {lobby.name} due to {ex}")
 
-    async def move_discord_channels(self, ctx: Context) -> None:
+    async def move_discord_channels(self, ctx: Context, members: tuple[list[Member], list[Member]]) -> None:
         """
         Move players to IHL Team Channels.
 
@@ -111,7 +79,7 @@ class Channels(Cog):
         t1_discord_members: list[Member]
         t2_discord_members: list[Member]
 
-        t1_discord_members, t2_discord_members = self.get_discord_members(ctx)
+        t1_discord_members, t2_discord_members = members
 
         t1_channel: VoiceChannel
         t2_channel: VoiceChannel

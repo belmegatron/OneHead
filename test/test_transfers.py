@@ -54,7 +54,7 @@ class TestShuffle:
         assert (
             dpytest.verify()
             .message()
-            .content(f"is unable to shuffle as they are not participating in the current game.")
+            .content("is unable to shuffle as they are not participating in the current game.")
             .contains()
         )
 

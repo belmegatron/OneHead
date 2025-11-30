@@ -1,6 +1,6 @@
 [project]
 name = "onehead"
-version = "1.56.0"
+version = "1.57.0"
 description = "A Dota 2 in-house league Discord bot."
 license = { text = "MIT" }
 readme = "README.md"
@@ -10,22 +10,14 @@ keywords = ["dota", "discord", "inhouse"]
 dependencies = [
     "aiohttp",
     "dacite",
-    "discord.py>=2.1.0",
+    "discord.py>=2.6.0",
     "pynacl",
     "pytz",
     "structlog",
     "tabulate",
     "types-tabulate",
     "tinydb",
-    "toml"
-]
-
-[project.optional-dependencies]
-dev = [
-    "black"
-]
-test = [
-    "dpytest"
+    "toml",
 ]
 
 [build-system]
@@ -43,3 +35,12 @@ line-length = 120
 multi_line_output = 3
 line_length = 120
 include_trailing_comma = false
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "dpytest>=0.7.0",
+    "isort>=6.0.1",
+    "pytest>=8.4.1",
+    "ruff>=0.12.9",
+]

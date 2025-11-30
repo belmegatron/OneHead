@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.57.0] - 2025-09-01
+
+### Added
+- Added `!clear` command to permit an admin to remove everyone from the current signups.
+
+### Changed
+- Moving discord members from channels is now handled in a separate async task. This should hopefully result in a snappier start and end to a game.
+
+## [1.56.2] - 2025-08-19
+
+### Changed
+- Bumped discord.py version to fix WebSocket 4006 error.
+
+## [1.56.1] - 2024-11-24
+
+### Changed
+- Fixed bug where calling a command that invoked the `play_sound` function caused an `AttributeError` to be thrown.
+- Fixed bug where if an admin executed the  `!stop` command while the game was during the transfer/betting phase, the bot would not reset to a clean state.
+- Fixed bug where bets were not being formatted as integers when displaying bet results.
+
 ## [1.56.0] - 2024-10-08
 
 ### Added

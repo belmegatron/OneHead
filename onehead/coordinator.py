@@ -1,8 +1,9 @@
-from asyncio import create_task
+from asyncio import Task, create_task
 from logging import Logger
 from typing import cast
 
 from discord.ext.commands import BucketType, Cog, Command, Context, command, has_role, max_concurrency
+from discord.guild import Guild
 from discord.member import Member
 from structlog import get_logger
 
@@ -19,16 +20,15 @@ from onehead.common import (
     get_discord_member_from_name,
     get_player_names,
     play_sound,
-    voice_client_disconnect,
+    voice_client_disconnect
 )
-from onehead.game import Challenge, ClassicGame
+from onehead.game import Challenge, ClassicGame, Game
 from onehead.interfaces.database import PlayerDatabase
 from onehead.lobby import Lobby
 from onehead.matchmaking import Matchmaking
 from onehead.scoreboard import ScoreBoard
 from onehead.store import GameStore
 from onehead.transfers import Transfers
-from onehead.version import __changelog__, __version__
 
 log: Logger = get_logger()
 
@@ -57,6 +57,7 @@ class GameCoordinator(Cog):
         self.lobby: Lobby = lobby
         self.matchmaking: Matchmaking = matchmaking
         self.scoreboard: ScoreBoard = scoreboard
+        self.start_tasks: set[Task] = set()
 
     @has_role(Roles.ADMIN)
     @command()
@@ -70,9 +71,12 @@ class GameCoordinator(Cog):
             return
 
         if duel_id:
-            await self.start_challenge(ctx, duel_id)
+            start_task: Task = create_task(self.start_challenge(ctx, duel_id))
         else:
-            await self.start_classic_game(ctx)
+            start_task: Task = create_task(self.start_classic_game(ctx))
+
+        self.start_tasks.add(start_task)
+        start_task.add_done_callback(self.start_tasks.discard)
 
     @has_role(Roles.ADMIN)
     @command()
@@ -82,16 +86,19 @@ class GameCoordinator(Cog):
         Cancels an IHL game.
         """
         if self.store.current_game and self.store.current_game.in_progress():
-            self.store.current_game.cancel()
-            log.info(f"Game was cancelled by {ctx.author.display_name}.")
-            await ctx.send("Game cancelled.")
+            if len(self.start_tasks) > 0:
+                task: Task = self.start_tasks.pop()
+                task.cancel()
+
             await self.betting.refund_all_bets(ctx)
 
             if isinstance(self.store.current_game, ClassicGame):
                 await self.transfers.refund_transfers(ctx)
-                await self.channels.move_back_to_lobby(ctx)
 
             await self.reset(ctx, game_cancelled=True)
+
+            await ctx.send(f"Game cancelled by {ctx.author.mention}.")
+            log.info(f"Game cancelled by {ctx.author.display_name}.")
         else:
             await ctx.send("No currently active game.")
 
@@ -126,7 +133,11 @@ class GameCoordinator(Cog):
             )
             return
 
-        winner = get_discord_member_from_name(ctx, result)
+        winner: Side | Member | None = get_discord_member_from_name(ctx, result)
+
+        if winner is None:
+            await ctx.send(f"Unable to find discord member for {result}")
+            return
 
         if winner not in (self.store.current_game.challenger, self.store.current_game.opponent):
             await ctx.send(
@@ -209,7 +220,7 @@ class GameCoordinator(Cog):
                     f"Expected valid teams: {self.store.current_game.radiant}, {self.store.current_game.dire}"
                 )
 
-            await self.channels.move_discord_channels(ctx)
+            create_task(self.channels.move_discord_channels(ctx, self.get_discord_members(ctx)))
 
     async def start_challenge(self, ctx: Context, duel_id: str) -> None:
         try:
@@ -274,7 +285,8 @@ class GameCoordinator(Cog):
         await self.setup_team_channels(ctx)
         await ctx.send("Create Dota 2 Lobby and join with the above teams.")
 
-        if self.store.current_game.in_progress():
+        # If an admin stops the game, the current_game is set to None, so we need to check it exists first before calling methods on it.
+        if self.store.current_game and self.store.current_game.in_progress():
             await ctx.send("GLHF")
 
             radiant: tuple[str, ...]
@@ -354,23 +366,21 @@ class GameCoordinator(Cog):
             await ctx.send(
                 "Cannot enter result as the transfer window for the game is currently open. Use the `!stop` command if you wish to abort the game."
             )
-            return
+            raise OneHeadException("Failed to enter result due to transfer window being open.")
 
         if self.store.current_game.betting_window_open():
             await ctx.send(
                 "Cannot enter result as the betting window for the game is currently open. Use the `!stop` command if you wish to abort the game."
             )
-            return
+            raise OneHeadException("Failed to enter result due to betting window being open.")
 
         result = result.lower()
 
         if result not in Side:
             await ctx.send(f"Must be either {Side.RADIANT} or {Side.DIRE}.")
-            return
+            raise OneHeadException("Failed to handle classic game result due to incorrect side entered")
 
         result = cast(Side, result)
-
-        await self.channels.move_back_to_lobby(ctx)
 
         log.info(f"{ctx.author.display_name} entered a result of {result}.")
 
@@ -403,9 +413,39 @@ class GameCoordinator(Cog):
             # TODO: Make a big song and dance about the end of an IHL season, present winners, go crazy.
             # TODO: Wipe scoreboard.
 
+    def get_discord_members(self, ctx: Context) -> tuple[list[Member], list[Member]]:
+        current_game: Game | None = self.store.current_game
+
+        guild: Guild | None = ctx.guild
+        if guild is None:
+            raise OneHeadException("No Guild associated with Discord Context")
+
+        if isinstance(current_game, ClassicGame) is False:
+            raise OneHeadException("Attempted to retrieve radiant/dire members but current game is not a ClassicGame")
+
+        current_game = cast(ClassicGame, current_game)
+
+        if current_game is None or current_game.radiant is None or current_game.dire is None:
+            raise OneHeadException("Unable to get discord members due to invalid game state.")
+
+        t1_names: tuple[str, ...]
+        t2_names: tuple[str, ...]
+
+        t1_names, t2_names = get_player_names(current_game.radiant, current_game.dire)
+
+        t1_discord_members: list[Member] = [x for x in guild.members if x.display_name in t1_names]
+        t2_discord_members: list[Member] = [x for x in guild.members if x.display_name in t2_names]
+
+        return t1_discord_members, t2_discord_members
+
+
     async def reset(self, ctx: Context, game_cancelled=False) -> None:
-        if self.store.current_game and isinstance(self.store.current_game, Challenge):
-            self.challenge_mode.challenges.remove(self.store.current_game)
+        if self.store.current_game:
+            if isinstance(self.store.current_game, Challenge):
+                self.challenge_mode.challenges.remove(self.store.current_game)
+            elif isinstance(self.store.current_game, ClassicGame):
+                self.lobby.clear_signups()
+                create_task(self.channels.move_back_to_lobby(ctx, self.get_discord_members(ctx)))
 
         if game_cancelled:
             self.store.previous_game = None
@@ -413,8 +453,6 @@ class GameCoordinator(Cog):
             self.store.previous_game = self.store.current_game
 
         self.store.current_game = None
-        if isinstance(self.store.previous_game, ClassicGame):
-            self.lobby.clear_signups()
 
         create_task(voice_client_disconnect(ctx))
 

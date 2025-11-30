@@ -20,7 +20,7 @@ class TestRegister:
         await add_ihl_role(bot, "IHL")
 
         await dpytest.message("!register derp")
-        assert dpytest.verify().message().content(f"the command you are looking for is").contains()
+        assert dpytest.verify().message().content("the command you are looking for is").contains()
 
     @pytest.mark.asyncio
     async def test_mmr_less_than_min(self, bot: Bot) -> None:

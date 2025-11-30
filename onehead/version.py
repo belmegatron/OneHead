@@ -1,9 +1,9 @@
 from pathlib import Path
 from typing import Any
+
 import toml
 
 from onehead.common import ROOT_DIR
-
 
 target: Path = Path(ROOT_DIR, "pyproject.toml")
 with open(target, "r") as f:
