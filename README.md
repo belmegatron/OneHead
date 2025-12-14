@@ -1,5 +1,7 @@
 # **OneHead**
 
+[![codecov](https://codecov.io/gh/belmegatron/onehead/branch/develop/graph/badge.svg)](https://codecov.io/gh/belmegatron/onehead)
+
 OneHead is a Discord Bot for hosting 5vs5 competitive DOTA 2 games in an In-House League (IHL).
 
 ## Features
