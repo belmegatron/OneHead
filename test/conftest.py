@@ -1,5 +1,6 @@
 import random
 from collections.abc import AsyncGenerator, Sequence
+from pathlib import Path
 
 import discord.ext.test as dpytest
 import pytest_asyncio
@@ -9,7 +10,7 @@ from discord.member import Member
 from discord.role import Role
 
 from onehead.common import Player, Team
-from onehead.config import load_config
+from onehead.config import Config, TinyDBConfig, DiscordChannelConfig, DiscordConfig
 from onehead.core import bot_builder
 
 TEST_USER: str = "TestUser0_0_nick"
@@ -17,7 +18,8 @@ TEST_USER: str = "TestUser0_0_nick"
 
 @pytest_asyncio.fixture
 async def bot() -> Bot:
-    bot: Bot = await bot_builder(load_config())
+    config: Config = Config(tinydb=TinyDBConfig(Path(__file__).parent / "test_db.json"), discord=DiscordConfig("token", DiscordChannelConfig("lobby", "match")))
+    bot: Bot = await bot_builder(config)
     await bot._async_setup_hook()
     dpytest.configure(bot)
 
