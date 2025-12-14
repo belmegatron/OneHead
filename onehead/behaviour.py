@@ -7,7 +7,13 @@ from discord.member import Member
 from discord.user import User
 from structlog import get_logger
 
-from onehead.common import OneHeadException, Player, Roles, get_discord_member_from_name, get_player_names
+from onehead.common import (
+    OneHeadException,
+    Player,
+    Roles,
+    get_discord_member_from_name,
+    get_player_names,
+)
 from onehead.game import ClassicGame, Game
 from onehead.interfaces.database import PlayerDatabase
 from onehead.store import GameStore
@@ -84,7 +90,10 @@ class Behaviour(Cog):
                 return
 
             current_behaviour_score: int = commendee_record.behaviour
-            new_score: int = min(current_behaviour_score + self.COMMEND_MODIFIER, self.MAX_BEHAVIOUR_SCORE)
+            new_score: int = min(
+                current_behaviour_score + self.COMMEND_MODIFIER,
+                self.MAX_BEHAVIOUR_SCORE,
+            )
 
             commendee_record.behaviour = new_score
             commendee_record.commends += 1

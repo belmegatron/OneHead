@@ -14,7 +14,7 @@ from onehead.common import (
     get_command_from_cog,
     get_discord_member_from_name,
     get_player_names,
-    play_sound
+    play_sound,
 )
 from onehead.game import ClassicGame
 from onehead.interfaces.database import PlayerDatabase
@@ -28,7 +28,13 @@ log: Logger = get_logger()
 class Transfers(Cog):
     SHUFFLE_COST: int = 500
 
-    def __init__(self, store: GameStore, database: PlayerDatabase, lobby: Lobby, matchmaking: Matchmaking) -> None:
+    def __init__(
+        self,
+        store: GameStore,
+        database: PlayerDatabase,
+        lobby: Lobby,
+        matchmaking: Matchmaking,
+    ) -> None:
         self.store: GameStore = store
         self.database: PlayerDatabase = database
         self.lobby: Lobby = lobby

@@ -86,9 +86,12 @@ class Channels(Cog):
 
         t1_channel, t2_channel = self.ihl_discord_channels
 
-        for team, channel in (t1_discord_members, t1_channel), (
-            t2_discord_members,
-            t2_channel,
+        for team, channel in (
+            (t1_discord_members, t1_channel),
+            (
+                t2_discord_members,
+                t2_channel,
+            ),
         ):
             for member in team:
                 try:

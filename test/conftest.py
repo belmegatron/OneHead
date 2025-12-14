@@ -1,5 +1,5 @@
 import random
-from typing import AsyncGenerator, Sequence
+from collections.abc import AsyncGenerator, Sequence
 
 import discord.ext.test as dpytest
 import pytest_asyncio
@@ -58,4 +58,10 @@ def create_fake_player() -> Player:
 
 
 def create_fake_team() -> Team:
-    return create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player(), create_fake_player()
+    return (
+        create_fake_player(),
+        create_fake_player(),
+        create_fake_player(),
+        create_fake_player(),
+        create_fake_player(),
+    )

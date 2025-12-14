@@ -3,14 +3,29 @@ from datetime import datetime, timedelta
 from logging import Logger
 from typing import Any
 
-from discord.ext.commands import BucketType, Cog, Command, Context, command, cooldown, has_role, max_concurrency
+from discord.ext.commands import (
+    BucketType,
+    Cog,
+    Command,
+    Context,
+    command,
+    cooldown,
+    has_role,
+    max_concurrency,
+)
 from discord.guild import Guild
 from discord.member import Member
 from discord.role import Role
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, Player, Roles, get_discord_member_from_name, play_sound
+from onehead.common import (
+    OneHeadException,
+    Player,
+    Roles,
+    get_discord_member_from_name,
+    play_sound,
+)
 from onehead.game import Game
 from onehead.interfaces.database import PlayerDatabase
 from onehead.store import GameStore
@@ -69,7 +84,7 @@ class Lobby(Cog):
             return True
 
         return False
-    
+
     @has_role(Roles.ADMIN)
     @command()
     async def clear(self, ctx: Context) -> None:

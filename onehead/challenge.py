@@ -19,7 +19,7 @@ from onehead.common import (
     get_discord_member_from_id,
     get_discord_member_from_name,
     play_sound,
-    voice_client_disconnect
+    voice_client_disconnect,
 )
 from onehead.game import Challenge
 from onehead.interfaces.database import PlayerDatabase
@@ -28,7 +28,6 @@ log: Logger = get_logger()
 
 
 class ChallengeMode(Cog):
-
     MAX_RATING_DIFFERENCE: int = 4000
 
     counter = itertools.count()

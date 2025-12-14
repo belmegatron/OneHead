@@ -179,7 +179,7 @@ async def play_sound(ctx: Context, file_name: str) -> None:
         voice_client.play(FFmpegPCMAudio(f"onehead/sounds/{file_name}"))
 
     except Exception as ex:
-        log.error(f"Failed to play sound '{file_name}' due to {ex}.")      
+        log.error(f"Failed to play sound '{file_name}' due to {ex}.")
 
 
 async def voice_client_disconnect(ctx: Context) -> None:

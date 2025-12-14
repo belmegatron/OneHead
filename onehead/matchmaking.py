@@ -8,10 +8,17 @@ from discord.member import Member
 from structlog import get_logger
 from tabulate import tabulate
 
-from onehead.common import OneHeadException, Player, Roles, Team, TeamCombination, get_discord_member_from_name
+from onehead.common import (
+    OneHeadException,
+    Player,
+    Roles,
+    Team,
+    TeamCombination,
+    get_discord_member_from_name,
+)
 from onehead.interfaces.database import PlayerDatabase
 from onehead.lobby import Lobby
-from onehead.statistics import Statistics
+from onehead.rating import Rating
 
 log: Logger = get_logger()
 
@@ -63,7 +70,9 @@ class Matchmaking(Cog):
         return unique_combinations
 
     @staticmethod
-    def _calculate_rating_differences(unique_combinations: list[TeamCombination]) -> list[int]:
+    def _calculate_rating_differences(
+        unique_combinations: list[TeamCombination],
+    ) -> list[int]:
         """
         Calculates the net rating difference for each unique combination of teams based on their adjusted mmr.
 
@@ -93,8 +102,8 @@ class Matchmaking(Cog):
         if profile_count != 10:
             raise OneHeadException(f"Only `{profile_count}` profiles could be found in database.")
 
-        Statistics.calculate_rating(profiles)
-        Statistics.calculate_adjusted_mmr(profiles)
+        Rating.calculate_rating(profiles)
+        Rating.calculate_adjusted_mmr(profiles)
 
         team_combinations: list[Team] = list(itertools.combinations(profiles, 5))
 
@@ -109,7 +118,7 @@ class Matchmaking(Cog):
 
         # Sort by ascending rating difference
         sorted_unique_combinations: list[TeamCombination] = [
-            combo for _, combo in sorted(zip(rating_differences, unique_combinations))
+            combo for _, combo in sorted(zip(rating_differences, unique_combinations, strict=False))
         ]
 
         # Take the top 20 that are closest in terms of rating and pick one at random.
@@ -151,8 +160,8 @@ class Matchmaking(Cog):
         Shows the internal MMR used for balancing teams.
         """
         scoreboard: list[Player] = self.database.get_all()
-        Statistics.calculate_rating(scoreboard)
-        Statistics.calculate_adjusted_mmr(scoreboard)
+        Rating.calculate_rating(scoreboard)
+        Rating.calculate_adjusted_mmr(scoreboard)
 
         ratings: list[dict[str, Any]] = [
             {

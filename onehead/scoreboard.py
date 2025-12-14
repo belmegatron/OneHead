@@ -5,7 +5,7 @@ from tabulate import tabulate
 
 from onehead.common import OneHeadException, Player, Roles
 from onehead.interfaces.database import PlayerDatabase
-from onehead.statistics import Statistics
+from onehead.rating import Rating
 
 
 class ScoreBoard(Cog):
@@ -18,7 +18,7 @@ class ScoreBoard(Cog):
 
     def _chunk_scoreboard(self, scoreboard: str) -> tuple[str, ...]:
         if len(scoreboard) < self.DISCORD_MAX_MESSAGE_LENGTH:
-            return tuple([scoreboard])
+            return (scoreboard,)
 
         offset: int = 0
         chunks: list[str] = []
@@ -121,8 +121,8 @@ class ScoreBoard(Cog):
         if not records:
             raise OneHeadException("No users found in database.")
 
-        Statistics.calculate_win_percentage(records)
-        Statistics.calculate_rating(records)
+        Rating.calculate_win_percentage(records)
+        Rating.calculate_rating(records)
 
         scoreboard_sorted_rows: list[Player] = self._calculate_positions(records)
         scoreboard_sorted_rows_and_columns: list[dict[str, Any]] = self._sort_scoreboard_key_order(
@@ -134,7 +134,9 @@ class ScoreBoard(Cog):
         return sorted_scoreboard
 
     @staticmethod
-    def _sort_duel_scoreboard_key_order(scoreboard: list[Player]) -> list[dict[str, Any]]:
+    def _sort_duel_scoreboard_key_order(
+        scoreboard: list[Player],
+    ) -> list[dict[str, Any]]:
         sorted_records: list[dict] = []
 
         for player in scoreboard:
@@ -178,8 +180,8 @@ class ScoreBoard(Cog):
         if not records:
             raise OneHeadException("No users found in database.")
 
-        Statistics.calculate_duel_win_percentage(records)
-        Statistics.calculate_duel_rating(records)
+        Rating.calculate_duel_win_percentage(records)
+        Rating.calculate_duel_rating(records)
 
         scoreboard_sorted_rows: list[Player] = self._calculate_duel_positions(records)
         scoreboard_sorted_rows_and_columns: list[dict[str, Any]] = self._sort_duel_scoreboard_key_order(

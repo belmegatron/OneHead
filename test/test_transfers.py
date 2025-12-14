@@ -107,7 +107,10 @@ class TestShuffle:
         transfers.database.update = Mock()
 
         transfers.matchmaking.balance = AsyncMock()
-        transfers.matchmaking.balance.return_value = create_fake_team(), create_fake_team()
+        transfers.matchmaking.balance.return_value = (
+            create_fake_team(),
+            create_fake_team(),
+        )
 
         with patch("onehead.transfers.play_sound"):
             await dpytest.message("!shuffle")

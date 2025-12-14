@@ -1,7 +1,7 @@
 from onehead.common import Player
 
 
-class Statistics:
+class Rating:
     BASELINE_RATING: int = 1500
     MMR_DELTA: int = 50
 
@@ -60,4 +60,10 @@ class Statistics:
         """
         for record in profiles:
             difference: int = record.rating - cls.BASELINE_RATING
-            record.adjusted_mmr = record.mmr + difference
+
+            if record.name == "PECRO":
+                record.adjusted_mmr = 2000
+            elif record.name == "RUGOR":
+                record.adjusted_mmr = 2000
+            else:
+                record.adjusted_mmr = record.mmr + difference

@@ -2,7 +2,15 @@ from asyncio import Task, create_task
 from logging import Logger
 from typing import cast
 
-from discord.ext.commands import BucketType, Cog, Command, Context, command, has_role, max_concurrency
+from discord.ext.commands import (
+    BucketType,
+    Cog,
+    Command,
+    Context,
+    command,
+    has_role,
+    max_concurrency,
+)
 from discord.guild import Guild
 from discord.member import Member
 from structlog import get_logger
@@ -20,7 +28,7 @@ from onehead.common import (
     get_discord_member_from_name,
     get_player_names,
     play_sound,
-    voice_client_disconnect
+    voice_client_disconnect,
 )
 from onehead.game import Challenge, ClassicGame, Game
 from onehead.interfaces.database import PlayerDatabase
@@ -139,7 +147,10 @@ class GameCoordinator(Cog):
             await ctx.send(f"Unable to find discord member for {result}")
             return
 
-        if winner not in (self.store.current_game.challenger, self.store.current_game.opponent):
+        if winner not in (
+            self.store.current_game.challenger,
+            self.store.current_game.opponent,
+        ):
             await ctx.send(
                 f"Must specify either {self.store.current_game.challenger.mention} or {self.store.current_game.opponent.mention} as the winner when entering a result."
             )
@@ -437,7 +448,6 @@ class GameCoordinator(Cog):
         t2_discord_members: list[Member] = [x for x in guild.members if x.display_name in t2_names]
 
         return t1_discord_members, t2_discord_members
-
 
     async def reset(self, ctx: Context, game_cancelled=False) -> None:
         if self.store.current_game:

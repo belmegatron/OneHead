@@ -8,7 +8,14 @@ from structlog import get_logger
 from tabulate import tabulate
 
 from onehead.challenge import ChallengeMode
-from onehead.common import Bet, Player, Roles, Side, get_discord_member_from_name, play_sound
+from onehead.common import (
+    Bet,
+    Player,
+    Roles,
+    Side,
+    get_discord_member_from_name,
+    play_sound,
+)
 from onehead.game import Challenge, ClassicGame, Game
 from onehead.interfaces.database import PlayerDatabase
 from onehead.lobby import Lobby
@@ -56,7 +63,9 @@ class Betting(Cog):
 
             if bet.selection == winner_name:
                 bet_result: BetResult = BetResult(
-                    win=True, stake=bet.stake, winnings=(bet.stake * bet.price) - bet.stake
+                    win=True,
+                    stake=bet.stake,
+                    winnings=(bet.stake * bet.price) - bet.stake,
                 )
             else:
                 bet_result: BetResult = BetResult(win=False, winnings=(-1 * bet.stake))

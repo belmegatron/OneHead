@@ -1,5 +1,5 @@
+from collections.abc import Sequence
 from datetime import datetime
-from typing import Sequence
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import discord.ext.test as dpytest
@@ -245,7 +245,6 @@ class TestReadyCheck:
 
 
 class TestSelectPlayers:
-
     @pytest.mark.asyncio
     async def test_10_or_less(self, bot: Bot) -> None:
         lobby: Lobby = bot.get_cog("Lobby")
@@ -265,7 +264,7 @@ class TestSelectPlayers:
 
         mock_context: MagicMock = MagicMock(spec=Context)
         await lobby.select_players(mock_context)
-        assert mock_context.send.is_not_called_once()
+        assert await mock_context.send.is_not_called_once()
 
     @pytest.mark.asyncio
     async def test_more_than_10(self, bot: Bot) -> None:
@@ -287,4 +286,4 @@ class TestSelectPlayers:
 
         mock_context: MagicMock = MagicMock(spec=Context)
         await lobby.select_players(mock_context)
-        assert mock_context.send.is_not_called_once()
+        assert await mock_context.send.is_not_called_once()

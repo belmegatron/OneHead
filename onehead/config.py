@@ -36,7 +36,7 @@ class Config:
 
 def load_config() -> Config:
     config_path: Path = Path(ROOT_DIR, "secrets/config.json")
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         json_blob: dict = json.load(f)
 
     return from_dict(data_class=Config, data=json_blob)
