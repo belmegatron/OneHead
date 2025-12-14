@@ -1,6 +1,12 @@
 name: Docker Build and Push
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Docker tag to use (e.g., manual, test, latest)'
+        required: false
+        default: 'manual'
   push:
     branches: [ main ]
     tags:
