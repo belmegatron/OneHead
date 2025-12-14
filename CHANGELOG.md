@@ -4,10 +4,343 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.58.0] - 2025-12-14
+### Added
+- Added Github CI/CD workflow
+- Added code coverage tracking with `codecov`
+
+### Changed
+- Switched to using `ruff`
+
+## [1.57.0] - 2025-09-01
+
+### Added
+- Added `!clear` command to permit an admin to remove everyone from the current signups.
+
+### Changed
+- Moving discord members from channels is now handled in a separate async task. This should hopefully result in a snappier start and end to a game.
+
+## [1.56.2] - 2025-08-19
+
+### Changed
+- Bumped discord.py version to fix WebSocket 4006 error.
+
+## [1.56.1] - 2024-11-24
+
+### Changed
+- Fixed bug where calling a command that invoked the `play_sound` function caused an `AttributeError` to be thrown.
+- Fixed bug where if an admin executed the  `!stop` command while the game was during the transfer/betting phase, the bot would not reset to a clean state.
+- Fixed bug where bets were not being formatted as integers when displaying bet results.
+
+## [1.56.0] - 2024-10-08
+
+### Added
+- Added challenge mode. Players can now challenge each other to 1v1 duels.
+- Bets now include a price. By default this is 2.0 for classic games and can vary between 1.01 and 101 for challenges.
+
+### Changed
+- Replaced database protocol with ABC.
+- Simplified database API.
+- Replaced all uses of TypedDict with Dataclass for consistency.
+- Game state is now stored in the GameStore.
+
+## [1.55.3] - 2024-08-26
+
+### Added
+- Added global exception handler to log uncaught exceptions.
+
+### Changed
+- Cleaned up Dockerfile, stopped copying in extraneous files.
+
+## [1.55.2] - 2024-08-25
+
+### Changed
+- Command typo's will now be purged!
+
+## [1.55.1] - 2024-08-24
+
+### Changed
+- Fixed bug in `play_sound` function which would, on occasion, sit forking `ffmpeg` forever more. 
+- Fixed bug where game would hang if more than 10 players signed up and players would have to be benched.
+
+## [1.55.0] - 2024-08-07
+
+### Changed
+- Betting window shortened to 1 minute.
+- Player transfer window shortened to 1 minute.
+
+## [1.54.1] - 2024-05-25
+
+### Changed
+- Fixed deregister command, was attempting to obtain Player record from database via name instead of id.
+- Reverted back to players being moved channels after Betting phase.
+
+## [1.54.0] - 2024-05-22
+
+### Changed
+- Betting window shortened from 3 to 2 minutes.
+- The `!who` command no longer attempts to print current signups if there are none.
+- Players will be moved channels after the Transfer phase instead of after the Betting phase.
+
+## [1.53.0] - 2024-04-09
+
+### Added
+- Added a `!recalibrate` command to allow admins to change a player's MMR on the fly.
+
+## [1.52.3] - 2024-04-02
+
+### Changed
+- Fixed bug in `!signup` command where the first call would not send a message to be displayed in Discord.
+
+## [1.52.2] - 2024-04-01
+
+### Changed
+- Fixed bug in on_presence_update callback not removing a player from signups.
+
+## [1.52.1] - 2024-04-01
+
+### Changed
+- Fixed bug in lobby cleanup routine.
+
+## [1.52.0] - 2024-03-30
+
+### Added
+- Added a cleanup routine to the lobby that runs every hour to check for players who have been signed up too long.
+
+## [1.51.3] - 2024-03-18
+
+### Changed
+- Fixed bug where audio played at end of game would terminate prematurely.
+
+## [1.51.2] - 2024-02-09
+
+### Changed
+- Bot will now disconnect from voice channel when a game has ended.
+
+## [1.51.1] - 2024-01-25
+
+### Changed
+- Bet phase has been reduced from 5 mins to 3 mins.
+
+## [1.51.0] - 2024-01-25
+
+### Changed
+- Changed the order in which events occur during the start of a game. Players are kept in the same voice channel until after the betting phase is over.
+
+## [1.50.1] - 2024-01-24
+
+### Added
+- Added missing pynacl dependency
+
+## [1.50.0] - 2024-01-22
+
+### Added
+- Bot now plays sounds when some commands are called.
+- Now logging discord.py output to separate log file.
+- Added ffmpeg requirement in Dockerfile in order to play mp3 files.
+
+### Changed
+- When shuffling, now picks from the top 20 team combinations based on mmr instead of 5.
+- Can now use the !bet command and specify amount as either first or second argument.
+
+## [1.49.0] - 2024-01-03
+
+### Changed
+- Use discord ID for identifying users instead of display name.
+
+## [1.48.0] - 2024-01-02
+
+### Changed
+- Bumped version for aiohttp and dpytest.
+
+## [1.47.0]- 2023-11-26
+
+### Changed
+- Switched to using pyproject.toml
+
+## [1.46.0] - 2023-11-25
+
+### Changed
+- Improved logging by using structlog.
+
+## [1.45.1] - 2023-04-14
+
+### Added
+- Added upper limit to MMR submitted when registering for IHL.
+
+## [1.45.0] - 2023-04-13
+
+### Added
+- Added !season command to show info on current IHL season.
+- Added IHL section to config for tracking game count.
+
+## [1.44.2] - 2023-04-13
+
+### Changed
+- Fixed bug where all rbucks were deducted on a bet loss.
+- Fixed bug where betting on both sides resulted in too many rbucks being deducted.
+
+## [1.44.1] - 2023-03-14
+
+### Changed
+- Fixed bug that happpened when attempting to add a new player to the database.
+
+## [1.44.0] - 2023-03-09
+
+### Added
+- Added callback that cleans up misspelt commands from a text channel.
+
+### Changed
+- Simplified Database API.
+
+## [1.43.0] - 2023-02-22
+
+### Added
+- Added a new set of dpytest based tests for testing commands.
+
+### Changed
+- discordpy upgraded to v2.0.
+- Fixed a bug in ready check falsely reporting all players were ready.
+- Fixed a bug in commend/report where the player being commended/reported and the player issuing the command were in the wrong order.
+- Fixed a bug where calling !bet could have resulted in the bet not being registered.
+
+## [1.42.5] - 2023-02-06
+
+### Changed
+- Side validation now working correctly.
+
+## [1.42.4] - 2023-02-01
+
+### Added
+- Log message for the combined MMR of each team.
+
+### Changed
+- Should now send a message to Discord channel when a player attempts to report themselves.
+
+## [1.42.3] - 2023-01-31
+
+### Changed
+- Stopped players being able to report/commend themselves.
+
+## [1.42.2] - 2023-01-30
+
+### Changed
+- Removed call to Channels.set_teams function that no longer exists.
+
+## [1.42.1] - 2023-01-29
+
+### Changed
+- Fixed bug where players were not moved Discord channels before and after game.
+
+## [1.42.0] - 2023-01-29
+
+### Added
+- Added a commend/report system and an associated behaviour score for each player. Commend players with !commend {player_name} and report players with !report {player_name} {reason}.
+
+### Changed
+- Refactored how we manage game state, this should make cleanup way easier and we now have less to keep track of.
+- Refactored various Cogs including Core and Lobby (previously PreGame).
+
+### Removed
+- Removed a load of awful tests, more to come at some point, maybe...
+- Removed !reset command, just use !stop if you wish to abort the game.
+
+## [1.41.1] - 2022-11-07
+
+### Changed
+- Fixed some member variables not being initialized on instantiating class.
+
+## [1.40.0] - 2022-11-03
+
+### Changed
+- Tidied up type hints.
+- Fixed broken tests.
+- Now remove old cogs and replace with new cogs when we reset state.
+
+## [1.40.2] - 2022-10-25
+
+### Changed
+- Fixed bug where shuffling could result in same teams.
+
+## [1.40.1] - 2022-08-30
+
+### Changed
+- Fixed bug in setting streaks in TinyDB wrapper.
+
+## [1.40] - 2022-08-30
+
+### Added
+- Now using TinyDB to store data instead of DynamoDB.
+
+### Removed
+- Removed all dependencies on AWS DynamoDB.
+
+## [1.39.2] - 2022-08-28
+
+### Changed
+- Fixed bug where Player transfer and Betting windows remained open after a !stop command had been issued.
+
+## [1.39.1] - 2022-08-21
+
+### Changed
+- Fixed bug where scoreboard if was < 2000 chars, we returned a tuple of characters instead of tuple of strings.
+
+## [1.39] - 2022-05-27
+
+### Removed
+- Functionality to protect RBEEZAY from encountering complete melts  on his team.
+
+## [1.38.1] - 2022-05-25
+
+### Changed
+- Only players that signed up to play can shuffle.
+
+## [1.38] - 2022-05-25
+
+### Added
+- Added a !shuffle command which will shuffle the teams at the cost of 500 RBUCKS.
+
+## [1.37] - 2022-05-18
+
+### Changed
+- Players who are about to participate in a game can now bet.
+- Increased betting window from 2 minutes to 5 minutes.
+
+## [1.36.1] - 2022-05-12
+
+### Changed
+- Winners of bets should now receive the expected number of RBUCKS.
+
+## [1.36] - 2022-05-12
+
+### Added
+- Added RBUCKS where players can bet on the outcome of an IHL game.
+
+## [1.35.1] - 2022-05-11
+
+### Changed
+- No longer able to accidentally issue multiple calls to !start/!stop/!result.
+
+## [1.35] - 2022-05-11
+
+### Changed
+- Simplified code used to balance teams, now always balances using adjusted MMR.
+
+## [1.34] - 2022-05-04
+
+### Changed
+- Users can only signup/signout once every 30s in order to prevent spamming OneHead post-game.
+- Users cannot signup/signout while a game is in progress.
+
+## [1.33] - 2022-05-04
+
+### Added
+- Members signed up to play a game are automatically signed out if they move/are moved to the AFK channel.
+
 ## [1.32] - 2022-04-14
 
 ### Changed
-- DynamoDB field names can't contain spaces, added _ in streak fields.
+- DynamoDB field names can't contain spaces, added '_' into streak fields.
 
 ## [1.31] - 2022-04-14
 

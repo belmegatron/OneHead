@@ -1,19 +1,15 @@
-FROM python
+FROM python:3.13-slim-trixie
 
-WORKDIR /usr/local/
+RUN apt update && apt upgrade -y && apt install ffmpeg -y
 
-COPY onehead/ config.json requirements.txt run.py setup.py version.py onehead/
+RUN apt install -y --no-install-recommends curl ca-certificates
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+RUN sh /uv-installer.sh && rm /uv-installer.sh
+ENV PATH="/root/.local/bin/:$PATH"
 
-RUN pip install virtualenv
+WORKDIR /app
+COPY onehead onehead/
+COPY uv.lock pyproject.toml run.py .
+RUN uv sync --frozen --no-dev
 
-ENV VIRTUAL_ENV=/opt/venv
-
-RUN python -m venv $VIRTUAL_ENV
-
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-
-WORKDIR /usr/local/onehead
-
-RUN pip install -e .
-
-ENTRYPOINT python run.py
+ENTRYPOINT uv run run.py

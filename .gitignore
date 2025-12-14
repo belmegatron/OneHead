@@ -1,8 +1,12 @@
-/.env
-/.idea
+.venv/
 db.json
 __pycache__/
 build/
 dist/
-OneHead.egg-info/
+*.egg-info/
 config.json
+.vscode/
+secrets/
+.coverage
+*.log
+onehead/sounds/

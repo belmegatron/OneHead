@@ -1,0 +1,69 @@
+import random
+from collections.abc import AsyncGenerator, Sequence
+from pathlib import Path
+
+import discord.ext.test as dpytest
+import pytest_asyncio
+from discord.ext.commands import Bot
+from discord.guild import Guild
+from discord.member import Member
+from discord.role import Role
+
+from onehead.common import Player, Team
+from onehead.config import Config, TinyDBConfig, DiscordChannelConfig, DiscordConfig
+from onehead.core import bot_builder
+
+TEST_USER: str = "TestUser0_0_nick"
+
+
+@pytest_asyncio.fixture
+async def bot() -> Bot:
+    config: Config = Config(tinydb=TinyDBConfig(Path(__file__).parent / "test_db.json"), discord=DiscordConfig("token", DiscordChannelConfig("lobby", "match")))
+    bot: Bot = await bot_builder(config)
+    await bot._async_setup_hook()
+    dpytest.configure(bot)
+
+    # Create the roles that are used by OneHead.
+    guilds: Sequence[Guild] = bot.guilds
+    guild: Guild = guilds[0]
+    await guild.create_role(name="IHL")
+    await guild.create_role(name="IHL Admin")
+    return bot
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def cleanup() -> AsyncGenerator[None, None]:
+    await dpytest.empty_queue()
+    yield
+
+
+async def add_ihl_role(bot: Bot, role: str, name: str | None = None) -> None:
+    guilds: Sequence[Guild] = bot.guilds
+    guild: Guild = guilds[0]
+    members: list[Member] = list(bot.get_all_members())
+
+    if name is not None:
+        target_member: Member = [member for member in members if member.name == name][0]
+    else:
+        target_member = members[0]
+
+    roles: Sequence[Role] = guild.roles
+    ihl_role: Role = [x for x in roles if x.name == role][0]
+    await dpytest.add_role(target_member, ihl_role)
+
+
+def create_fake_player() -> Player:
+    id: int = random.randint(0, 99999)
+    name: str = f"user_{id}"
+    mmr: int = random.randint(0, 9000)
+    return Player(id=id, name=name, mmr=mmr)
+
+
+def create_fake_team() -> Team:
+    return (
+        create_fake_player(),
+        create_fake_player(),
+        create_fake_player(),
+        create_fake_player(),
+        create_fake_player(),
+    )

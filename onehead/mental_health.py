@@ -1,11 +1,13 @@
 import random
 
-from discord.ext import commands
+from discord.ext.commands import Cog, Context, command, has_role
+from discord.member import Member
+
+from onehead.common import Roles, get_discord_member_from_name
 
 
-class OneHeadMentalHealth(commands.Cog):
-
-    quotes = [
+class MentalHealth(Cog):
+    quotes: list[str] = [
         """'It's not whether you get knocked down; it's whether you get up.' — Vince Lombardi""",
         """'The only way to prove that you’re a good sport is to lose.' - Ernie Banks""",
         """'When you’re riding, only the race in which you’re riding is important.' - Bill Shoemaker""",
@@ -26,7 +28,7 @@ class OneHeadMentalHealth(commands.Cog):
         """'Never give up, never give in, and when the upper hand is ours, may we have the ability to handle the win with the dignity that we absorbed the loss.' - Doug Williams""",
         """'It’s not the will to win that matters—everyone has that. It’s the will to prepare to win that matters.' - Paul 'Bear' Bryant""",
         """'Persistence can change failure into extraordinary achievement.' - Marv Levy""",
-        """'*unintelligble brummie mutterings*' - Sponge""",
+        """'*unintelligible brummie mutterings*' - Sponge""",
         """'I’ve learned that something constructive comes from every defeat.' - Tom Landry""",
         """'Make sure your worst enemy doesn’t live between your own two ears.' - Laird Hamilton""",
         """'Set your goals high, and don’t stop till you get there.' - Bo Jackson""",
@@ -112,14 +114,23 @@ class OneHeadMentalHealth(commands.Cog):
         """'I’ve missed more than 9,000 shots in my career. I’ve lost almost 300 games. 26 times, I’ve been trusted to take the game winning shot and missed. I’ve failed over and over and over again in my life. And that is why I succeed.' - Michael Jordan""",
         """'It’s not whether you get knocked down; it’s whether you get up.' - Vince Lombardi""",
         """'Push mid and end.' - James Peckham""",
+        """'gotta ban the io' - THANOS""",
+        """'ZUG ZUG' - Rugor""",
     ]
 
-    @commands.has_role("IHL")
-    @commands.command(aliases=["mh"])
-    async def mental_health(self, ctx: commands.Context, name: str):
+    @has_role(Roles.MEMBER)
+    @command(aliases=["mh"])
+    async def mental_health(self, ctx: Context, name: str) -> None:
         """
         Provides mental health to the target player.
         """
 
-        quote = random.choice(self.quotes)
-        await ctx.send(f"**{name}**\n {quote}")
+        quote: str = random.choice(self.quotes)
+
+        member: Member | None = get_discord_member_from_name(ctx, name)
+        if member:
+            message: str = f"**{member.mention}**\n {quote}"
+        else:
+            message: str = f"**{name}**\n {quote}"
+
+        await ctx.send(message)

@@ -1,0 +1,60 @@
+[project]
+name = "onehead"
+version = "1.58.0"
+description = "A Dota 2 in-house league Discord bot."
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.13"
+keywords = ["dota", "discord", "inhouse"]
+
+dependencies = [
+    "aiohttp",
+    "dacite",
+    "discord.py>=2.6.0",
+    "pynacl",
+    "pytz",
+    "structlog",
+    "tabulate",
+    "types-tabulate",
+    "tinydb",
+    "toml",
+]
+
+[build-system]
+requires = ["setuptools>=43.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["onehead"]
+exclude = ["secrets"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+
+
+[tool.lint.ruff.per-file-ignores]
+"onehead/mental_health.py" = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[dependency-groups]
+dev = [
+    "dpytest @ git+https://github.com/CraftSpider/dpytest.git@master",
+    "pytest>=8.4.1",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.12.9",
+]
