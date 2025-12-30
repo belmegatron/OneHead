@@ -1,0 +1,9 @@
+[tinydb]
+path = "season_10.json"
+
+[discord]
+token = "changeme"
+
+[discord.channels]
+lobby = "Lobby"
+match = "Match"

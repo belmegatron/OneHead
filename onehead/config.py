@@ -1,5 +1,5 @@
-import json
-from dataclasses import asdict, dataclass
+import tomllib
+from dataclasses import dataclass
 from pathlib import Path
 
 from dacite import from_dict
@@ -7,8 +7,7 @@ from dacite import from_dict
 from onehead.common import ROOT_DIR
 
 
-class ConfigException(Exception):
-    pass
+CONFIG_PATH: Path = ROOT_DIR / "secrets/config.toml"
 
 
 @dataclass
@@ -35,14 +34,7 @@ class Config:
 
 
 def load_config() -> Config:
-    config_path: Path = Path(ROOT_DIR, "secrets/config.json")
-    with open(config_path) as f:
-        json_blob: dict = json.load(f)
+    with open(CONFIG_PATH, "rb") as f:
+        blob: dict = tomllib.load(f)
 
-    return from_dict(data_class=Config, data=json_blob)
-
-
-def update_config(updated_config: Config) -> None:
-    config_path: Path = Path(ROOT_DIR, "secrets/config.json")
-    with open(config_path, "w") as f:
-        json.dump(asdict(updated_config), f)
+    return from_dict(data_class=Config, data=blob)

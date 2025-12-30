@@ -18,7 +18,10 @@ TEST_USER: str = "TestUser0_0_nick"
 
 @pytest_asyncio.fixture
 async def bot() -> Bot:
-    config: Config = Config(tinydb=TinyDBConfig(Path(__file__).parent / "test_db.json"), discord=DiscordConfig("token", DiscordChannelConfig("lobby", "match")))
+    config: Config = Config(
+        tinydb=TinyDBConfig(Path(__file__).parent / "test_db.json"),
+        discord=DiscordConfig("token", DiscordChannelConfig("lobby", "match")),
+    )
     bot: Bot = await bot_builder(config)
     await bot._async_setup_hook()
     dpytest.configure(bot)

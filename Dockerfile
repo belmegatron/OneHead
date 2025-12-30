@@ -10,6 +10,6 @@ ENV PATH="/root/.local/bin/:$PATH"
 WORKDIR /app
 COPY onehead onehead/
 COPY uv.lock pyproject.toml run.py .
-RUN uv sync --frozen --no-dev
+RUN ["uv", "sync", "--frozen", "--no-dev"]
 
-ENTRYPOINT uv run run.py
+ENTRYPOINT ["uv", "run", "--no-sync", "run.py"]
