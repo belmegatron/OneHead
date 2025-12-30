@@ -1,44 +1,59 @@
-# **OneHead**
+# OneHead
 
 [![codecov](https://codecov.io/gh/belmegatron/onehead/branch/develop/graph/badge.svg)](https://codecov.io/gh/belmegatron/onehead)
 
-OneHead is a Discord Bot for hosting 5vs5 competitive DOTA 2 games in an In-House League (IHL).
+> A Discord bot for hosting competitive 5v5 DOTA 2 In-House League (IHL) matches with automated team balancing, player ratings, and match management.
 
 ## Features
 
-- ### Persistent Results
-    Results are stored in an external database. They will therefore be persisted, even when OneHead is no longer running.
-- ### Leaderboard
-    Players can view a leaderboard which is based on an IHL Rating.
-- ### Behaviour system
-    Players can be commended or reported based on their performance in game.
-- ### Team Balancing
-    Teams are balanced by an internal rating which incorporates both the player's DOTA MMR and their IHL rating.
-- ### Automated Discord Channel Admin
-    OneHead automatically handles moving players to separate channels at the start of a game and moves them back to a shared lobby upon game completion.
-- ### Admin Commands
-    Admins are able to simply start/stop games in addition to removing players from the signup pool, or deregister them entirely.
-- ### Discord Role-Based Permissions
-    The use of the bot can be controlled by assigning Discord Roles to players who want to interact
-    with the bot. There are currently two roles - "IHL" and "IHL Admin".
+**Persistent Results** — Match results are stored in an external database, ensuring data persists across bot restarts.
 
+**Leaderboard System** — Track player performance with an IHL rating system and view competitive rankings.
+
+**Behavior Tracking** — Players can commend or report others based on in-game conduct.
+
+**Smart Team Balancing** — Teams are automatically balanced using a hybrid rating that combines DOTA MMR and IHL performance.
+
+**Automated Channel Management** — Players are automatically moved to team-specific voice channels during matches and returned to the lobby when games end.
+
+**Admin Controls** — Comprehensive admin commands for starting/stopping games, managing the player pool, and handling registrations.
+
+**Role-Based Permissions** — Control bot access through Discord roles (`IHL` for players, `IHL Admin` for administrators).
 
 ## Requirements
 
 - [Docker](https://www.docker.com/products/docker-desktop)
 
-## Configure
+## Configuration
 
-All OneHead settings that can be configured are stored in `config.json`. This 
-will be copied over to your container during `docker build` process.
+OneHead uses `config.toml` for all settings. Copy `config_example.toml` to `config.toml` and customize it for your server:
 
-An example has been provided in `config_example.json`. This can be used
-as the basis for your own `config.json`.
- 
-## Build
+```toml
+[tinydb]
+path = "season_10.json"
 
-`docker build -t onehead:latest <install_dir path>`
+[discord]
+token = "your_discord_bot_token_here"
 
-## Run
+[discord.channels]
+lobby = "Lobby"
+match = "Match"
+```
 
-`docker run -d onehead:latest`
+## Installation
+
+Build the Docker image:
+
+```bash
+docker build -t onehead:latest <install_dir_path>
+```
+
+Run the container:
+
+```bash
+docker run -d -v /usr/local/onehead/secrets:/app/secrets --name onehead onehead:latest
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
